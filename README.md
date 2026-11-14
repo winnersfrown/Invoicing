@@ -46,3 +46,17 @@ The separate legacy inbox still accepts labeled text only. Email monitoring, ban
 - `.openai/hosting.json`: private demo deployment configuration
 
 Verified with automated workflow and matching tests, plus browser checks of comparison evidence, correction drafting, review gating and CSV download.
+
+## Opportunities A and B
+
+### A — duplicate review
+
+Open **Duplicate review** to scan every non-rejected queued or completed invoice/receipt, import a batch (up to 20 files), or add four resilience examples. Signals include SHA-256 file identity, supplier suffix/punctuation normalization, invoice-reference prefix normalization, and extracted-text word overlap. Same supplier and amount alone do not flag a pair; conflicting nonempty references are conservatively preserved unless stronger evidence applies. Similarity is a heuristic, not a calibrated probability or image-layout comparison.
+
+Both sides of unresolved candidate pairs are blocked from inbox approval. Review source evidence, choose which record to retain, and give a reason. Confirming a duplicate rejects the other record without deleting its source. Marking distinct records the decision against the evidence; edits invalidate that decision. New imports and rescans revisit completed records too. This is a single-browser queue, not a server-concurrent transaction system. The processing sequence prevents a local batch from bypassing checks; multi-user concurrency will need server-side enforcement.
+
+### B — discrepancy resolution
+
+After comparison, select **Track correction & resolution**. The local case preserves the original invoice, PO and comparison; provides an editable correction draft; records manually logged supplier communications; accepts a revised invoice via JSON/PDF/image; and verifies the revision against the original PO. A changed invoice number is allowed when the vendor and PO agree; the reviewer must confirm that it replaces the original.
+
+A revision that still differs stays on hold. A matching revision requires a reviewer checkbox and verification note before resolving the discrepancy. Resolution never approves payment. Export the case JSON for original documents, all revisions, comparison evidence, notes, timestamps and explicit payment status. One case is retained in browser storage; export before replacing it. This local history is not an immutable audit log. No supplier messages are sent automatically. Opportunity C is outside this release.
