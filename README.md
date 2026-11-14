@@ -14,7 +14,7 @@ The default **Match invoice & PO** page demonstrates the complete discrepancy wo
 
 Comparison validates document type, vendor, PO reference, USD currency, unique SKUs, positive whole-number quantities, prices and document arithmetic. Changed or missing items and tax differences stay visible even if opposing differences net to zero. Replacing either source invalidates its previous review and draft. These matching-session documents and drafts stay in memory until reload; use export to keep the reviewed data. The existing inbox continues to use browser-local persistence.
 
-The matching inputs accept structured `.json` documents under 500 KB with the schema illustrated in `dist/samples/matching-invoice.json` and `matching-po.json`. Arbitrary PDFs/images, OCR, real email sending and accounting integrations are not included in this demo.
+The matching inputs accept structured `.json` documents under 500 KB with the schema illustrated in `dist/samples/matching-invoice.json` and `matching-po.json`. PDF text extraction and English OCR for images/scanned PDFs are connected in Match invoice & PO. Upload PDF, PNG, JPEG or WebP (15 MB; PDFs up to 5 pages). Verify extracted fields and line items in the review dialog. Field detection uses simple patterns and does not reliably interpret every vendor layout; missing rows can be added manually. Currency defaults to USD and must be verified. PDF.js 4.10.38 and Tesseract.js 5.1.1 load pinned browser code from jsDelivr; OCR also loads English language data. Internet access is needed for these assets, but document bytes remain in the browser. No API key is needed. Real email sending and accounting integrations remain disconnected.
 
 ## Try the invoice inbox
 
@@ -35,7 +35,7 @@ Serve `dist/` using any static web server, for example `python3 -m http.server 8
 
 Sample extraction is simulated from seeded fields. Text imports use a deterministic labeled-text parser. Validation, field correction, duplicate checks, approval/rejection, CSV export, browser persistence and activity history work locally. Duplicate detection compares normalized vendor + invoice number against earlier non-rejected documents. CSV contains approved records only and guards against spreadsheet formula injection.
 
-No OCR, PDF/image ingestion, email monitoring, bank payments, accounting integration, server database or multi-user approval routing is connected. Records persist only in this browser's localStorage; the log is illustrative, not an immutable audit trail. All sample businesses and documents are fictional. This is a demonstration, not production accounting software.
+The separate legacy inbox still accepts labeled text only. Email monitoring, bank payments, accounting integration, server database and multi-user approval routing are not connected. Records persist only in this browser's localStorage; the log is illustrative, not an immutable audit trail. All sample businesses and documents are fictional. This is a demonstration, not production accounting software.
 
 ## Structure
 

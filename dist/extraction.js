@@ -1,0 +1,20 @@
+// Pinned browser dependencies; documents are processed locally, never sent to these CDNs.
+const CDN='https://cdn.jsdelivr.net/npm/';
+export function parseExtractedText(text,kind){
+ const get=pattern=>text.match(pattern)?.[1]?.trim()||'';
+ const amount=label=>{const s=get(new RegExp('^'+label+'[ \\t]*[:$]?[ \\t]*\\$?([\\d,]+\\.\\d{2})[ \\t]*$','mi'));return s?Number(s.replaceAll(',','')):null;};
+ const po=get(/(?:PO(?: number| reference)?|Purchase order(?: number)?)[ \t]*[:#][ \t]*([^\n]+)/i);
+ const lines=[];for(const row of text.split('\n')){const m=row.trim().match(/^([\w-]+)\s+(.+?)\s+(\d+)\s+\$?([\d,]+\.\d{2})(?:\s+\$?[\d,]+\.\d{2})?$/);if(m&&!/subtotal|total|tax/i.test(m[1]))lines.push({sku:m[1],description:m[2].trim(),quantity:Number(m[3]),unitPrice:Number(m[4].replaceAll(',',''))});}
+ return {type:kind,vendor:get(/^Vendor[ \t]*:[ \t]*(.+)$/mi),number:kind==='invoice'?get(/^Invoice(?: number)?[ \t]*[:#][ \t]*(.+)$/mi):po,poNumber:po,currency:get(/^Currency[ \t]*:[ \t]*(\w+)/mi)||'USD',lines,tax:amount('Tax'),total:amount('Total'),note:'Extracted document. Fields require human verification.'};
+}
+let pdfPromise,ocrPromise;
+async function pdfLib(){if(!pdfPromise)pdfPromise=import(CDN+'pdfjs-dist@4.10.38/build/pdf.min.mjs').then(m=>{m.GlobalWorkerOptions.workerSrc=CDN+'pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';return m;});return pdfPromise;}
+async function ocrLib(){if(!ocrPromise)ocrPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=CDN+'tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=()=>resolve(window.Tesseract);s.onerror=()=>{ocrPromise=null;reject(Error('OCR library could not load. Check your internet connection and retry.'));};document.head.append(s);});return ocrPromise;}
+export async function extractFile(file,onProgress){
+ if(file.size>15*1024*1024)throw Error('Choose a document under 15 MB.');
+ const isPdf=/\.pdf$/i.test(file.name);if(!isPdf&&!/\.(png|jpe?g|webp)$/i.test(file.name))throw Error('Upload PDF, PNG, JPG or WebP.');
+ let worker,pdf;const pages=[];async function recognize(canvas){if(!worker){onProgress('Loading English OCR…');const T=await ocrLib();worker=await T.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')onProgress('Reading image text… '+Math.round(m.progress*100)+'%');}});}return (await worker.recognize(canvas)).data.text;}
+ try{if(isPdf){onProgress('Opening PDF…');const lib=await pdfLib();pdf=await lib.getDocument({data:await file.arrayBuffer(),isEvalSupported:false}).promise;if(pdf.numPages>5)throw Error('This demo accepts PDFs up to 5 pages.');for(let n=1;n<=pdf.numPages;n++){onProgress(`Reading PDF page ${n} of ${pdf.numPages}…`);const page=await pdf.getPage(n),content=await page.getTextContent();let text='',y=null;for(const item of content.items){if(y!==null&&Math.abs(item.transform[5]-y)>3)text+='\n';text+=item.str+' ';if(item.hasEOL)text+='\n';y=item.transform[5];}if(text.trim().length<40){const viewport=page.getViewport({scale:Math.min(2,2000/Math.max(page.view[2],page.view[3]))});const canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;text=await recognize(canvas);}pages.push(text);}}else{const bitmap=await createImageBitmap(file);try{if(bitmap.width*bitmap.height>30000000)throw Error('Image is too large. Use an image below 30 megapixels.');const scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=bitmap.width*scale;canvas.height=bitmap.height*scale;const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);pages.push(await recognize(canvas));}finally{bitmap.close();}}
+ const text=pages.join('\n\n');if(!text.trim())throw Error('No readable text found. Try a clearer scan.');return text;
+ }finally{if(worker)await worker.terminate();if(pdf)await pdf.destroy();}
+}
