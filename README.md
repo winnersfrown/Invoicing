@@ -2,7 +2,21 @@
 
 A browser-local accounts payable demo for the Diamond Challenge project.
 
-## Try the demo
+## Featured demo: invoice vs. purchase order
+
+The default **Match invoice & PO** page demonstrates the complete discrepancy workflow:
+
+1. Download the sample invoice and purchase order JSON files, then upload them into their labeled inputs; or click **Load $60 example**.
+2. Click **Compare documents**. Invoice NS-1068 totals $660; PO-2026-042 totals $600.
+3. Inspect the highlighted source lines: 12 paper cases cost $45 each on the invoice versus $40 each on the PO. The application calculates 12 × $5 = $60; the result is not hardcoded.
+4. Click **Draft correction request**. Edit the message and download it as text. No email is sent.
+5. Confirm that you reviewed the evidence, then export CSV or JSON. JSON includes per-line evidence. Both formats explicitly retain `paymentApproved: false` and `ON_HOLD` for discrepancies. Reviewing does not mark the invoice corrected or authorize payment.
+
+Comparison validates document type, vendor, PO reference, USD currency, unique SKUs, positive whole-number quantities, prices and document arithmetic. Changed or missing items and tax differences stay visible even if opposing differences net to zero. Replacing either source invalidates its previous review and draft. These matching-session documents and drafts stay in memory until reload; use export to keep the reviewed data. The existing inbox continues to use browser-local persistence.
+
+The matching inputs accept structured `.json` documents under 500 KB with the schema illustrated in `dist/samples/matching-invoice.json` and `matching-po.json`. Arbitrary PDFs/images, OCR, real email sending and accounting integrations are not included in this demo.
+
+## Try the invoice inbox
 
 1. Open the app and select **Process all invoices**.
 2. Review the two clean invoices and approve them.
@@ -31,4 +45,4 @@ No OCR, PDF/image ingestion, email monitoring, bank payments, accounting integra
 - `tests/workflow.test.js`: validation, workflow and export tests
 - `.openai/hosting.json`: private demo deployment configuration
 
-Verified with automated workflow tests and a browser walkthrough of batch processing, approval and correction of a mismatched total.
+Verified with automated workflow and matching tests, plus browser checks of comparison evidence, correction drafting, review gating and CSV download.

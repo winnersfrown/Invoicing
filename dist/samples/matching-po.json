@@ -1,0 +1,16 @@
+{
+  "type": "purchase_order",
+  "number": "PO-2026-042",
+  "vendor": "Northstar Paper Co.",
+  "poNumber": "PO-2026-042",
+  "currency": "USD",
+  "issued": "2026-11-10",
+  "billTo": "Oak & Elm Creative (fictional)",
+  "lines": [
+    {"sku": "PAPER-A4", "description": "A4 copy paper, case", "quantity": 12, "unitPrice": 40},
+    {"sku": "FOLDER-20", "description": "Project folders, pack of 20", "quantity": 4, "unitPrice": 30}
+  ],
+  "tax": 0,
+  "total": 600,
+  "note": "Fictional training document. Ordered unit price for PAPER-A4 is $40.00."
+}

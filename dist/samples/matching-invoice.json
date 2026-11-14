@@ -1,0 +1,17 @@
+{
+  "type": "invoice",
+  "number": "NS-1068",
+  "vendor": "Northstar Paper Co.",
+  "poNumber": "PO-2026-042",
+  "currency": "USD",
+  "issued": "2026-11-13",
+  "due": "2026-12-13",
+  "billTo": "Oak & Elm Creative (fictional)",
+  "lines": [
+    {"sku": "PAPER-A4", "description": "A4 copy paper, case", "quantity": 12, "unitPrice": 45},
+    {"sku": "FOLDER-20", "description": "Project folders, pack of 20", "quantity": 4, "unitPrice": 30}
+  ],
+  "tax": 0,
+  "total": 660,
+  "note": "Fictional training document. No real payment is due."
+}
