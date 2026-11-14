@@ -1,4 +1,4 @@
-# Accounting — invoice automation demo
+# Invoicing — invoice automation demo
 
 A browser-local accounts payable demo for the Diamond Challenge project.
 
