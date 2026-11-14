@@ -1,22 +1,30 @@
 {
   "benchmarkVersion": 1,
+  "dataset": "benchmark",
+  "humanRecovery": [
+    {
+      "invoice": "I11",
+      "matchedAfterConfirmation": true
+    }
+  ],
   "baselineGitHubCommit": "b84fa0be0ecf22a0977e58b9a91d05cc98bcabaa",
   "scope": "Structured JSON engine checks only; no OCR, UI upload, live concurrency or customer performance claims.",
   "groundTruthSha256": "34b9d2b4341fb9b026d1ba318571ce00e9fc5d44ac9be5244e832eb3da5f6180",
   "engineSha256": {
-    "duplicates-engine.js": "d9570a4c9750fbce7b3b6b07a9d901b07a4eb4ee14a424e8f2e35726b48d57d0",
-    "matching-engine.js": "52dc6859d72e14e2ff2b1749a546748fa6e5c84e026894225255c2ca8ff68f80",
-    "engine.js": "a52fb5efad91d97a13debbde2440165aa677ff939b779e1159c5da32a5438837"
+    "duplicates-engine.js": "1b5e7eb8ff30f5624f8cbcd4d67003a69c67b7016feb0c73f0402e83d2e5440c",
+    "matching-engine.js": "8771b69f1ed73f9feb9f70e94f25e1e53390a76a8dd15160af24aacd884f28d0",
+    "engine.js": "a52fb5efad91d97a13debbde2440165aa677ff939b779e1159c5da32a5438837",
+    "supplier.js": "69e10890fdfea95dc4a63b2e0032a307e0622350c7f630ccaa2d28732b9973fe"
   },
   "datasetSha256": "293b365e50b2120c7936ecbf98e14f907d885c0b5c518e311036b2ad3dd2d4dc",
   "duplicates": {
-    "tp": 4,
+    "tp": 6,
     "fp": 0,
     "tn": 184,
-    "fn": 2,
-    "accuracy": 0.9894736842105263,
+    "fn": 0,
+    "accuracy": 1,
     "precision": 1,
-    "recall": 0.6666666666666666,
+    "recall": 1,
     "falsePositiveRate": 0,
     "pairs": [
       {
@@ -629,9 +637,14 @@
           "I10"
         ],
         "expectedDuplicate": true,
-        "detected": false,
-        "result": "FN",
-        "evidence": []
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 93% of unique words (a similarity signal, not a probability).",
+          "References differ only by a copy/resend suffix or common OCR character confusion; matching supplier, total and content support human review."
+        ]
       },
       {
         "pair": [
@@ -943,9 +956,14 @@
           "I12"
         ],
         "expectedDuplicate": true,
-        "detected": false,
-        "result": "FN",
-        "evidence": []
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+          "References differ only by a copy/resend suffix or common OCR character confusion; matching supplier, total and content support human review."
+        ]
       },
       {
         "pair": [
@@ -1940,13 +1958,13 @@
     ]
   },
   "comparison": {
-    "exactClassificationCorrect": 18,
+    "exactClassificationCorrect": 19,
     "total": 20,
     "issuesDetected": 8,
     "issueCount": 8,
-    "falseAlarms": 2,
+    "falseAlarms": 1,
     "cleanCount": 12,
-    "explanationCorrect": 18,
+    "explanationCorrect": 19,
     "results": [
       {
         "invoice": "I01",
@@ -1958,6 +1976,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-1",
@@ -2023,6 +2042,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-2",
@@ -2088,6 +2108,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-3",
@@ -2153,6 +2174,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-4",
@@ -2218,6 +2240,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-5",
@@ -2283,6 +2306,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-6",
@@ -2348,6 +2372,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-1",
@@ -2408,11 +2433,65 @@
         "po": "P2",
         "expected": "matched",
         "reason": "Verified supplier alias represents the same synthetic supplier; prefix is harmless.",
-        "actual": "vendor_mismatch",
-        "classificationPass": false,
-        "explanationPass": false,
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
         "output": {
-          "error": "Vendor mismatch. Select documents from the same vendor."
+          "comparison": {
+            "vendorEvidence": "Supplier names match after punctuation and company-suffix normalization; verify legal identity during review.",
+            "lines": [
+              {
+                "sku": "ITEM-2",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-2",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
         }
       },
       {
@@ -2440,6 +2519,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-4",
@@ -2500,11 +2580,11 @@
         "po": "P5",
         "expected": "matched",
         "reason": "Synthetic supplier typo represents the same supplier (master identity ground truth).",
-        "actual": "vendor_mismatch",
+        "actual": "supplier_review",
         "classificationPass": false,
         "explanationPass": false,
         "output": {
-          "error": "Vendor mismatch. Select documents from the same vendor."
+          "error": "Similar supplier names require identity review. Verify supplier records before comparing these documents."
         }
       },
       {
@@ -2517,6 +2597,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-6",
@@ -2582,6 +2663,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-1",
@@ -2665,6 +2747,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-2",
@@ -2748,6 +2831,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-3",
@@ -2888,6 +2972,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-1",
@@ -2960,6 +3045,7 @@
         "explanationPass": true,
         "output": {
           "comparison": {
+            "vendorEvidence": "Supplier names match.",
             "lines": [
               {
                 "sku": "ITEM-2",
@@ -3021,29 +3107,29 @@
     {
       "id": "C1",
       "rejected": true,
-      "creditSpecificExplanation": false,
-      "error": "Choose a invoice JSON document with the correct type.",
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
       "supported": false
     },
     {
       "id": "C2",
       "rejected": true,
-      "creditSpecificExplanation": false,
-      "error": "Choose a invoice JSON document with the correct type.",
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
       "supported": false
     },
     {
       "id": "C3",
       "rejected": true,
-      "creditSpecificExplanation": false,
-      "error": "Choose a invoice JSON document with the correct type.",
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
       "supported": false
     },
     {
       "id": "C4",
       "rejected": true,
-      "creditSpecificExplanation": false,
-      "error": "Choose a invoice JSON document with the correct type.",
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
       "supported": false
     }
   ],

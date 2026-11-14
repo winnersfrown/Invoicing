@@ -1,0 +1,9 @@
+invoice
+Supplier: Cobalt Hardware Inc
+Reference: 8201
+PO: ORDER-72
+1. KIT-2 Workshop assembly kit with sealed components and inspection label: 4 x 74.5
+2. PACK-2 Protective packing and scheduled delivery to regional distribution depot: 3 x 8.5
+Tax: 14.5
+Total: 338 USD
+Fictional holdout document. No actual obligation.

@@ -1,0 +1,27 @@
+{
+  "id": "P5",
+  "type": "purchase_order",
+  "number": "ORDER-75",
+  "poNumber": "ORDER-75",
+  "vendor": "Quartz Fixtures LLC",
+  "currency": "USD",
+  "date": "2026-11-13",
+  "due": "2026-12-13",
+  "lines": [
+    {
+      "sku": "KIT-5",
+      "description": "Workshop assembly kit with sealed components and inspection label",
+      "quantity": 4,
+      "unitPrice": 72.25
+    },
+    {
+      "sku": "PACK-5",
+      "description": "Protective packing and scheduled delivery to regional distribution depot",
+      "quantity": 3,
+      "unitPrice": 8.5
+    }
+  ],
+  "tax": 14.5,
+  "total": 329,
+  "notes": "Fictional holdout document. No actual obligation."
+}

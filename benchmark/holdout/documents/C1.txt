@@ -1,0 +1,8 @@
+credit_note
+Supplier: Birch Laboratory LLC
+Reference: CREDIT-92
+PO: ORDER-71
+1. KIT-1 Return of one damaged assembly kit: 1 x 72.25
+Tax: 0
+Total: 72.25 USD
+Fictional holdout document. No actual obligation.

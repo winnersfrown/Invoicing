@@ -1,0 +1,22 @@
+{
+  "id": "C3",
+  "type": "credit_note",
+  "number": "CREDIT-94",
+  "poNumber": "ORDER-73",
+  "vendor": "Linden Catering Ltd",
+  "currency": "USD",
+  "date": "2026-11-13",
+  "due": "2026-12-13",
+  "lines": [
+    {
+      "sku": "KIT-3",
+      "description": "Return of one damaged assembly kit",
+      "quantity": 1,
+      "unitPrice": 72.25
+    }
+  ],
+  "tax": 0,
+  "total": 72.25,
+  "originalInvoiceNumber": "8300",
+  "notes": "Fictional holdout document. No actual obligation."
+}

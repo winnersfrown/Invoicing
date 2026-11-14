@@ -1,0 +1,9 @@
+invoice
+Supplier: Birch Laboratory LLC
+Reference: 8102
+PO: ORDER-71
+1. KIT-1 Workshop assembly kit with sealed components and inspection label: 4 x 73
+2. PACK-1 Protective packing and scheduled delivery to regional distribution depot: 3 x 7.5
+Tax: 14.5
+Total: 329 USD
+Fictional holdout document. No actual obligation.

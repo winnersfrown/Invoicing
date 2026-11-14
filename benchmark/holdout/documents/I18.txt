@@ -1,0 +1,9 @@
+invoice
+Supplier: Spruce Print Company
+Reference: 8601
+PO: ORDER-999
+1. KIT-6 Workshop assembly kit with sealed components and inspection label: 4 x 72.25
+2. PACK-6 Protective packing and scheduled delivery to regional distribution depot: 3 x 8.5
+Tax: 14.5
+Total: 329 USD
+Fictional holdout document. No actual obligation.

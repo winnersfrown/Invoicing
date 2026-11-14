@@ -1,0 +1,14 @@
+{
+  "dist/app.js": "0aceaeadcff1038d8e37731ba9e1a51756f777228023f3c03f3dfd40d1982366",
+  "dist/case-engine.js": "c9cf333cb5f0c05db67a9fca9734903f1828074c865921d339e32cfda7d43597",
+  "dist/case-ui.js": "81424f626cc7d58f26f74425e4c2e919f61675b624ff0615d14edf40bad4cf31",
+  "dist/duplicates-engine.js": "1b5e7eb8ff30f5624f8cbcd4d67003a69c67b7016feb0c73f0402e83d2e5440c",
+  "dist/duplicates-ui.js": "44901b19f054d0cef78e800392df444e610bc51a408050f96e976a5504af15ac",
+  "dist/engine.js": "a52fb5efad91d97a13debbde2440165aa677ff939b779e1159c5da32a5438837",
+  "dist/extraction-review.js": "1e42c2f2fff036a4e1d2669831b522ac75aa692ff01049a9c447e3d0eb90152a",
+  "dist/extraction.js": "a745d0845b9361fbc97b8151c541a943e210da52c788c348e1cc23e86ba9a4bc",
+  "dist/matching-engine.js": "8771b69f1ed73f9feb9f70e94f25e1e53390a76a8dd15160af24aacd884f28d0",
+  "dist/matching.js": "d06404fde7d067917797de087da36f0d8da4966affbbb72a819a803eeacbcfa7",
+  "dist/samples.js": "5e12f92e65f89a9a014be404dbf6241e8115d11ce127b728b5c501fa825d13bb",
+  "dist/supplier.js": "69e10890fdfea95dc4a63b2e0032a307e0622350c7f630ccaa2d28732b9973fe"
+}

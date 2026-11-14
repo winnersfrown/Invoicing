@@ -1,0 +1,21 @@
+{
+  "id": "I15",
+  "type": "invoice",
+  "number": "8301",
+  "poNumber": "ORDER-73",
+  "vendor": "Linden Catering Ltd",
+  "currency": "USD",
+  "date": "2026-11-13",
+  "due": "2026-12-13",
+  "lines": [
+    {
+      "sku": "KIT-3",
+      "description": "Workshop assembly kit with sealed components and inspection label",
+      "quantity": 4,
+      "unitPrice": 72.25
+    }
+  ],
+  "tax": 14.5,
+  "total": 303.5,
+  "notes": "Fictional holdout document. No actual obligation."
+}

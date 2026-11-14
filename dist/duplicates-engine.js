@@ -1,5 +1,7 @@
-export const normalizeVendor=s=>String(s||'').toLowerCase().replace(/&/g,'and').replace(/\b(incorporated|inc|llc|limited|ltd|company|co|corp|corporation)\b/g,'').replace(/[^a-z0-9]/g,'');
+import {normalizeVendor} from './supplier.js';
+export {normalizeVendor} from './supplier.js';
 export const normalizeReference=s=>String(s||'').toLowerCase().replace(/^(?:invoice|inv|reference|ref)[\s:#-]+/,'').replace(/[^a-z0-9]/g,'');
+const referenceVariant=s=>normalizeReference(String(s||'').replace(/[\s_-]+(?:resend|copy|duplicate)$/i,'')).replace(/[o]/g,'0').replace(/[il]/g,'1');
 const words=s=>new Set(String(s||'').toLowerCase().match(/[a-z0-9]+/g)||[]);
 export function similarity(a,b){const x=words(a),y=words(b);if(Math.min(x.size,y.size)<12)return 0;const intersection=[...x].filter(w=>y.has(w)).length;return intersection/(x.size+y.size-intersection);}
 export function pairKey(a,b){return [a.id,b.id].sort().join('::');}
@@ -15,7 +17,9 @@ export function comparePair(a,b){
  if(content>=.8)evidence.push(`Extracted content shares ${Math.round(content*100)}% of unique words (a similarity signal, not a probability).`);
  // Different nonempty references need stronger evidence than routine repeated purchases.
  const missingRef=!ref||!normalizeReference(y.number);
- const candidate=identicalFile||(sameSupplier&&sameRef)||(amount&&sameSupplier&&missingRef&&content>=.8)||(amount&&sameRef&&content>=.9);
+ const variant=!!ref&&ref!==normalizeReference(y.number)&&referenceVariant(x.number).length>=4&&referenceVariant(x.number)===referenceVariant(y.number)&&sameSupplier&&amount&&content>=.9;
+ if(variant)evidence.push('References differ only by a copy/resend suffix or common OCR character confusion; matching supplier, total and content support human review.');
+ const candidate=variant||identicalFile||(sameSupplier&&sameRef)||(amount&&sameSupplier&&missingRef&&content>=.8)||(amount&&sameRef&&content>=.9);
  return {candidate,evidence,content,level:identicalFile?'Exact file':sameSupplier&&sameRef?'Strong field match':'Possible content match',key:pairKey(a,b),stamp:pairStamp(a,b),a:a.id,b:b.id};
 }
 export function scanDuplicates(docs){const pairs=[];for(let i=0;i<docs.length;i++)for(let j=i+1;j<docs.length;j++){const a=docs[i],b=docs[j];if(a.status==='rejected'||b.status==='rejected')continue;const p=comparePair(a,b);if(!p.candidate)continue;const decision=a.duplicateDecisions?.[p.key];if(decision?.stamp===p.stamp&&decision.action==='distinct')continue;pairs.push(p);}return pairs;}

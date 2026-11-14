@@ -1,0 +1,8 @@
+credit_note
+Supplier: Cobalt Hardware Inc
+Reference: CREDIT-93
+PO: ORDER-72
+1. KIT-2 Return of one damaged assembly kit: 1 x 72.25
+Tax: 0
+Total: 72.25 USD
+Fictional holdout document. No actual obligation.

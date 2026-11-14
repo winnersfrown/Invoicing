@@ -1,0 +1,8 @@
+credit_note
+Supplier: Meadow Textile Co.
+Reference: CREDIT-95
+PO: ORDER-74
+1. KIT-4 Return of one damaged assembly kit: 1 x 72.25
+Tax: 0
+Total: 72.25 USD
+Fictional holdout document. No actual obligation.

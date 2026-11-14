@@ -69,3 +69,11 @@ The dataset contains exactly 30 synthetic documents: 20 invoices, 6 POs and 4 cr
 The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Subsequent runs write `LATEST.md` and `latest.json`; preserve the initial baseline. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
 
 This benchmark tests structured detection and explanation facts. It does not measure PDF/image OCR or live upload concurrency. Credit notes currently receive an unsupported-type rejection; credit reconciliation is not implemented. TXT files are human-readable evidence, not inbox-import fixtures.
+
+### Reference and supplier improvements
+
+Supported copy/resend suffixes and common O/0 or I/L/1 OCR confusions now trigger duplicate review only with matching normalized supplier, total, and at least 90% token overlap. Ordinary sequential references remain distinct. This is a conservative heuristic; not every altered reference is caught.
+
+PO matching normalizes company suffixes and punctuation. One-character supplier spelling differences require explicit identity confirmation and a note in the UI before comparison can proceed; the decision is scoped to the supplier names and document references and exported with the evidence. Credit-note JSON receives a clear unsupported message; credit processing is still not implemented.
+
+Run `npm run benchmark:holdout` for the new 30-document evaluation. Production JavaScript hashes were frozen before generating it; the runner refuses changed engine hashes. Its author also wrote the implementation, so it is fresh synthetic validation rather than an independently blinded test. Results are in `benchmark/holdout/results/LATEST.md`. The original frozen baseline is unchanged.

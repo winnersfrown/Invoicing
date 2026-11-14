@@ -1,0 +1,22 @@
+{
+  "id": "C4",
+  "type": "credit_note",
+  "number": "CREDIT-95",
+  "poNumber": "ORDER-74",
+  "vendor": "Meadow Textile Co.",
+  "currency": "USD",
+  "date": "2026-11-13",
+  "due": "2026-12-13",
+  "lines": [
+    {
+      "sku": "KIT-4",
+      "description": "Return of one damaged assembly kit",
+      "quantity": 1,
+      "unitPrice": 72.25
+    }
+  ],
+  "tax": 0,
+  "total": 72.25,
+  "originalInvoiceNumber": "8400",
+  "notes": "Fictional holdout document. No actual obligation."
+}

@@ -1,0 +1,8 @@
+invoice
+Supplier: Linden Catering Ltd
+Reference: 8301
+PO: ORDER-73
+1. KIT-3 Workshop assembly kit with sealed components and inspection label: 4 x 72.25
+Tax: 14.5
+Total: 303.5 USD
+Fictional holdout document. No actual obligation.

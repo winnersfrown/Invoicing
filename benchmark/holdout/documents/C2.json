@@ -1,0 +1,22 @@
+{
+  "id": "C2",
+  "type": "credit_note",
+  "number": "CREDIT-93",
+  "poNumber": "ORDER-72",
+  "vendor": "Cobalt Hardware Inc",
+  "currency": "USD",
+  "date": "2026-11-13",
+  "due": "2026-12-13",
+  "lines": [
+    {
+      "sku": "KIT-2",
+      "description": "Return of one damaged assembly kit",
+      "quantity": 1,
+      "unitPrice": 72.25
+    }
+  ],
+  "tax": 0,
+  "total": 72.25,
+  "originalInvoiceNumber": "8200",
+  "notes": "Fictional holdout document. No actual obligation."
+}

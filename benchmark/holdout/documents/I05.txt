@@ -1,0 +1,9 @@
+invoice
+Supplier: Quartz Fixtures LLC
+Reference: 8500
+PO: ORDER-75
+1. KIT-5 Workshop assembly kit with sealed components and inspection label: 4 x 72.25
+2. PACK-5 Protective packing and scheduled delivery to regional distribution depot: 3 x 8.5
+Tax: 14.5
+Total: 329 USD
+Fictional holdout document. No actual obligation.
