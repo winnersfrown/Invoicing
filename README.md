@@ -83,3 +83,13 @@ Run `npm run benchmark:holdout` for the new 30-document evaluation. Production J
 The previously missed `REISSUED-8600` / `8600` pair is now detected for human review. Standalone reissue/resent/copy labels can appear at either reference edge; matching supplier, amount and strong content evidence are still required. Arbitrary reference changes are not universally detected.
 
 Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The old holdout remains frozen and its original command intentionally rejects changed engine hashes. This rerun is regression testing, not fresh holdout validation.
+
+## Connected inbox workflow
+
+The inbox is now the starting screen. Select **Load complete $60 example**, then **Process all invoices**. On invoice NS-1068 choose **Match purchase order**; its invoice and sample PO are already loaded. Compare, select **Track correction & resolution**, prepare the draft, load or upload a corrected invoice, and explicitly resolve it. **Back to invoice inbox** shows the resolved status and $600 corrected amount alongside the $660 original. Review and approve for export separately; CSV uses the verified replacement reference and amount. No payment or message is sent.
+
+Inbox import now accepts JSON, PDFs, images and labeled TXT. Structured invoice line items are retained. TXT and older inbox records require a one-time line-item review using their existing source text; no re-upload is needed. New imported invoices require PO matching before export. Legacy demo records keep their original non-PO validation flow until a PO workflow is started.
+
+Cases are stored per inbox record and survive refreshes. Switching invoices preserves each linked case. Editing source fields invalidates prior matching and archives previous workflow evidence. Unresolved or stale comparisons cannot be approved or exported; corrected invoices are rechecked for duplicates. Approved case evidence is read-only and remains exportable. Data remains in this browser; these are not multi-user server records or tamper-proof audit logs.
+
+Validation: 40 unit tests cover holds, resolution, corrected exports, stale source changes, case isolation and replacement duplicates. Browser QA completed the $60 flow, refresh/resume, approval, read-only case access and CSV download.

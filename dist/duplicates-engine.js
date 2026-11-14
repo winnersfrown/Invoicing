@@ -1,3 +1,4 @@
+import {effectiveFields} from './workflow-engine.js';
 import {normalizeVendor} from './supplier.js';
 export {normalizeVendor} from './supplier.js';
 export const normalizeReference=s=>String(s||'').toLowerCase().replace(/^(?:invoice|inv|reference|ref)[\s:#-]+/,'').replace(/[^a-z0-9]/g,'');
@@ -7,9 +8,9 @@ const referenceVariant=s=>{let value=String(s||'').trim();for(let n=0;n<4;n++){c
 const words=s=>new Set(String(s||'').toLowerCase().match(/[a-z0-9]+/g)||[]);
 export function similarity(a,b){const x=words(a),y=words(b);if(Math.min(x.size,y.size)<12)return 0;const intersection=[...x].filter(w=>y.has(w)).length;return intersection/(x.size+y.size-intersection);}
 export function pairKey(a,b){return [a.id,b.id].sort().join('::');}
-export function pairStamp(a,b){return JSON.stringify([a,b].sort((x,y)=>x.id.localeCompare(y.id)).map(d=>[d.id,d.fields,d.source,d.fingerprint,d.documentType]));}
+export function pairStamp(a,b){return JSON.stringify([a,b].sort((x,y)=>x.id.localeCompare(y.id)).map(d=>[d.id,effectiveFields(d),d.source,d.fingerprint,d.documentType]));}
 export function comparePair(a,b){
- const x=a.fields,y=b.fields;const supplier=normalizeVendor(x.vendor),ref=normalizeReference(x.number),sameSupplier=!!supplier&&supplier===normalizeVendor(y.vendor),sameRef=!!ref&&ref===normalizeReference(y.number);
+ const x=effectiveFields(a),y=effectiveFields(b);const supplier=normalizeVendor(x.vendor),ref=normalizeReference(x.number),sameSupplier=!!supplier&&supplier===normalizeVendor(y.vendor),sameRef=!!ref&&ref===normalizeReference(y.number);
  const amount=typeof x.total==='number'&&typeof y.total==='number'&&Number.isFinite(x.total)&&Number.isFinite(y.total)&&Math.round(x.total*100)===Math.round(y.total*100);const content=similarity(a.source,b.source);const evidence=[];
  const identicalFile=!!a.fingerprint&&a.fingerprint===b.fingerprint;
  if(identicalFile)evidence.push('Identical file SHA-256 fingerprint.');
