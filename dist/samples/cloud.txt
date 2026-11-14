@@ -1,0 +1,17 @@
+FICTIONAL SAMPLE — DEMO ONLY
+
+INVOICE
+Vendor: Cloudline Software
+Invoice: CL-091
+Issued: 2026-11-12
+Due: 
+Bill to: Oak & Elm Creative (fictional)
+Currency: USD
+
+Team subscription · 1 month × $299.00 = $299.00
+
+Subtotal: 299.00
+Tax: 0.00
+Total: 299.00
+
+Due date omitted intentionally. For this exercise, use 2026-12-12 after confirming with the fictional vendor.

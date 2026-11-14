@@ -1,0 +1,18 @@
+FICTIONAL SAMPLE — DEMO ONLY
+
+INVOICE
+Vendor: Northstar Paper Co.
+Invoice: NS-1042
+Issued: 2026-11-12
+Due: 2026-12-12
+Bill to: Oak & Elm Creative (fictional)
+Currency: USD
+
+Copy paper · 12 boxes × $25.00 = $300.00
+Desk supplies · 6 sets × $30.00 = $180.00
+
+Subtotal: 480.00
+Tax: 38.40
+Total: 518.40
+
+Thank you for your business.

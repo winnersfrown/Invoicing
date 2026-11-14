@@ -1,0 +1,17 @@
+FICTIONAL SAMPLE — DEMO ONLY
+
+INVOICE
+Vendor: Harbor Freight Services
+Invoice: HF-773
+Issued: 2026-11-12
+Due: 2026-12-18
+Bill to: Oak & Elm Creative (fictional)
+Currency: USD
+
+Local deliveries · 10 trips × $85.00 = $850.00
+
+Subtotal: 850.00
+Tax: 68.00
+Total: 968.00
+
+Training scenario: the vendor total is incorrect. Use $918.00 as the corrected total.
