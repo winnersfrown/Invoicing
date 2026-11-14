@@ -1,0 +1,22 @@
+{
+  "id": "C4",
+  "type": "credit_note",
+  "number": "CN-4",
+  "poNumber": "PO-4",
+  "vendor": "Orion Packaging Inc",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-4",
+      "description": "Credit for returned supply carton",
+      "quantity": 1,
+      "unitPrice": 50
+    }
+  ],
+  "tax": 0,
+  "total": 50,
+  "originalInvoiceNumber": "4004",
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

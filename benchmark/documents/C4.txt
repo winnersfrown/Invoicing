@@ -1,0 +1,11 @@
+CREDIT_NOTE
+Vendor: Orion Packaging Inc
+Reference: CN-4
+PO: PO-4
+Date: 2026-11-01
+Due: 2026-12-01
+Line 1: ITEM-4 | Credit for returned supply carton | 1 x $50.00 = $50.00
+Tax: $0.00
+Total: $50.00 USD
+Credits invoice: 4004
+FICTIONAL BENCHMARK DOCUMENT — no payment due.

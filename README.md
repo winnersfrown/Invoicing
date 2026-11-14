@@ -60,3 +60,12 @@ Both sides of unresolved candidate pairs are blocked from inbox approval. Review
 After comparison, select **Track correction & resolution**. The local case preserves the original invoice, PO and comparison; provides an editable correction draft; records manually logged supplier communications; accepts a revised invoice via JSON/PDF/image; and verifies the revision against the original PO. A changed invoice number is allowed when the vendor and PO agree; the reviewer must confirm that it replaces the original.
 
 A revision that still differs stays on hold. A matching revision requires a reviewer checkbox and verification note before resolving the discrepancy. Resolution never approves payment. Export the case JSON for original documents, all revisions, comparison evidence, notes, timestamps and explicit payment status. One case is retained in browser storage; export before replacing it. This local history is not an immutable audit log. No supplier messages are sent automatically. Opportunity C is outside this release.
+
+## Controlled synthetic benchmark
+
+Run `npm run benchmark` from the repository root (Node 18+; no network needed).
+The dataset contains exactly 30 synthetic documents: 20 invoices, 6 POs and 4 credit notes, each with JSON and readable TXT representations. `benchmark/ground-truth.json` holds predefined expected results; `benchmark/generate.mjs` regenerates the fixtures deterministically.
+
+The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Subsequent runs write `LATEST.md` and `latest.json`; preserve the initial baseline. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
+
+This benchmark tests structured detection and explanation facts. It does not measure PDF/image OCR or live upload concurrency. Credit notes currently receive an unsupported-type rejection; credit reconciliation is not implemented. TXT files are human-readable evidence, not inbox-import fixtures.

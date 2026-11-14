@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "seed": "deterministic-no-randomness",
+  "documentIds": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "I07",
+    "I08",
+    "I09",
+    "I10",
+    "I11",
+    "I12",
+    "I13",
+    "I14",
+    "I15",
+    "I16",
+    "I17",
+    "I18",
+    "I19",
+    "I20",
+    "C1",
+    "C2",
+    "C3",
+    "C4"
+  ],
+  "duplicatePairs": [
+    [
+      "I01",
+      "I07"
+    ],
+    [
+      "I02",
+      "I08"
+    ],
+    [
+      "I03",
+      "I09"
+    ],
+    [
+      "I04",
+      "I10"
+    ],
+    [
+      "I05",
+      "I11"
+    ],
+    [
+      "I06",
+      "I12"
+    ]
+  ],
+  "scenarios": [
+    {
+      "invoice": "I01",
+      "po": "P1",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I02",
+      "po": "P2",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I03",
+      "po": "P3",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I04",
+      "po": "P4",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I05",
+      "po": "P5",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I06",
+      "po": "P6",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I07",
+      "po": "P1",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I08",
+      "po": "P2",
+      "expected": "matched",
+      "reason": "Verified supplier alias represents the same synthetic supplier; prefix is harmless."
+    },
+    {
+      "invoice": "I09",
+      "po": "P3",
+      "expected": "invalid_reference",
+      "reason": "Missing invoice reference must block comparison.",
+      "error": [
+        "number"
+      ]
+    },
+    {
+      "invoice": "I10",
+      "po": "P4",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I11",
+      "po": "P5",
+      "expected": "matched",
+      "reason": "Synthetic supplier typo represents the same supplier (master identity ground truth)."
+    },
+    {
+      "invoice": "I12",
+      "po": "P6",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I13",
+      "po": "P1",
+      "expected": "matched",
+      "reason": "All ordered amounts agree."
+    },
+    {
+      "invoice": "I14",
+      "po": "P2",
+      "expected": "discrepancy",
+      "reason": "Ten units overcharged $6 each.",
+      "difference": 6000,
+      "lines": [
+        {
+          "sku": "ITEM-2",
+          "difference": 6000,
+          "invoiceLine": 1,
+          "poLine": 1,
+          "invoicePrice": 56,
+          "poPrice": 50,
+          "invoiceQty": 10,
+          "poQty": 10
+        }
+      ],
+      "draft": [
+        "10 × $56.00",
+        "10 × $50.00",
+        "$60.00"
+      ]
+    },
+    {
+      "invoice": "I15",
+      "po": "P3",
+      "expected": "discrepancy",
+      "reason": "One extra unit billed.",
+      "difference": 5000,
+      "lines": [
+        {
+          "sku": "ITEM-3",
+          "difference": 5000,
+          "invoiceLine": 1,
+          "poLine": 1,
+          "invoicePrice": 50,
+          "poPrice": 50,
+          "invoiceQty": 11,
+          "poQty": 10
+        }
+      ],
+      "draft": [
+        "11 × $50.00",
+        "10 × $50.00",
+        "$50.00"
+      ]
+    },
+    {
+      "invoice": "I16",
+      "po": "P4",
+      "expected": "invalid_total",
+      "reason": "Stated total 580 disagrees with computed 520.",
+      "error": [
+        "line amounts + tax",
+        "document total"
+      ]
+    },
+    {
+      "invoice": "I17",
+      "po": "P5",
+      "expected": "vendor_mismatch",
+      "reason": "Invoice belongs to a genuinely different supplier.",
+      "error": [
+        "Vendor mismatch"
+      ]
+    },
+    {
+      "invoice": "I18",
+      "po": "P6",
+      "expected": "po_mismatch",
+      "reason": "Invoice references a different PO.",
+      "error": [
+        "reference mismatch"
+      ]
+    },
+    {
+      "invoice": "I19",
+      "po": "P1",
+      "expected": "discrepancy",
+      "reason": "Offsetting line errors must not be hidden by a zero net difference.",
+      "difference": 0,
+      "lines": [
+        {
+          "sku": "ITEM-1",
+          "difference": 1000,
+          "invoiceLine": 1,
+          "poLine": 1,
+          "invoicePrice": 51,
+          "poPrice": 50,
+          "invoiceQty": 10,
+          "poQty": 10
+        },
+        {
+          "sku": "SHIP-1",
+          "difference": -1000,
+          "invoiceLine": 2,
+          "poLine": 2,
+          "invoicePrice": 10,
+          "poPrice": 20,
+          "invoiceQty": 1,
+          "poQty": 1
+        }
+      ],
+      "draft": [
+        "$10.00",
+        "-$10.00",
+        "10 × $51.00",
+        "1 × $10.00"
+      ]
+    },
+    {
+      "invoice": "I20",
+      "po": "P2",
+      "expected": "discrepancy",
+      "reason": "Unordered tax charge.",
+      "difference": 1200,
+      "lines": [],
+      "taxDifference": 1200,
+      "draft": [
+        "Tax: invoice $12.00; PO $0.00",
+        "$12.00"
+      ]
+    }
+  ],
+  "credits": [
+    "C1",
+    "C2",
+    "C3",
+    "C4"
+  ],
+  "creditExpectation": "Explicitly reject unsupported credit notes without treating them as payable invoices."
+}

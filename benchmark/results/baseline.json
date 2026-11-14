@@ -1,0 +1,3054 @@
+{
+  "benchmarkVersion": 1,
+  "baselineGitHubCommit": "b84fa0be0ecf22a0977e58b9a91d05cc98bcabaa",
+  "scope": "Structured JSON engine checks only; no OCR, UI upload, live concurrency or customer performance claims.",
+  "groundTruthSha256": "34b9d2b4341fb9b026d1ba318571ce00e9fc5d44ac9be5244e832eb3da5f6180",
+  "engineSha256": {
+    "duplicates-engine.js": "d9570a4c9750fbce7b3b6b07a9d901b07a4eb4ee14a424e8f2e35726b48d57d0",
+    "matching-engine.js": "52dc6859d72e14e2ff2b1749a546748fa6e5c84e026894225255c2ca8ff68f80",
+    "engine.js": "a52fb5efad91d97a13debbde2440165aa677ff939b779e1159c5da32a5438837"
+  },
+  "datasetSha256": "293b365e50b2120c7936ecbf98e14f907d885c0b5c518e311036b2ad3dd2d4dc",
+  "duplicates": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 184,
+    "fn": 2,
+    "accuracy": 0.9894736842105263,
+    "precision": 1,
+    "recall": 0.6666666666666666,
+    "falsePositiveRate": 0,
+    "pairs": [
+      {
+        "pair": [
+          "I01",
+          "I02"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I03"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I07"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Invoice references agree after harmless prefix and formatting normalization.",
+          "Document totals agree.",
+          "Extracted content shares 96% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I01",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I03"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I08"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Invoice references agree after harmless prefix and formatting normalization.",
+          "Document totals agree.",
+          "Extracted content shares 91% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I02",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I09"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 95% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I03",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I10"
+        ],
+        "expectedDuplicate": true,
+        "detected": false,
+        "result": "FN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I11"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Invoice references agree after harmless prefix and formatting normalization.",
+          "Document totals agree.",
+          "Extracted content shares 93% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I05",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I12"
+        ],
+        "expectedDuplicate": true,
+        "detected": false,
+        "result": "FN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I18",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I18",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I19",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      }
+    ]
+  },
+  "comparison": {
+    "exactClassificationCorrect": 18,
+    "total": 20,
+    "issuesDetected": 8,
+    "issueCount": 8,
+    "falseAlarms": 2,
+    "cleanCount": 12,
+    "explanationCorrect": 18,
+    "results": [
+      {
+        "invoice": "I01",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-1",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-1",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I02",
+        "po": "P2",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-2",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-2",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I03",
+        "po": "P3",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-3",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-3",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-3",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-3",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-3",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-3",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I04",
+        "po": "P4",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-4",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-4",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-4",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-4",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-4",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-4",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I05",
+        "po": "P5",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-5",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-5",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-5",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-5",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-5",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-5",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I06",
+        "po": "P6",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-6",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-6",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-6",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-6",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-6",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-6",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I07",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-1",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-1",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I08",
+        "po": "P2",
+        "expected": "matched",
+        "reason": "Verified supplier alias represents the same synthetic supplier; prefix is harmless.",
+        "actual": "vendor_mismatch",
+        "classificationPass": false,
+        "explanationPass": false,
+        "output": {
+          "error": "Vendor mismatch. Select documents from the same vendor."
+        }
+      },
+      {
+        "invoice": "I09",
+        "po": "P3",
+        "expected": "invalid_reference",
+        "reason": "Missing invoice reference must block comparison.",
+        "error": [
+          "number"
+        ],
+        "actual": "invalid_reference",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Document needs a valid number."
+        }
+      },
+      {
+        "invoice": "I10",
+        "po": "P4",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-4",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-4",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-4",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-4",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-4",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-4",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I11",
+        "po": "P5",
+        "expected": "matched",
+        "reason": "Synthetic supplier typo represents the same supplier (master identity ground truth).",
+        "actual": "vendor_mismatch",
+        "classificationPass": false,
+        "explanationPass": false,
+        "output": {
+          "error": "Vendor mismatch. Select documents from the same vendor."
+        }
+      },
+      {
+        "invoice": "I12",
+        "po": "P6",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-6",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-6",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-6",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-6",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-6",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-6",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I13",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "All ordered amounts agree.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-1",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-1",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I14",
+        "po": "P2",
+        "expected": "discrepancy",
+        "reason": "Ten units overcharged $6 each.",
+        "difference": 6000,
+        "lines": [
+          {
+            "sku": "ITEM-2",
+            "difference": 6000,
+            "invoiceLine": 1,
+            "poLine": 1,
+            "invoicePrice": 56,
+            "poPrice": 50,
+            "invoiceQty": 10,
+            "poQty": 10
+          }
+        ],
+        "draft": [
+          "10 × $56.00",
+          "10 × $50.00",
+          "$60.00"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-2",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 56
+                },
+                "po": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 56000,
+                "expectedCents": 50000,
+                "differenceCents": 6000,
+                "changed": true,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-2",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 6000,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 580,
+            "poTotal": 520
+          },
+          "draft": "Subject: Please review invoice 2005 against PO-2\n\nHello Harbor Office LLC,\n\nWhile reviewing invoice 2005, we found differences from purchase order PO-2:\n\nITEM-2 (Standard supply carton for monthly office replenishment): invoice line 1 shows 10 × $56.00; PO line 1 shows 10 × $50.00. Line difference: $60.00.\n\nThe invoice total is $580.00 and the purchase order total is $520.00, a net difference of $60.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I15",
+        "po": "P3",
+        "expected": "discrepancy",
+        "reason": "One extra unit billed.",
+        "difference": 5000,
+        "lines": [
+          {
+            "sku": "ITEM-3",
+            "difference": 5000,
+            "invoiceLine": 1,
+            "poLine": 1,
+            "invoicePrice": 50,
+            "poPrice": 50,
+            "invoiceQty": 11,
+            "poQty": 10
+          }
+        ],
+        "draft": [
+          "11 × $50.00",
+          "10 × $50.00",
+          "$50.00"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-3",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-3",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 11,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-3",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 55000,
+                "expectedCents": 50000,
+                "differenceCents": 5000,
+                "changed": true,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-3",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-3",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-3",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 5000,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 570,
+            "poTotal": 520
+          },
+          "draft": "Subject: Please review invoice 3005 against PO-3\n\nHello Maple Industrial Ltd,\n\nWhile reviewing invoice 3005, we found differences from purchase order PO-3:\n\nITEM-3 (Standard supply carton for monthly office replenishment): invoice line 1 shows 11 × $50.00; PO line 1 shows 10 × $50.00. Line difference: $50.00.\n\nThe invoice total is $570.00 and the purchase order total is $520.00, a net difference of $50.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I16",
+        "po": "P4",
+        "expected": "invalid_total",
+        "reason": "Stated total 580 disagrees with computed 520.",
+        "error": [
+          "line amounts + tax",
+          "document total"
+        ],
+        "actual": "invalid_total",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "4005: line amounts + tax do not equal the document total. Fix the source before comparing."
+        }
+      },
+      {
+        "invoice": "I17",
+        "po": "P5",
+        "expected": "vendor_mismatch",
+        "reason": "Invoice belongs to a genuinely different supplier.",
+        "error": [
+          "Vendor mismatch"
+        ],
+        "actual": "vendor_mismatch",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Vendor mismatch. Select documents from the same vendor."
+        }
+      },
+      {
+        "invoice": "I18",
+        "po": "P6",
+        "expected": "po_mismatch",
+        "reason": "Invoice references a different PO.",
+        "error": [
+          "reference mismatch"
+        ],
+        "actual": "po_mismatch",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Purchase order reference mismatch. Select the PO referenced on the invoice."
+        }
+      },
+      {
+        "invoice": "I19",
+        "po": "P1",
+        "expected": "discrepancy",
+        "reason": "Offsetting line errors must not be hidden by a zero net difference.",
+        "difference": 0,
+        "lines": [
+          {
+            "sku": "ITEM-1",
+            "difference": 1000,
+            "invoiceLine": 1,
+            "poLine": 1,
+            "invoicePrice": 51,
+            "poPrice": 50,
+            "invoiceQty": 10,
+            "poQty": 10
+          },
+          {
+            "sku": "SHIP-1",
+            "difference": -1000,
+            "invoiceLine": 2,
+            "poLine": 2,
+            "invoicePrice": 10,
+            "poPrice": 20,
+            "invoiceQty": 1,
+            "poQty": 1
+          }
+        ],
+        "draft": [
+          "$10.00",
+          "-$10.00",
+          "10 × $51.00",
+          "1 × $10.00"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-1",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 51
+                },
+                "po": {
+                  "sku": "ITEM-1",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 51000,
+                "expectedCents": 50000,
+                "differenceCents": 1000,
+                "changed": true,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-1",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 10
+                },
+                "po": {
+                  "sku": "SHIP-1",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 1000,
+                "expectedCents": 2000,
+                "differenceCents": -1000,
+                "changed": true,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 520,
+            "poTotal": 520
+          },
+          "draft": "Subject: Please review invoice 1006 against PO-1\n\nHello Cedar Supply Co.,\n\nWhile reviewing invoice 1006, we found differences from purchase order PO-1:\n\nITEM-1 (Standard supply carton for monthly office replenishment): invoice line 1 shows 10 × $51.00; PO line 1 shows 10 × $50.00. Line difference: $10.00.\nSHIP-1 (Delivery handling service for scheduled warehouse shipment): invoice line 2 shows 1 × $10.00; PO line 2 shows 1 × $20.00. Line difference: -$10.00.\n\nThe invoice total is $520.00 and the purchase order total is $520.00, a net difference of $0.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I20",
+        "po": "P2",
+        "expected": "discrepancy",
+        "reason": "Unordered tax charge.",
+        "difference": 1200,
+        "lines": [],
+        "taxDifference": 1200,
+        "draft": [
+          "Tax: invoice $12.00; PO $0.00",
+          "$12.00"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "lines": [
+              {
+                "sku": "ITEM-2",
+                "description": "Standard supply carton for monthly office replenishment",
+                "invoice": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "po": {
+                  "sku": "ITEM-2",
+                  "description": "Standard supply carton for monthly office replenishment",
+                  "quantity": 10,
+                  "unitPrice": 50
+                },
+                "invoicedCents": 50000,
+                "expectedCents": 50000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1
+              },
+              {
+                "sku": "SHIP-2",
+                "description": "Delivery handling service for scheduled warehouse shipment",
+                "invoice": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "po": {
+                  "sku": "SHIP-2",
+                  "description": "Delivery handling service for scheduled warehouse shipment",
+                  "quantity": 1,
+                  "unitPrice": 20
+                },
+                "invoicedCents": 2000,
+                "expectedCents": 2000,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2
+              }
+            ],
+            "taxDifferenceCents": 1200,
+            "differenceCents": 1200,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 532,
+            "poTotal": 520
+          },
+          "draft": "Subject: Please review invoice 2006 against PO-2\n\nHello Harbor Office LLC,\n\nWhile reviewing invoice 2006, we found differences from purchase order PO-2:\n\nTax: invoice $12.00; PO $0.00.\n\nThe invoice total is $532.00 and the purchase order total is $520.00, a net difference of $12.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      }
+    ]
+  },
+  "credits": [
+    {
+      "id": "C1",
+      "rejected": true,
+      "creditSpecificExplanation": false,
+      "error": "Choose a invoice JSON document with the correct type.",
+      "supported": false
+    },
+    {
+      "id": "C2",
+      "rejected": true,
+      "creditSpecificExplanation": false,
+      "error": "Choose a invoice JSON document with the correct type.",
+      "supported": false
+    },
+    {
+      "id": "C3",
+      "rejected": true,
+      "creditSpecificExplanation": false,
+      "error": "Choose a invoice JSON document with the correct type.",
+      "supported": false
+    },
+    {
+      "id": "C4",
+      "rejected": true,
+      "creditSpecificExplanation": false,
+      "error": "Choose a invoice JSON document with the correct type.",
+      "supported": false
+    }
+  ],
+  "probes": {
+    "reverseOrderInvariant": true,
+    "mixedQueueStatusInvariant": true
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "I20",
+  "type": "invoice",
+  "number": "2006",
+  "poNumber": "PO-2",
+  "vendor": "Harbor Office LLC",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-2",
+      "description": "Standard supply carton for monthly office replenishment",
+      "quantity": 10,
+      "unitPrice": 50
+    },
+    {
+      "sku": "SHIP-2",
+      "description": "Delivery handling service for scheduled warehouse shipment",
+      "quantity": 1,
+      "unitPrice": 20
+    }
+  ],
+  "tax": 12,
+  "total": 532,
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

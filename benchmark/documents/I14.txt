@@ -1,0 +1,11 @@
+INVOICE
+Vendor: Harbor Office LLC
+Reference: 2005
+PO: PO-2
+Date: 2026-11-01
+Due: 2026-12-01
+Line 1: ITEM-2 | Standard supply carton for monthly office replenishment | 10 x $56.00 = $560.00
+Line 2: SHIP-2 | Delivery handling service for scheduled warehouse shipment | 1 x $20.00 = $20.00
+Tax: $0.00
+Total: $580.00 USD
+FICTIONAL BENCHMARK DOCUMENT — no payment due.

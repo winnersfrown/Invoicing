@@ -1,0 +1,27 @@
+{
+  "id": "P4",
+  "type": "purchase_order",
+  "number": "PO-4",
+  "poNumber": "PO-4",
+  "vendor": "Orion Packaging Inc",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-4",
+      "description": "Standard supply carton for monthly office replenishment",
+      "quantity": 10,
+      "unitPrice": 50
+    },
+    {
+      "sku": "SHIP-4",
+      "description": "Delivery handling service for scheduled warehouse shipment",
+      "quantity": 1,
+      "unitPrice": 20
+    }
+  ],
+  "tax": 0,
+  "total": 520,
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

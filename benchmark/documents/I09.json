@@ -1,0 +1,27 @@
+{
+  "id": "I09",
+  "type": "invoice",
+  "number": "",
+  "poNumber": "PO-3",
+  "vendor": "Maple Industrial Ltd",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-3",
+      "description": "Standard supply carton for monthly office replenishment",
+      "quantity": 10,
+      "unitPrice": 50
+    },
+    {
+      "sku": "SHIP-3",
+      "description": "Delivery handling service for scheduled warehouse shipment",
+      "quantity": 1,
+      "unitPrice": 20
+    }
+  ],
+  "tax": 0,
+  "total": 520,
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

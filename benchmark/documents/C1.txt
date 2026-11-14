@@ -1,0 +1,11 @@
+CREDIT_NOTE
+Vendor: Cedar Supply Co.
+Reference: CN-1
+PO: PO-1
+Date: 2026-11-01
+Due: 2026-12-01
+Line 1: ITEM-1 | Credit for returned supply carton | 1 x $50.00 = $50.00
+Tax: $0.00
+Total: $50.00 USD
+Credits invoice: 1004
+FICTIONAL BENCHMARK DOCUMENT — no payment due.

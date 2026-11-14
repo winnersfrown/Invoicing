@@ -1,0 +1,11 @@
+CREDIT_NOTE
+Vendor: Maple Industrial Ltd
+Reference: CN-3
+PO: PO-3
+Date: 2026-11-01
+Due: 2026-12-01
+Line 1: ITEM-3 | Credit for returned supply carton | 1 x $50.00 = $50.00
+Tax: $0.00
+Total: $50.00 USD
+Credits invoice: 3004
+FICTIONAL BENCHMARK DOCUMENT — no payment due.

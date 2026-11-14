@@ -1,0 +1,22 @@
+{
+  "id": "C3",
+  "type": "credit_note",
+  "number": "CN-3",
+  "poNumber": "PO-3",
+  "vendor": "Maple Industrial Ltd",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-3",
+      "description": "Credit for returned supply carton",
+      "quantity": 1,
+      "unitPrice": 50
+    }
+  ],
+  "tax": 0,
+  "total": 50,
+  "originalInvoiceNumber": "3004",
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "C2",
+  "type": "credit_note",
+  "number": "CN-2",
+  "poNumber": "PO-2",
+  "vendor": "Harbor Office LLC",
+  "currency": "USD",
+  "date": "2026-11-01",
+  "due": "2026-12-01",
+  "lines": [
+    {
+      "sku": "ITEM-2",
+      "description": "Credit for returned supply carton",
+      "quantity": 1,
+      "unitPrice": 50
+    }
+  ],
+  "tax": 0,
+  "total": 50,
+  "originalInvoiceNumber": "2004",
+  "notes": "FICTIONAL BENCHMARK DOCUMENT — no payment due."
+}

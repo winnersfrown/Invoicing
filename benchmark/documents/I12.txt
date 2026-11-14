@@ -1,0 +1,11 @@
+INVOICE
+Vendor: Willow Studio LLC
+Reference: 6004-RESEND
+PO: PO-6
+Date: 2026-11-01
+Due: 2026-12-01
+Line 1: ITEM-6 | Standard supply carton for monthly office replenishment | 10 x $50.00 = $500.00
+Line 2: SHIP-6 | Delivery handling service for scheduled warehouse shipment | 1 x $20.00 = $20.00
+Tax: $0.00
+Total: $520.00 USD
+FICTIONAL BENCHMARK DOCUMENT — no payment due.
