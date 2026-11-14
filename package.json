@@ -6,7 +6,8 @@
     "test": "node --test tests/*.test.js",
     "benchmark": "node benchmark/run.mjs",
     "benchmark:generate": "node benchmark/generate.mjs",
-    "benchmark:holdout": "node benchmark/run.mjs benchmark/holdout"
+    "benchmark:holdout": "node benchmark/run.mjs benchmark/holdout",
+    "benchmark:reissue": "node benchmark/reissue-regression/run.mjs"
   },
   "dependencies": {
     "pdfjs-dist": "^4.10.38",

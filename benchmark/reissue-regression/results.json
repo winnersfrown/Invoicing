@@ -1,0 +1,2366 @@
+{
+  "scope": "Regression on two previously seen datasets. Not a fresh or independently blinded accuracy estimate.",
+  "engineHash": "a06f780f77f7769f739f092f55979e665083a08efd2ee24bf200b79c185952b6",
+  "supplierHash": "69e10890fdfea95dc4a63b2e0032a307e0622350c7f630ccaa2d28732b9973fe",
+  "results": [
+    {
+      "dataset": "benchmark",
+      "tp": 6,
+      "fp": 0,
+      "tn": 184,
+      "fn": 0,
+      "groundTruthHash": "34b9d2b4341fb9b026d1ba318571ce00e9fc5d44ac9be5244e832eb3da5f6180",
+      "inputHash": "9b352cc779dac1d64183b0b107d92b2a351a4fa303cdc6b7c3416ed5a67a156a",
+      "decisions": [
+        {
+          "key": "I01::I02",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I03",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I07",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Invoice references agree after harmless prefix and formatting normalization.",
+            "Document totals agree.",
+            "Extracted content shares 96% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I01::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I03",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I08",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Invoice references agree after harmless prefix and formatting normalization.",
+            "Document totals agree.",
+            "Extracted content shares 91% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I02::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I09",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 95% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I03::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I10",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 93% of unique words (a similarity signal, not a probability).",
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+          ]
+        },
+        {
+          "key": "I04::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I11",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Invoice references agree after harmless prefix and formatting normalization.",
+            "Document totals agree.",
+            "Extracted content shares 93% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I05::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I12",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+          ]
+        },
+        {
+          "key": "I06::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I18::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I18::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I19::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "dataset": "benchmark/holdout",
+      "tp": 6,
+      "fp": 0,
+      "tn": 184,
+      "fn": 0,
+      "groundTruthHash": "06f1d4661f1b224f4c9df7e36653ef8644e687bbf93b722ab5c358ddd03470cd",
+      "inputHash": "66e79c651ddf1ff70a8f89a7705e9a493c078c84c57246bab3bb661653288612",
+      "decisions": [
+        {
+          "key": "I01::I02",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I03",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I07",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+          ]
+        },
+        {
+          "key": "I01::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I01::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I03",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I08",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 94% of unique words (a similarity signal, not a probability).",
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+          ]
+        },
+        {
+          "key": "I02::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I02::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I04",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I09",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 95% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I03::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I03::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I05",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I10",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Invoice references agree after harmless prefix and formatting normalization.",
+            "Document totals agree.",
+            "Extracted content shares 92% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I04::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I04::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I06",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I11",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Invoice references agree after harmless prefix and formatting normalization.",
+            "Document totals agree.",
+            "Extracted content shares 97% of unique words (a similarity signal, not a probability)."
+          ]
+        },
+        {
+          "key": "I05::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I05::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I07",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I12",
+          "expected": true,
+          "detected": true,
+          "evidence": [
+            "Supplier names agree after punctuation and company-suffix normalization.",
+            "Document totals agree.",
+            "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+          ]
+        },
+        {
+          "key": "I06::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I06::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I08",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I07::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I09",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I08::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I10",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I09::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I11",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I10::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I12",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I11::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I13",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I12::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I14",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I13::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I15",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I14::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I16",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I15::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I17",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I16::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I18",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I17::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I18::I19",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I18::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        },
+        {
+          "key": "I19::I20",
+          "expected": false,
+          "detected": false,
+          "evidence": []
+        }
+      ]
+    }
+  ]
+}

@@ -77,3 +77,9 @@ Supported copy/resend suffixes and common O/0 or I/L/1 OCR confusions now trigge
 PO matching normalizes company suffixes and punctuation. One-character supplier spelling differences require explicit identity confirmation and a note in the UI before comparison can proceed; the decision is scoped to the supplier names and document references and exported with the evidence. Credit-note JSON receives a clear unsupported message; credit processing is still not implemented.
 
 Run `npm run benchmark:holdout` for the new 30-document evaluation. Production JavaScript hashes were frozen before generating it; the runner refuses changed engine hashes. Its author also wrote the implementation, so it is fresh synthetic validation rather than an independently blinded test. Results are in `benchmark/holdout/results/LATEST.md`. The original frozen baseline is unchanged.
+
+### Reissued-reference regression
+
+The previously missed `REISSUED-8600` / `8600` pair is now detected for human review. Standalone reissue/resent/copy labels can appear at either reference edge; matching supplier, amount and strong content evidence are still required. Arbitrary reference changes are not universally detected.
+
+Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The old holdout remains frozen and its original command intentionally rejects changed engine hashes. This rerun is regression testing, not fresh holdout validation.
