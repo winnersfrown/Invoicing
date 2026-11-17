@@ -8,11 +8,23 @@ const referenceVariant=s=>{let value=String(s||'').trim();for(let n=0;n<4;n++){c
 const words=s=>new Set(String(s||'').toLowerCase().match(/[a-z0-9]+/g)||[]);
 export function similarity(a,b){const x=words(a),y=words(b);if(Math.min(x.size,y.size)<12)return 0;const intersection=[...x].filter(w=>y.has(w)).length;return intersection/(x.size+y.size-intersection);}
 export function pairKey(a,b){return [a.id,b.id].sort().join('::');}
-export function pairStamp(a,b){return JSON.stringify([a,b].sort((x,y)=>x.id.localeCompare(y.id)).map(d=>[d.id,effectiveFields(d),d.source,d.fingerprint,d.documentType]));}
+const documentFor=d=>d.workflow?.state==='resolved'?d.workflow.case?.revisions.at(-1)?.document:d.invoiceDocument;
+const validDate=value=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(value||''))return '';const n=Date.parse(value);return Number.isFinite(n)&&new Date(n).toISOString().slice(0,10)===value?value:'';};
+export function lineSignature(doc){const lines=documentFor(doc)?.lines;if(!lines?.length||!lines.every(l=>l.sku&&l.description&&Number.isFinite(l.quantity)&&Number.isFinite(l.unitPrice)))return '';return JSON.stringify(lines.map(l=>[normalizeReference(l.sku),String(l.description).toLowerCase().replace(/[^a-z0-9]/g,''),l.quantity,Math.round(l.unitPrice*100),l.amount==null?null:Math.round(l.amount*100)]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));}
+const fingerprintFor=d=>d.workflow?.state==='resolved'?(documentFor(d)?.fingerprint||''):d.fingerprint;
+const metadata=d=>{const f=effectiveFields(d),s=documentFor(d);return {date:validDate(s?.date||f.date),currency:s?.currency||f.currency||'USD',supplierId:String(s?.supplierId||f.supplierId||'').toLowerCase().replace(/[^a-z0-9]/g,''),lines:lineSignature(d)};};
+export function pairStamp(a,b){return JSON.stringify([a,b].sort((x,y)=>x.id.localeCompare(y.id)).map(d=>[d.id,effectiveFields(d),d.source,d.fingerprint,d.documentType,metadata(d)]));}
 export function comparePair(a,b){
  const x=effectiveFields(a),y=effectiveFields(b);const supplier=normalizeVendor(x.vendor),ref=normalizeReference(x.number),sameSupplier=!!supplier&&supplier===normalizeVendor(y.vendor),sameRef=!!ref&&ref===normalizeReference(y.number);
  const amount=typeof x.total==='number'&&typeof y.total==='number'&&Number.isFinite(x.total)&&Number.isFinite(y.total)&&Math.round(x.total*100)===Math.round(y.total*100);const content=similarity(a.source,b.source);const evidence=[];
- const identicalFile=!!a.fingerprint&&a.fingerprint===b.fingerprint;
+ const mx=metadata(a),my=metadata(b),sameDate=!!mx.date&&mx.date===my.date,dateConflict=!!mx.date&&!!my.date&&mx.date!==my.date,sameLines=!!mx.lines&&mx.lines===my.lines,sameIdentity=!!mx.supplierId&&mx.supplierId===my.supplierId,identityConflict=!!mx.supplierId&&!!my.supplierId&&mx.supplierId!==my.supplierId,currencyConflict=mx.currency!==my.currency;
+ if(sameDate)evidence.push('Invoice dates agree (due dates are not used as issue dates).');
+ if(dateConflict)evidence.push('Invoice dates differ; this may be a legitimate recurring purchase.');
+ if(sameLines)evidence.push('Line-item signatures agree: SKU, description, quantities, prices and printed amounts.');
+ if(sameIdentity)evidence.push('Explicit supplier identifiers agree.');
+ if(identityConflict)evidence.push('Supplier identifiers conflict; normalized names alone cannot establish identity.');
+ if(currencyConflict)evidence.push('Document currencies differ.');
+ const identicalFile=!!fingerprintFor(a)&&fingerprintFor(a)===fingerprintFor(b);
  if(identicalFile)evidence.push('Identical file SHA-256 fingerprint.');
  if(sameSupplier)evidence.push('Supplier names agree after punctuation and company-suffix normalization.');
  if(sameRef)evidence.push('Invoice references agree after harmless prefix and formatting normalization.');
@@ -20,9 +32,9 @@ export function comparePair(a,b){
  if(content>=.8)evidence.push(`Extracted content shares ${Math.round(content*100)}% of unique words (a similarity signal, not a probability).`);
  // Different nonempty references need stronger evidence than routine repeated purchases.
  const missingRef=!ref||!normalizeReference(y.number);
- const variant=!!ref&&ref!==normalizeReference(y.number)&&referenceVariant(x.number).length>=4&&referenceVariant(x.number)===referenceVariant(y.number)&&sameSupplier&&amount&&content>=.9;
- if(variant)evidence.push('References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review.');
- const candidate=variant||identicalFile||(sameSupplier&&sameRef)||(amount&&sameSupplier&&missingRef&&content>=.8)||(amount&&sameRef&&content>=.9);
+ const variant=!!ref&&ref!==normalizeReference(y.number)&&referenceVariant(x.number).length>=4&&referenceVariant(x.number)===referenceVariant(y.number)&&(sameSupplier||sameIdentity)&&!identityConflict&&!dateConflict&&!currencyConflict&&amount&&(content>=.9||(sameDate&&sameLines));
+ if(variant)evidence.push('References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review.');
+ const candidate=identicalFile||(!currencyConflict&&!identityConflict&&(variant||((sameSupplier||sameIdentity)&&sameRef)||(amount&&(sameSupplier||sameIdentity)&&missingRef&&!dateConflict&&(content>=.8||(sameDate&&sameLines)))||(amount&&sameRef&&content>=.9)));
  return {candidate,evidence,content,level:identicalFile?'Exact file':sameSupplier&&sameRef?'Strong field match':'Possible content match',key:pairKey(a,b),stamp:pairStamp(a,b),a:a.id,b:b.id};
 }
 export function scanDuplicates(docs){const pairs=[];for(let i=0;i<docs.length;i++)for(let j=i+1;j<docs.length;j++){const a=docs[i],b=docs[j];if(a.status==='rejected'||b.status==='rejected')continue;const p=comparePair(a,b);if(!p.candidate)continue;const decision=a.duplicateDecisions?.[p.key];if(decision?.stamp===p.stamp&&decision.action==='distinct')continue;pairs.push(p);}return pairs;}

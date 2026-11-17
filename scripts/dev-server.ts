@@ -1,6 +1,6 @@
 // Local development server: dist/ as static files, the real router at /api, PGlite with the real migrations,
 // in-memory storage, three fake users, the spec scenario seeded, jobs run in-process. Never for production.
-//   npm run dev            (PORT, default 8787; OPENAI_API_KEY set = real OpenAI model, else the scripted one)
+//   npm run dev (PORT defaults to 8787; scripted unless AGENT_MODE=openai explicitly opts in)
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage } from 'node:http';
@@ -29,7 +29,7 @@ export async function startDevServer(o: { port?: number; env?: Record<string, st
 
   const t = await createTestDb();
   const db = pgliteDb(t.db);
-  const model = env.OPENAI_API_KEY ? openaiModel(env.OPENAI_MODEL || FALLBACK_OPENAI_MODEL, env.OPENAI_API_KEY) : scriptedModel();
+  const model = env.AGENT_MODE === 'openai' && env.OPENAI_API_KEY ? openaiModel(env.OPENAI_MODEL || FALLBACK_OPENAI_MODEL, env.OPENAI_API_KEY) : scriptedModel();
   registerJobHandler('investigate', investigateHandler({ model }));
 
   const [org] = await db.query<{ id: string }>(`insert into organizations (name) values ('Dev Org') returning id`);
@@ -105,7 +105,8 @@ function readBody(req: IncomingMessage): Promise<Buffer> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const s = await startDevServer();
+  const portFlag=process.argv.indexOf('--port');
+  const s = await startDevServer({port:portFlag>=0?Number(process.argv[portFlag+1]):undefined});
   console.log(`Rekono dev server on ${s.url} (model: ${s.model}). Dev users: ${s.users.map((u) => `${u.role}=${u.token}`).join(', ')}`);
   const stop = () => { s.close().finally(() => process.exit(0)); };
   process.on('SIGINT', stop);

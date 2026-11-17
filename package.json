@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "dev": "tsx scripts/dev-server.ts",
+    "dev": "node --import tsx scripts/dev-server.ts",
     "benchmark": "node benchmark/run.mjs",
     "benchmark:generate": "node benchmark/generate.mjs",
     "benchmark:holdout": "node benchmark/run.mjs benchmark/holdout",

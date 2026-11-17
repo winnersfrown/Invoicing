@@ -81,6 +81,7 @@ export async function createPurchaseOrder(db: Db, ctx: Ctx, req: z.infer<typeof 
     validateDocument(engineDoc('purchase_order', { number: req.purchase_order_number, vendor: req.supplier_name, poNumber: req.purchase_order_number,
       currency: req.currency, lines: lines.map((l) => ({ sku: l.sku, description: l.description, qty_milli: l.qty, unit_price: l.unit })), tax, total }), 'purchase_order');
   } catch (e: any) { fail('invalid_request', String(e?.message)); }
+  if(lines.reduce((sum,l)=>sum+l.total,0)+tax!==total)fail('invalid_request','Purchase-order line amounts + tax must equal total.');
   const bad = lines.findIndex((l) => l.total !== lineCents(l.qty, l.unit));
   if (bad >= 0) fail('invalid_request', `Line ${bad + 1}: line_total does not equal quantity × unit_price`);
   const normalized = normalizeVendor(req.supplier_name);

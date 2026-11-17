@@ -36,7 +36,7 @@ function lines(d) {
     if (!(q > 0 && q <= 100000)) throw Error(`Line ${i + 1}: quantity must be between 0 and 100,000.`);
     const unit = toMoneyString(l.unitPrice);
     if (unit == null) throw Error(`Line ${i + 1}: unit price is missing.`);
-    return {sku: text(l.sku), description: String(l.description ?? '').trim().slice(0, 500), quantity: q, unit_price: unit, line_total: null, tax_amount: null};
+    return {sku: text(l.sku), description: String(l.description ?? '').trim().slice(0, 500), quantity: q, unit_price: unit, line_total: toMoneyString(l.amount), tax_amount: toMoneyString(l.taxAmount)};
   });
 }
 // Contract field -> how to read it from the app's document shape. These are the fields the extractor looks for.
@@ -57,17 +57,20 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
     const value = get(final);
     out[field] = value;
     if (value == null) missing.push(field);
-    else if (JSON.stringify(safe(get, read)) === JSON.stringify(value)) field_confidence[field] = 1;
+    else if (JSON.stringify(safe(get, read)) === JSON.stringify(value) && !hasExtractionRisk(read, field)) field_confidence[field] = 1;
     else uncertain.push(field);
   }
   const present = Object.keys(FIELDS).length - missing.length;
   return {
-    supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.issued), due_date: isoDate(final?.due),
+    supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.date ?? final?.issued), due_date: isoDate(final?.due),
     po_reference: out.po_reference, currency: out.currency, subtotal: toMoneyString(final?.subtotal), tax_amount: out.tax_amount, total_amount: out.total_amount,
     lines: out.lines ?? [], source_text: sourceText == null ? null : String(sourceText).slice(0, 200000),
-    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, source_refs: {}},
+    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, source_refs: sourceReferences(read), support_labels: read?.extraction?.fields ?? {}, confidence_meaning: 'Heuristic field agreement, not a calibrated probability.'},
   };
 }
+const FIELD_KEYS={supplier_name:'vendor',invoice_number:'number',po_reference:'poNumber',currency:'currency',tax_amount:'tax',total_amount:'total'};
+function hasExtractionRisk(d, field){const entries=Object.entries(d?.extraction?.fields||{}).filter(([k])=>field==='lines'?k.startsWith('lines.'):k===FIELD_KEYS[field]);return entries.some(([,v])=>v.support!=='supported');}
+function sourceReferences(d){return Object.fromEntries(Object.entries(d?.extraction?.fields||{}).flatMap(([key,v])=>{const e=v.evidence?.[0];return e?[[key,{page:e.page,excerpt:e.text.slice(0,500)}]]:[];}));}
 function safe(get, d) { try { return get(d); } catch { return undefined; } }
 
 /** CreatePurchaseOrderRequest from a verified purchase order document. Every field is required. */
@@ -110,14 +113,15 @@ async function readInvoiceFile(file, progress) {
     if (d?.type !== 'invoice') throw Error('The JSON file must describe an invoice ("type": "invoice").');
     return {method: 'json', read: d, final: d, sourceText: source};
   }
-  let source, method = 'labeled_text';
+  let source, layout=[], method = 'labeled_text';
   if (/\.txt$/i.test(file.name)) source = await file.text();
   else {
     let ocr = false;
-    source = await extractFile(file, m => { if (/OCR|image text/i.test(m)) ocr = true; progress(m); });
+    const extracted = await extractFile(file, m => { if (/OCR|image text/i.test(m)) ocr = true; progress(m); }, {detailed:true});
+    source=extracted.text; layout=extracted.layout;
     method = /\.pdf$/i.test(file.name) && !ocr ? 'pdf_text' : 'ocr';
   }
-  const raw = parseExtractedText(source, 'invoice');
+  const raw = parseExtractedText(source, 'invoice',layout);
   const read = {...raw, currency: /^Currency[ \t]*:/mi.test(source) ? raw.currency : ''}; // the parser defaults USD; a default is not a reading
   const final = await reviewExisting(structuredClone(raw), source, /\.txt$/i.test(file.name) ? null : file);
   return final && {method, read, final, sourceText: source};

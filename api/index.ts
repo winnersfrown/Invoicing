@@ -2,7 +2,7 @@
 import { waitUntil } from '@vercel/functions';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { investigateHandler } from '../server/agent/investigate';
-import { FALLBACK_OPENAI_MODEL, openaiModel } from '../server/agent/model';
+import { FALLBACK_OPENAI_MODEL, openaiModel, scriptedModel } from '../server/agent/model';
 import { pgDb } from '../server/db/index';
 import { createRouter } from '../server/http/router';
 import { supabaseVerifier } from '../server/services/auth';
@@ -20,8 +20,9 @@ function router() {
   };
   const url = env('SUPABASE_URL'), serviceKey = env('SUPABASE_SERVICE_ROLE_KEY');
   // One id for the request and the run, so the stored model_identifier and the reuse key always agree.
-  const modelId = process.env.OPENAI_MODEL || FALLBACK_OPENAI_MODEL;
-  registerJobHandler('investigate', investigateHandler({ model: openaiModel(modelId, process.env.OPENAI_API_KEY) }));
+  const model = process.env.AGENT_MODE === 'openai' ? openaiModel(process.env.OPENAI_MODEL || FALLBACK_OPENAI_MODEL, process.env.OPENAI_API_KEY) : scriptedModel();
+  const modelId = model.id;
+  registerJobHandler('investigate', investigateHandler({ model }));
   const anonKey = process.env.SUPABASE_ANON_KEY;
   route = createRouter({
     db: pgDb(env('DATABASE_URL')),

@@ -58,3 +58,8 @@ describe('dev server', () => {
       verified_financial_impact: { currency: 'USD', amount: '60.00', source: 'deterministic_engine' } });
   });
 });
+
+it('defaults to scripted mode even when an API key is present',async()=>{
+ const s=await startDevServer({port:0,env:{OPENAI_API_KEY:'test-placeholder-never-call'},log:()=>{}});
+ try{expect(s.model).toBe('scripted-investigator');}finally{await s.close();}
+});

@@ -59,11 +59,11 @@ test('fields the reviewer had to enter or correct are reported as uncertain, not
   const final = {...read, vendor: 'Northstar Paper Co.', currency: 'USD', total: 540};
   const x = extractedInvoice({method: 'ocr', read, final, sourceText: text});
   assert.equal(x.supplier_name, 'Northstar Paper Co.');
-  assert.deepEqual(x.extraction.uncertain, ['supplier_name', 'currency', 'total_amount']);
+  assert.deepEqual(x.extraction.uncertain, ['supplier_name', 'currency', 'total_amount', 'lines']);
   assert.deepEqual(x.extraction.missing, []);
   assert.equal(x.extraction.field_confidence.invoice_number, 1);
   assert.equal(x.extraction.field_confidence.supplier_name, undefined);
-  assert.equal(x.extraction.confidence, 0.57); // 4 of 7 read and confirmed
+  assert.equal(x.extraction.confidence, 0.43); // 4 of 7 read and confirmed
   assert.equal(x.extraction.method, 'ocr');
   assert.equal(x.lines[0].unit_price, '45.00');
 });
@@ -162,4 +162,10 @@ test('failed shows the error and offers retry; an unknown status is surfaced as 
   const noRetry = investigationView(dto('failed', {retry_available: false, error: null}));
   assert.equal(noRetry.canRetry, false);
   assert.ok(noRetry.message.length > 0);
+});
+
+test('preserves printed contradictions, dates and source review labels in upload',()=>{
+ const raw=parseExtractedText('Vendor: Example\nInvoice: X\nPO reference: P\nCurrency: USD\nInvoice date: 2026-11-16\nA Boxes 2 50.00 90.00\nTax: 0.00\nTotal: 100.00','invoice');
+ const x=extractedInvoice({method:'pdf_text',read:raw,final:raw});
+ assert.equal(x.lines[0].line_total,'90.00');assert.equal(x.invoice_date,'2026-11-16');assert.ok(x.extraction.uncertain.includes('lines'));assert.match(x.extraction.source_refs['lines.0.amount'].excerpt,/90.00/);assert.match(x.extraction.confidence_meaning,/not a calibrated probability/);
 });

@@ -3,8 +3,10 @@ import type { EvidenceItem } from '../contracts/index';
 import { loadInvoice, toCents, type Db, type Invoice } from '../db/index';
 import { notFound } from './util';
 
-type DupRow = { id: string; status: string; supplier_name_raw: string | null; invoice_number: string | null; total: number | null; source_text: string | null; document_sha256: string };
-const engineDoc = (r: DupRow) => ({ id: r.id, status: r.status, fields: { vendor: r.supplier_name_raw, number: r.invoice_number, total: r.total == null ? null : r.total / 100 }, source: r.source_text, fingerprint: r.document_sha256 });
+export const duplicateEngineDoc = (inv: Invoice) => ({id:inv.id,status:inv.status,
+ fields:{vendor:inv.supplier_name_raw,number:inv.invoice_number,total:inv.total_amount==null?null:inv.total_amount/100,date:inv.invoice_date,currency:inv.currency,supplierId:inv.supplier_id},
+ invoiceDocument:{date:inv.invoice_date,currency:inv.currency,supplierId:inv.supplier_id,lines:inv.lines.map(l=>({sku:l.sku,description:l.description,quantity:l.qty_milli/1000,unitPrice:l.unit_price/100,amount:l.line_total/100}))},
+ source:inv.source_text,fingerprint:inv.document_sha256});
 
 /**
  * Engine duplicate candidates for one invoice against the rest of its organisation. Superseded and rejected
@@ -13,12 +15,13 @@ const engineDoc = (r: DupRow) => ({ id: r.id, status: r.status, fields: { vendor
  */
 export async function duplicateCandidates(db: Db, orgId: string, inv: Invoice) {
   const others = await db.query(
-    `select id, status, supplier_name_raw, invoice_number, total_amount::text as total_amount, source_text, document_sha256 from invoices
+    `select id from invoices
      where organization_id = $1 and id <> $2 and status not in ('superseded', 'rejected')
        and id is distinct from $3::uuid and supersedes_invoice_id is distinct from $2::uuid`, [orgId, inv.id, inv.supersedes_invoice_id]);
-  const me = engineDoc({ ...inv, total: inv.total_amount });
-  return others.map((o) => {
-    const { stamp: _stamp, ...pair } = comparePair(me, engineDoc({ ...(o as DupRow), total: toCents(o.total_amount) }));
+  const me = duplicateEngineDoc(inv);
+  const loaded=await Promise.all(others.map(o=>loadInvoice(db,orgId,o.id)));
+  return loaded.filter((o): o is Invoice=>!!o).map((o) => {
+    const { stamp: _stamp, ...pair } = comparePair(me, duplicateEngineDoc(o));
     return { other: { id: o.id as string, invoice_number: o.invoice_number as string | null }, pair };
   }).filter((x) => x.pair.candidate);
 }

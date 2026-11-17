@@ -93,3 +93,9 @@ describe('moneyAmounts', () => {
     expect(moneyAmounts(`12 boxes on 2026-11-01, line 3, id ${randomUUID()}`)).toEqual([]);
   });
 });
+
+it('withholds inverted price comparisons and never recommends completing an open discrepancy',()=>{
+ const bad=verifyOutput(good({summary:'Invoice is cheaper than the PO.',findings:[{claim:'The invoice price $45.00 is lower than the PO price $40.00.',evidence_ids:[`invoice_line:${ids.il}`,`po_line:${ids.pl}`]}],recommended_action:'approve_review_completion'}),ctx());
+ expect(bad.status).toBe('insufficient_evidence');expect(bad.findings).toHaveLength(0);
+ expect(verifyOutput(good({recommended_action:'approve_review_completion'}),ctx()).recommended_action).toBe('escalate_to_reviewer');
+});

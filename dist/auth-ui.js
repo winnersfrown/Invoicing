@@ -32,7 +32,7 @@ function enter(next) {
   document.querySelector('[data-page=invoices]')?.click();
   inbox?.stop();
   inbox = createServerInbox({api, root: document.querySelector('#invoices-page'), user});
-  renderArea(`Signed in. Shared workspace, ${ROLE[user.role] ?? user.role} access.`);
+  renderArea(`Signed in. Shared workspace, ${ROLE[user.role] ?? user.role} access.${config.mode==='dev'?' Scripted demo — no OpenAI calls.':''}`);
 }
 
 async function signOut(message = 'Signed out. Back to the local demo.') {

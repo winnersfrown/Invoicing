@@ -54,6 +54,16 @@ export type VerifyContext = {
 const WITHHELD_SUMMARY = 'The model summary was withheld because it stated an amount that is not in the evidence. See the findings and the engine figures.';
 const DROPPED_NOTE = 'Some model statements were removed because they cited evidence not returned in this investigation or stated amounts not in the evidence.';
 
+// Narrow deterministic direction checks; broader natural-language entailment is not claimed.
+export function contradictsDirection(text: string, expected: string | null, observed: string | null): boolean {
+ const numeric=(v:string|null)=>v!=null&&/^-?\d+(?:\.\d+)?$/.test(v)?Number(v):null;
+ const e=numeric(expected),o=numeric(observed);if(e==null||o==null||e===o)return false;
+ const lower=/\b(lower than|below|less than|cheaper than)\b/i, higher=/\b(higher than|exceeds?|above|greater than|more than)\b/i;
+ // Only invoice -> purchase-order assertions: reverse-direction assertions require manual review.
+ if(!/invoice/i.test(text)||!/(?:PO\b|purchase order)/i.test(text))return false;
+ const invoiceFirst=text.search(/invoice/i)<text.search(/\bPO\b|purchase order/i);
+ return invoiceFirst ? (o>e?lower.test(text):higher.test(text)) : (o>e?higher.test(text):lower.test(text));
+}
 export function verifyOutput(out: AgentOutput, ctx: VerifyContext): InvestigationResult {
   const d = ctx.discrepancy;
   const engine = [d.difference_amount, d.expected_value, d.observed_value].filter((x): x is string => !!x);
@@ -63,10 +73,11 @@ export function verifyOutput(out: AgentOutput, ctx: VerifyContext): Investigatio
 
   // A finding survives only if every id it cites came from a tool in this run and every amount it states is in those items or the engine's figures.
   const findings = keep(out.findings, (f) => f.evidence_ids.every((id) => ctx.evidence.has(id))
+    && !contradictsDirection(f.claim,d.expected_value,d.observed_value)
     && !unsupportedAmounts(f.claim, [...f.evidence_ids.map((id) => ctx.evidence.get(id)!.value), ...engine]).length);
   const possible_causes = keep(out.hypotheses, (h) => !unsupportedAmounts(h, everything).length);
   const missing = keep(out.missing_information, (m) => !unsupportedAmounts(m, everything).length);
-  const summaryOk = !unsupportedAmounts(out.summary, everything).length;
+  const summaryOk = !unsupportedAmounts(out.summary, everything).length && !contradictsDirection(out.summary,d.expected_value,d.observed_value);
   if (!summaryOk) dropped++;
 
   const insufficient = dropped > 0 || !findings.length || out.status === 'insufficient_evidence' || out.recommended_action === 'insufficient_evidence';
@@ -81,7 +92,7 @@ export function verifyOutput(out: AgentOutput, ctx: VerifyContext): Investigatio
     missing_information: dropped ? [...missing, DROPPED_NOTE] : missing,
     evidence: [...new Set(findings.flatMap((f) => f.evidence_ids))].map((id) => ctx.evidence.get(id)!),
     verified_financial_impact: amount && currency ? { currency, amount, source: 'deterministic_engine' } : null,
-    recommended_action: insufficient ? 'insufficient_evidence' : out.recommended_action,
+    recommended_action: insufficient ? 'insufficient_evidence' : out.recommended_action==='approve_review_completion'?'escalate_to_reviewer':out.recommended_action,
     confidence: dropped ? 'low' : out.confidence,
     requires_human_approval: true,
   };

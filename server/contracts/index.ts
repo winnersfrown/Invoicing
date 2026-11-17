@@ -91,6 +91,8 @@ export const ExtractedInvoice = z.object({
   source_text: z.string().max(200_000).nullable(),
   extraction: z.object({
     method: z.enum(['json', 'labeled_text', 'pdf_text', 'ocr', 'manual']),
+    support_labels: z.record(z.string(),z.unknown()).optional(),
+    confidence_meaning: z.string().optional(),
     confidence: z.number().min(0).max(1).nullable(),
     field_confidence: z.record(z.string(), z.number().min(0).max(1)).default({}),
     missing: z.array(z.string()).default([]),
