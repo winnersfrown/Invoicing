@@ -21,7 +21,7 @@ beforeAll(async () => {
 });
 afterAll(async () => env.close());
 
-const userRoutes = Object.entries(ROUTES).filter(([, role]) => role !== 'system' && role !== 'public').map(([k]) => k);
+const userRoutes = Object.entries(ROUTES).filter(([, role]) => ['admin', 'reviewer', 'viewer'].includes(role)).map(([k]) => k);
 const urlFor = (route: string) => {
   const [method, path] = route.split(' ');
   const id = path.startsWith('/api/investigations') ? ids.investigation : path.startsWith('/api/discrepancies') ? ids.discrepancy : ids.invoice;

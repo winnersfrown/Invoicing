@@ -1,11 +1,11 @@
 // Reads: DTOs for the GET routes and { data, evidence } results for the agent's tools. Every query is scoped to orgId;
 // a row in another organisation is reported exactly like a missing one.
-import type { EvidenceItem } from '../contracts/index';
-import { INVOICE_COLUMNS, invoiceFromRow, iso, isoOrNull, loadInvoice, loadPurchaseOrder, toCents, toMoney, type Db, type Invoice, type Line, type PurchaseOrder } from '../db/index';
-import { invoiceEvidence, lineText, poEvidence } from './matching';
-import type { Storage } from './storage';
-import { notFound } from './util';
-import { OPEN_STATUSES_SQL } from './validation';
+import type { EvidenceItem } from '../contracts/index.ts';
+import { INVOICE_COLUMNS, invoiceFromRow, iso, isoOrNull, loadInvoice, loadPurchaseOrder, toCents, toMoney, type Db, type Invoice, type Line, type PurchaseOrder } from '../db/index.ts';
+import { invoiceEvidence, lineText, poEvidence } from './matching.ts';
+import type { Storage } from './storage.ts';
+import { notFound } from './util.ts';
+import { OPEN_STATUSES_SQL } from './validation.ts';
 
 const clip = (s: string, n = 2000) => s.slice(0, n);
 
@@ -53,7 +53,11 @@ export async function listInvoices(db: Db, orgId: string) {
 export async function getInvoiceDto(db: Db, orgId: string, id: string, documentUrl?: (path: string) => Promise<string>) {
   const inv = (await loadInvoice(db, orgId, id)) ?? notFound();
   const [extras] = await db.query<{ open_discrepancy_count: number; investigation_status: string | null }>(`select ${EXTRAS} from invoices i where i.id = $1`, [id]);
-  return invoiceDto(inv, extras, { lines: true, document_url: documentUrl ? await documentUrl(inv.document_storage_path) : undefined });
+  // Reviewers can edit their own rows through the Data API. Sign only this invoice's private object.
+  const path = `${inv.organization_id}/${inv.id}/${inv.document_sha256}`;
+  const document_url = documentUrl && /^[a-f0-9]{64}$/.test(inv.document_sha256) && inv.document_storage_path === path
+    ? await documentUrl(path) : undefined;
+  return invoiceDto(inv, extras, { lines: true, document_url });
 }
 
 /** Agent tool get_invoice. */

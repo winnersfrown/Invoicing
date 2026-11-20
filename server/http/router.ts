@@ -3,18 +3,19 @@ import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { ZodError, type z } from 'zod';
 import {
   CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ROUTES, type Role,
-} from '../contracts/index';
-import { asUser, type Db } from '../db/index';
-import { authenticate, type Caller, type TokenVerifier } from '../services/auth';
-import { findDuplicateCandidates } from '../services/duplicates';
-import { createInvoice, createPurchaseOrder } from '../services/invoices';
-import { enqueue, runJobs } from '../services/jobs';
-import { draftSupplierMessage } from '../services/matching';
-import { discrepancyHistory, getDiscrepancies, getInvoiceDto, listInvoices, listPurchaseOrders } from '../services/records';
-import { getInvestigation, requestInvestigation, resolveDiscrepancy } from '../services/resolution';
-import type { Storage } from '../services/storage';
-import { ApiError, canonical, fail, notFound, sha256, STATUS } from '../services/util';
-import { processInvoice } from '../services/validation';
+} from '../contracts/index.ts';
+import { asUser, type Db } from '../db/index.ts';
+import { authenticate, verifyBearer, type Caller, type TokenVerifier } from '../services/auth.ts';
+import { findDuplicateCandidates } from '../services/duplicates.ts';
+import { createInvoice, createPurchaseOrder } from '../services/invoices.ts';
+import { enqueue, runJobs } from '../services/jobs.ts';
+import { draftSupplierMessage } from '../services/matching.ts';
+import { discrepancyHistory, getDiscrepancies, getInvoiceDto, listInvoices, listPurchaseOrders } from '../services/records.ts';
+import { getInvestigation, requestInvestigation, resolveDiscrepancy } from '../services/resolution.ts';
+import type { Storage } from '../services/storage.ts';
+import { ApiError, canonical, fail, notFound, sha256, STATUS } from '../services/util.ts';
+import { processInvoice } from '../services/validation.ts';
+import { ensureWorkspace } from '../services/workspace.ts';
 
 export type Deps = {
   db: Db; verifyToken: TokenVerifier; storage: Storage;
@@ -22,6 +23,8 @@ export type Deps = {
   log?: (entry: Record<string, unknown>) => void;
   /** Public Supabase client settings for GET /api/config. Unset: that route answers 500. */
   publicConfig?: { supabase_url: string; supabase_anon_key: string };
+  /** Only configured on the hosted app after email verification is set up. */
+  verifyWorkspaceToken?: TokenVerifier;
   /** Runs work after the response is sent (Vercel waitUntil). Used to start the worker as soon as an investigation is queued. */
   defer?: (fn: () => Promise<unknown>) => void;
 };
@@ -37,7 +40,7 @@ const RANK: Record<z.infer<typeof Role>, number> = { viewer: 0, reviewer: 1, adm
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const user = (c: Ctx) => ({ orgId: c.caller.orgId, userId: c.caller.userId });
 
-const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/run' | 'GET /api/config'>, (c: Ctx) => Promise<Result>> = {
+const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/run' | 'GET /api/config' | 'POST /api/workspace'>, (c: Ctx) => Promise<Result>> = {
   'POST /api/invoices': async (c) => {
     const id = await createInvoice(c.tx, user(c), CreateInvoiceRequest.parse(c.body), c.deps.storage);
     return { status: 201, data: await getInvoiceDto(c.tx, c.caller.orgId, id) };
@@ -126,7 +129,13 @@ export function createRouter(deps: Deps) {
       } else if (key === 'GET /api/config') {
         // Only the supabase variant is ever served here; the dev variant exists only in scripts/dev-server.ts.
         if (!deps.publicConfig) fail('internal', 'Internal error');
-        res = { status: 200, body: { data: { mode: 'supabase', supabase_url: deps.publicConfig!.supabase_url, supabase_anon_key: deps.publicConfig!.supabase_anon_key } } };
+        res = { status: 200, body: { data: { mode: 'supabase', supabase_url: deps.publicConfig!.supabase_url,
+          supabase_anon_key: deps.publicConfig!.supabase_anon_key, ...(deps.verifyWorkspaceToken && { public_signup: true }) } } };
+      } else if (key === 'POST /api/workspace') {
+        const verify = deps.verifyWorkspaceToken ?? notFound();
+        const userId = await verifyBearer(verify, header(req.headers, 'authorization'));
+        caller = await ensureWorkspace(deps.db, deps.storage, userId);
+        res = { status: 200, body: { data: { role: caller.role } } };
       } else {
         caller = await authenticate(deps.db, deps.verifyToken, header(req.headers, 'authorization'));
         if (RANK[caller.role] < RANK[ROUTES[key] as z.infer<typeof Role>]) fail('forbidden', 'Your role does not allow this action');

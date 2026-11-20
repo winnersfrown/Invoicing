@@ -114,6 +114,12 @@ Both the local server and Vercel API now default to `AGENT_MODE=scripted`, even 
 
 The Vercel rewrite routes `/api/*` to the single function; the daily cron sweeps jobs missed by immediate background execution. Do not deploy the dev server or its fake users publicly. Configure `CRON_SECRET` for the production job endpoint. The verifier checks cited IDs, supported numeric amounts, and common price-direction contradictions; it does not establish general natural-language entailment. Human review remains required. AI output cannot recommend closing an open discrepancy directly.
 
+### Open signup for the hosted demo
+
+In Supabase Auth, enable signups and email confirmation. Configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) so confirmation links reach testers outside your Supabase team. Set the [Site URL and allowed redirect URL](https://supabase.com/docs/guides/auth/redirect-urls) to the hosted Rekono URL (`https://invoicing-fawn.vercel.app/` for this deployment).
+
+Set `PUBLIC_SIGNUP=true` in the Vercel Production environment and redeploy. A tester can choose **Sign up**, confirm their email, and open their own workspace. Rekono seeds it with invoice NS-1068 ($660) and purchase order PO-2026-042 ($600). Their account has reviewer access. Existing accounts with a workspace continue using their existing membership. Before sharing the signup link, confirm that an email address outside the Supabase team can receive a link and see the sample.
+
 ## PDF feedback and guided retest
 
 The tester LorenzinAsia reported missing-label messages on a historical company invoice and requested a simpler first-use flow. Their original PDF has not been supplied, so this change does not claim an exact reproduction or confirmed user retest. PDF parsing now covers compact labels, stacked label/value rows, explicit currency totals, and a conservative company-heading suggestion marked uncertain. Missing PO references, dates and SKUs can be retained at intake for later review; malformed numeric values are rejected and completeness still gates matching/approval.

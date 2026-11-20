@@ -1,4 +1,4 @@
-import type { Db } from '../db/index';
+import type { Db } from '../db/index.ts';
 
 export type Actor = { type: 'user' | 'agent' | 'system'; id: string | null };
 export const SYSTEM: Actor = { type: 'system', id: null };

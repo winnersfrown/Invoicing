@@ -1,13 +1,13 @@
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
 import { normalizeVendor, similarSupplier } from '../../dist/supplier.js';
-import type { DiscrepancyType, InvoiceStatus, Severity } from '../contracts/index';
-import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type PurchaseOrder } from '../db/index';
+import type { DiscrepancyType, InvoiceStatus, Severity } from '../contracts/index.ts';
+import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type PurchaseOrder } from '../db/index.ts';
 import type { z } from 'zod';
-import { audit, type Actor } from './audit';
-import { duplicateCandidates } from './duplicates';
-import { compareWithPo, lineText, qtyText } from './matching';
-import { canonical, fail, notFound, sha256 } from './util';
+import { audit, type Actor } from './audit.ts';
+import { duplicateCandidates } from './duplicates.ts';
+import { compareWithPo, lineText, qtyText } from './matching.ts';
+import { canonical, fail, notFound, sha256 } from './util.ts';
 
 type DType = z.infer<typeof DiscrepancyType>;
 type Status = z.infer<typeof InvoiceStatus>;

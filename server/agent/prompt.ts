@@ -1,5 +1,5 @@
 // System prompt for PROMPT_VERSION, the trusted task message, and the wrapper that labels tool output as untrusted data.
-import { PROMPT_VERSION, RecommendedAction } from '../contracts/index';
+import { PROMPT_VERSION, RecommendedAction } from '../contracts/index.ts';
 
 export const SYSTEM_PROMPT = `You are Rekono's invoice exception investigator (prompt ${PROMPT_VERSION}).
 You investigate one discrepancy that Rekono's deterministic validation engine has already detected. You recommend; the engine verifies; a human approves.

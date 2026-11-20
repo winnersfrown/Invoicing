@@ -276,7 +276,8 @@ export const ROUTES = {
   'GET /api/jobs/run': 'system', // same worker; Vercel Cron calls with GET
   'POST /api/jobs/run': 'system', // worker; authenticated by CRON_SECRET, not a user session
   'GET /api/config': 'public', // no auth; returns ConfigDto
-} as const satisfies Record<string, z.infer<typeof Role> | 'system' | 'public'>;
+  'POST /api/workspace': 'verified_user', // verified Supabase session, before membership exists
+} as const satisfies Record<string, z.infer<typeof Role> | 'system' | 'public' | 'verified_user'>;
 
 // ---------- added after the API package landed ----------
 export const PurchaseOrderDto = z.object({
@@ -289,6 +290,6 @@ export const HistoryDto = z.object({ resolutions: z.array(ResolutionActionDto), 
 // Public client configuration. The anon key is a public value by Supabase's design; nothing secret goes here.
 // 'dev' mode exists only in scripts/dev-server.ts (PGlite, fake users). api/index.ts must never return it.
 export const ConfigDto = z.discriminatedUnion('mode', [
-  z.object({ mode: z.literal('supabase'), supabase_url: z.string().url(), supabase_anon_key: z.string() }),
+  z.object({ mode: z.literal('supabase'), supabase_url: z.string().url(), supabase_anon_key: z.string(), public_signup: z.literal(true).optional() }),
   z.object({ mode: z.literal('dev'), dev_users: z.array(z.object({ label: z.string(), token: z.string(), role: Role })) }),
 ]);

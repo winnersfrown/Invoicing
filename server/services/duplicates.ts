@@ -1,7 +1,7 @@
 import { comparePair } from '../../dist/duplicates-engine.js';
-import type { EvidenceItem } from '../contracts/index';
-import { loadInvoice, toCents, type Db, type Invoice } from '../db/index';
-import { notFound } from './util';
+import type { EvidenceItem } from '../contracts/index.ts';
+import { loadInvoice, toCents, type Db, type Invoice } from '../db/index.ts';
+import { notFound } from './util.ts';
 
 export const duplicateEngineDoc = (inv: Invoice) => ({id:inv.id,status:inv.status,
  fields:{vendor:inv.supplier_name_raw,number:inv.invoice_number,total:inv.total_amount==null?null:inv.total_amount/100,date:inv.invoice_date,currency:inv.currency,supplierId:inv.supplier_id},

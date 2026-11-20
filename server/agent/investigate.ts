@@ -1,14 +1,14 @@
 // The investigate job: one bounded loop of model turns and tool calls, then the verifier, then one stored result.
 // The model recommends; verify.ts decides what survives; a human approves elsewhere. Nothing here edits financial records.
-import type { EvidenceItem, InvestigationResult } from '../contracts/index';
-import type { Db } from '../db/index';
-import { audit } from '../services/audit';
-import type { JobHandler } from '../services/jobs';
-import { loadDiscrepancy } from '../services/records';
-import { estimateCostUsd, type Completion, type Message, type Model, type Usage } from './model';
-import { repairMessage, SYSTEM_PROMPT, taskMessage, wrapToolResult } from './prompt';
-import { runTool, TOOLS, type ToolContext } from './tools';
-import { parseWithRepair, verifyOutput } from './verify';
+import type { EvidenceItem, InvestigationResult } from '../contracts/index.ts';
+import type { Db } from '../db/index.ts';
+import { audit } from '../services/audit.ts';
+import type { JobHandler } from '../services/jobs.ts';
+import { loadDiscrepancy } from '../services/records.ts';
+import { estimateCostUsd, type Completion, type Message, type Model, type Usage } from './model.ts';
+import { repairMessage, SYSTEM_PROMPT, taskMessage, wrapToolResult } from './prompt.ts';
+import { runTool, TOOLS, type ToolContext } from './tools.ts';
+import { parseWithRepair, verifyOutput } from './verify.ts';
 
 export type Limits = { maxToolCalls: number; maxIterations: number; maxOutputTokens: number; timeoutMs: number };
 

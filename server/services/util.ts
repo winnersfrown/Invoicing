@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { z } from 'zod';
-import type { ErrorCode } from '../contracts/index';
+import type { ErrorCode } from '../contracts/index.ts';
 
 type Code = z.infer<typeof ErrorCode>;
 export const STATUS: Record<Code, number> = {

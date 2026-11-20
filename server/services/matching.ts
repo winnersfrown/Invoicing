@@ -1,10 +1,10 @@
 // The one adapter from database rows to the engine's document shape, plus the comparison wrapper.
 import { compareDocuments, correctionDraft } from '../../dist/matching-engine.js';
 import { supplierEvidence } from '../../dist/supplier.js';
-import type { EvidenceItem } from '../contracts/index';
-import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type Line, type PurchaseOrder } from '../db/index';
-import { audit, type Actor } from './audit';
-import { fail, notFound } from './util';
+import type { EvidenceItem } from '../contracts/index.ts';
+import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type Line, type PurchaseOrder } from '../db/index.ts';
+import { audit, type Actor } from './audit.ts';
+import { fail, notFound } from './util.ts';
 
 type Side = { number: string | null; vendor: string | null; poNumber: string | null; currency: string | null; lines: Pick<Line, 'sku' | 'description' | 'qty_milli' | 'unit_price'>[]; tax: number | null; total: number | null };
 

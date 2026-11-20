@@ -2,8 +2,8 @@
 // scripted investigator used by tests, the evaluation harness and the dev server, and the cost estimate table.
 import OpenAI from 'openai';
 import { z } from 'zod';
-import { AgentOutput, type ToolName } from '../contracts/index';
-import { readToolResult, type Task } from './prompt';
+import { AgentOutput, type ToolName } from '../contracts/index.ts';
+import { readToolResult, type Task } from './prompt.ts';
 
 export type ToolCall = { id: string; name: string; arguments: string };
 export type Message =

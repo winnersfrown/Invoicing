@@ -1,8 +1,8 @@
 // Durable jobs in Postgres: idempotent enqueue, claim with FOR UPDATE SKIP LOCKED, lease, retry with backoff.
 // Always called on the privileged connection (authenticated has no access to `jobs`).
-import type { Db } from '../db/index';
-import { SYSTEM } from './audit';
-import { processInvoice } from './validation';
+import type { Db } from '../db/index.ts';
+import { SYSTEM } from './audit.ts';
+import { processInvoice } from './validation.ts';
 
 export type Job = {
   id: string; organization_id: string; kind: string; payload: any; idempotency_key: string; status: 'queued' | 'running' | 'succeeded' | 'failed';

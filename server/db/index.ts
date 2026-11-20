@@ -1,7 +1,7 @@
 // Data access: the Db interface, the pg implementation, the per-request user scope, and the only place
 // where numeric(14,2) strings become integer cents (and back).
 import pg from 'pg';
-import { centsToMoney, moneyToCents, type InvoiceStatus } from '../contracts/index';
+import { centsToMoney, moneyToCents, type InvoiceStatus } from '../contracts/index.ts';
 import type { z } from 'zod';
 
 export interface Db {

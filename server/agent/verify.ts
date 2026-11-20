@@ -1,6 +1,6 @@
 // Turns the model's AgentOutput into the stored InvestigationResult. The model recommends; this file decides what survives.
 import type { z } from 'zod';
-import { AgentOutput, MoneyString, SCHEMA_VERSION, type DiscrepancyType, type EvidenceItem, type InvestigationResult } from '../contracts/index';
+import { AgentOutput, MoneyString, SCHEMA_VERSION, type DiscrepancyType, type EvidenceItem, type InvestigationResult } from '../contracts/index.ts';
 
 export type Parsed = { ok: true; output: AgentOutput } | { ok: false; issues: string };
 

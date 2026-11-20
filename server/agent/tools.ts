@@ -1,13 +1,13 @@
 // The agent's nine tools. Each validates its arguments with the contract's Zod schema, calls an existing service with
 // the organisation from the job (never from the model), and is logged in tool_calls. Errors go back to the model as data.
-import { TOOL_NAMES, ToolInputs, type EvidenceItem, type ToolName, type ToolResult } from '../contracts/index';
-import type { Db } from '../db/index';
-import { findDuplicateCandidates } from '../services/duplicates';
-import { compareInvoiceToPo, draftSupplierMessage } from '../services/matching';
-import { getDiscrepancies, getDocumentEvidence, getInvoice, getPurchaseOrder, getResolutionHistory, getSupplier } from '../services/records';
-import { ApiError } from '../services/util';
-import { jsonSchemaOf, type ToolSpec } from './model';
-import { unsupportedAmounts } from './verify';
+import { TOOL_NAMES, ToolInputs, type EvidenceItem, type ToolName, type ToolResult } from '../contracts/index.ts';
+import type { Db } from '../db/index.ts';
+import { findDuplicateCandidates } from '../services/duplicates.ts';
+import { compareInvoiceToPo, draftSupplierMessage } from '../services/matching.ts';
+import { getDiscrepancies, getDocumentEvidence, getInvoice, getPurchaseOrder, getResolutionHistory, getSupplier } from '../services/records.ts';
+import { ApiError } from '../services/util.ts';
+import { jsonSchemaOf, type ToolSpec } from './model.ts';
+import { unsupportedAmounts } from './verify.ts';
 
 export type ToolContext = {
   db: Db; orgId: string; investigationId: string; discrepancyId: string; requestedBy: string;

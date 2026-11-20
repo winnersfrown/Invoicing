@@ -1,4 +1,4 @@
-// Sign-in and mode switch. Signed out, or with no reachable API (static hosting), the local demo stays exactly as it is.
+// Account entry and mode switch. The signed-out demo runs in the browser.
 // The browser holds only the Supabase anon key (public by design) and the user's own session token.
 import {createApiClient} from './api-client.js';
 import {createServerInbox} from './server-inbox.js';
@@ -22,7 +22,8 @@ function renderArea(message = '') {
       h('button', {type: 'button', class: 'button secondary', onclick: () => signOut()}, 'Sign out'), note);
   } else {
     fill(area, h('span', {class: 'demo-badge'}, 'DEMO MODE'), h('span', {class: 'auth-label'}, 'Local demo, data stays in this browser'),
-      config && h('button', {type: 'button', class: 'button secondary', onclick: openSignIn}, 'Sign in'), note);
+      config && h('button', {type: 'button', class: 'button secondary', onclick: () => openAuth()}, 'Sign in'),
+      config?.public_signup && h('button', {type: 'button', class: 'button primary', onclick: () => openAuth(true)}, 'Sign up'), note);
   }
 }
 
@@ -32,7 +33,7 @@ function enter(next) {
   document.querySelector('[data-page=invoices]')?.click();
   inbox?.stop();
   inbox = createServerInbox({api, root: document.querySelector('#invoices-page'), user});
-  renderArea(`Signed in. Shared workspace, ${ROLE[user.role] ?? user.role} access.${config.mode==='dev'?' Scripted demo — no OpenAI calls.':''}`);
+  renderArea(`Signed in. ${ROLE[user.role] ?? user.role} access.${config.mode==='dev'?' Scripted demo — no OpenAI calls.':''}`);
 }
 
 async function signOut(message = 'Signed out. Back to the local demo.') {
@@ -57,21 +58,26 @@ async function loadSupabase() {
 async function supabaseUser(session) {
   const {data, error} = await supabase.from('organization_memberships').select('role').eq('user_id', session.user.id)
     .order('created_at', {ascending: true}).order('organization_id', {ascending: true}).limit(1);
-  if (error || !data?.length) throw Error('Your account has no organisation membership yet. Ask an admin to add you.');
-  return {label: session.user.email ?? 'Signed in', role: data[0].role};
+  if (error) throw Error('Could not load your workspace. Try signing in again.');
+  const membership = data?.[0] ?? (config.public_signup ? await api.send('POST', '/api/workspace') : null);
+  if (!membership) throw Error('Your account has no workspace yet. Ask an admin to add you.');
+  return {label: session.user.email ?? 'Signed in', role: membership.role};
 }
 
-function openSignIn() {
+function openAuth(signup = false) {
+  const title = signup ? 'Create your Rekono account' : 'Sign in';
   const error = h('p', {class: 'ocr-error', role: 'alert'});
-  const submit = h('button', {type: 'submit', class: 'button primary'}, 'Sign in');
+  const submit = h('button', {type: 'submit', class: 'button primary'}, signup ? 'Create account' : 'Sign in');
   const fields = config.mode === 'dev'
     ? [h('p', {}, 'Local development server. Choose a seeded user.'), h('label', {}, 'User', h('select', {name: 'user', required: true}, config.dev_users.map((u, i) => h('option', {value: String(i)}, `${u.label} (${ROLE[u.role] ?? u.role})`))))]
     : [h('label', {}, 'Email', h('input', {name: 'email', type: 'email', autocomplete: 'username', required: true})),
-      h('label', {}, 'Password', h('input', {name: 'password', type: 'password', autocomplete: 'current-password', required: true}))];
-  const form = h('form', {class: 'auth-form'}, fields, error, h('div', {class: 'actions'}, submit));
+      h('label', {}, signup ? 'Password (8 or more characters)' : 'Password',
+        h('input', {name: 'password', type: 'password', autocomplete: signup ? 'new-password' : 'current-password', required: true, ...(signup && {minlength: '8'})}))];
+  const form = h('form', {class: 'auth-form'}, signup && h('p', {}, 'Confirm your email to open a private workspace with a sample invoice and purchase order.'),
+    fields, error, h('div', {class: 'actions'}, submit));
   const dialog = h('dialog', {class: 'auth-dialog', 'aria-labelledby': 'auth-title'},
-    h('div', {class: 'dialog-top'}, h('div', {}, h('span', {class: 'eyebrow'}, 'SHARED WORKSPACE'), h('h2', {id: 'auth-title'}, 'Sign in')),
-      h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close sign in', onclick: () => dialog.close()}, '×')), form);
+    h('div', {class: 'dialog-top'}, h('h2', {id: 'auth-title'}, title),
+      h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close', onclick: () => dialog.close()}, '×')), form);
   dialog.addEventListener('close', () => dialog.remove());
   form.onsubmit = async e => {
     e.preventDefault();
@@ -87,8 +93,26 @@ function openSignIn() {
         enter(u);
       } else {
         await loadSupabase();
-        const {data, error: err} = await supabase.auth.signInWithPassword({email: String(f.get('email')), password: String(f.get('password'))});
-        if (err) throw Error('Email or password was not accepted.');
+        const credentials = {email: String(f.get('email')).trim(), password: String(f.get('password'))};
+        if (signup) {
+          const {data, error: err} = await supabase.auth.signUp({
+            ...credentials, options: {emailRedirectTo: new URL('./', location.href).href},
+          });
+          if (err) {
+            if (err.code === 'weak_password') throw Error('Choose a stronger password and try again.');
+            if (err.status === 429) throw Error('Too many attempts. Wait a few minutes and try again.');
+            throw Error('Could not send a confirmation email. Try again or sign in if you already have an account.');
+          }
+          if (data.session) {
+            await supabase.auth.signOut();
+            throw Error('Email verification is temporarily unavailable. Try again later.');
+          }
+          dialog.close();
+          renderArea('If the address is eligible, you’ll receive a confirmation link. Open it to start your workspace.');
+          return;
+        }
+        const {data, error: err} = await supabase.auth.signInWithPassword(credentials);
+        if (err) throw Error(err.code === 'email_not_confirmed' ? 'Confirm your email using the link in your inbox first.' : 'Email or password was not accepted.');
         const next = await supabaseUser(data.session).catch(async x => { await supabase.auth.signOut(); throw x; });
         dialog.close();
         enter(next);

@@ -1,11 +1,11 @@
 // Human decisions and investigation requests. Nothing here marks anything paid or edits invoice or PO values.
 import type { z } from 'zod';
-import { PROMPT_VERSION, type RecommendedAction, type ResolveRequest } from '../contracts/index';
-import type { Db } from '../db/index';
-import { audit, type Actor } from './audit';
-import { discrepancyDto, investigationDto, loadDiscrepancy, resolutionDto } from './records';
-import { fail, notFound } from './util';
-import { deriveInvoiceStatus, setInvoiceStatus } from './validation';
+import { PROMPT_VERSION, type RecommendedAction, type ResolveRequest } from '../contracts/index.ts';
+import type { Db } from '../db/index.ts';
+import { audit, type Actor } from './audit.ts';
+import { discrepancyDto, investigationDto, loadDiscrepancy, resolutionDto } from './records.ts';
+import { fail, notFound } from './util.ts';
+import { deriveInvoiceStatus, setInvoiceStatus } from './validation.ts';
 
 type Ctx = { orgId: string; userId: string };
 type Action = z.infer<typeof RecommendedAction>;

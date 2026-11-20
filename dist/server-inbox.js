@@ -142,7 +142,7 @@ export function createServerInbox({api, root, user}) {
   const section = h('section', {id: 'server-inbox'},
     h('section', {class: 'panel'},
       h('div', {class: 'panel-heading'},
-        h('div', {}, h('h2', {}, 'Shared invoice inbox'), h('p', {}, 'Invoices stored in your organisation workspace. Validation runs on the server; AI investigations need a reviewer’s approval before anything changes.')),
+        h('div', {}, h('h2', {}, 'Workspace invoice inbox'), h('p', {}, 'Open an invoice to review its purchase order and resolve discrepancies.')),
         h('div', {class: 'actions'}, canAct && uploadInvoiceButton, canAct && uploadPoButton, refreshButton)),
       canAct && h('p', {class: 'match-note'}, 'Uploads: PDF, image, JSON or labeled TXT up to 3 MB. Fields are extracted in this browser and you review them before upload; the server re-validates everything.'),
       h('div', {class: 'table-scroll'}, h('table', {}, h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'PROCESSING', 'OPEN DISCREPANCIES', 'AI INVESTIGATION', ''].map(t => h('th', {}, t)))), rows))),

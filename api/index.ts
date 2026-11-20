@@ -1,13 +1,13 @@
 // The single Vercel Function. vercel.json rewrites /api/(.*) here; req.url keeps the original path.
 import { waitUntil } from '@vercel/functions';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { investigateHandler } from '../server/agent/investigate';
-import { FALLBACK_OPENAI_MODEL, openaiModel, scriptedModel } from '../server/agent/model';
-import { pgDb } from '../server/db/index';
-import { createRouter } from '../server/http/router';
-import { supabaseVerifier } from '../server/services/auth';
-import { registerJobHandler } from '../server/services/jobs';
-import { supabaseStorage } from '../server/services/storage';
+import { investigateHandler } from '../server/agent/investigate.ts';
+import { FALLBACK_OPENAI_MODEL, openaiModel, scriptedModel } from '../server/agent/model.ts';
+import { pgDb } from '../server/db/index.ts';
+import { createRouter } from '../server/http/router.ts';
+import { supabaseVerifier } from '../server/services/auth.ts';
+import { registerJobHandler } from '../server/services/jobs.ts';
+import { supabaseStorage } from '../server/services/storage.ts';
 
 let route: ReturnType<typeof createRouter> | undefined;
 
@@ -27,6 +27,7 @@ function router() {
   route = createRouter({
     db: pgDb(env('DATABASE_URL')),
     verifyToken: supabaseVerifier(url, serviceKey),
+    verifyWorkspaceToken: process.env.PUBLIC_SIGNUP === 'true' ? supabaseVerifier(url, serviceKey, { verifiedEmail: true }) : undefined,
     storage: supabaseStorage(url, serviceKey),
     cronSecret: process.env.CRON_SECRET,
     model: modelId,
