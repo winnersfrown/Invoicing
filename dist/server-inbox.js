@@ -1,3 +1,4 @@
+import {percentageCents,toCents} from './arithmetic.js';
 // Server-backed inbox, invoice detail, evidence viewer and resolution controls (signed-in mode only).
 // The top half is pure request building (unit-tested); createServerInbox() is the DOM layer.
 import {extractFile, parseExtractedText} from './extraction.js';
@@ -32,9 +33,13 @@ const text = v => (v == null || String(v).trim() === '' ? null : String(v).trim(
 const isoDate = v => (/^\d{4}-\d{2}-\d{2}$/.test(text(v) ?? '') ? text(v) : null);
 function lines(d) {
   return (Array.isArray(d?.lines) ? d.lines : []).map((l, i) => {
-    const q = Number(l.quantity);
+    const percentage = typeof l.ratePercent === 'number' && Number.isFinite(l.ratePercent);
+    const basis = Number(l.quantity);
+    if(percentage && (!(basis>0) || l.ratePercent<0)) throw Error(`Line ${i+1}: invalid percentage basis or rate.`);
+    const q = percentage ? 1 : basis;
     if (!(q > 0 && q <= 100000)) throw Error(`Line ${i + 1}: quantity must be between 0 and 100,000.`);
-    const unit = toMoneyString(l.unitPrice);
+    const computed = percentage ? percentageCents(toCents(basis),l.ratePercent) : null;
+    const unit = toMoneyString(percentage ? (computed==null?null:computed/100) : l.unitPrice);
     if (unit == null) throw Error(`Line ${i + 1}: unit price is missing.`);
     return {sku: text(l.sku), description: String(l.description ?? '').trim().slice(0, 500), quantity: q, unit_price: unit, line_total: toMoneyString(l.amount), tax_amount: toMoneyString(l.taxAmount)};
   });
@@ -64,6 +69,10 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
   const supportLabels = {...read?.extraction?.fields};
   const customer = text(final?.customer)?.slice(0, 250);
   if (customer) supportLabels.customer = {...supportLabels.customer, reviewedValue: customer};
+  for(const field of ['shipping','discount']) {
+    if (final?.[field]!=null) supportLabels[field]={...supportLabels[field],reviewedValue:toMoneyString(final[field])};
+  }
+  if(final?.taxInclusive===true) supportLabels.taxInclusive={reviewedValue:true};
 
   return {
     supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.date ?? final?.issued), due_date: isoDate(final?.due),
@@ -263,6 +272,8 @@ export function createServerInbox({api, root, user}) {
         field('invoice_number', 'Invoice number', inv.invoice_number), field('invoice_date', 'Invoice date', inv.invoice_date), field('due_date', 'Due date', inv.due_date),
         field('po_reference', 'PO reference', inv.po_reference), field('currency', 'Currency', inv.currency),
         field('subtotal', 'Subtotal', inv.subtotal && formatMoney(inv.subtotal, cur)), field('tax_amount', 'Tax', inv.tax_amount && formatMoney(inv.tax_amount, cur)),
+        inv.extraction?.support_labels?.shipping?.reviewedValue && field('shipping', 'Shipping / freight', formatMoney(inv.extraction.support_labels.shipping.reviewedValue,cur)),
+        inv.extraction?.support_labels?.discount?.reviewedValue && field('discount', 'Discount', formatMoney(inv.extraction.support_labels.discount.reviewedValue,cur)),
         field('total_amount', 'Total', inv.total_amount && formatMoney(inv.total_amount, cur)))),
       lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`),
       h('p', {class: 'hint'}, `Extraction: ${inv.extraction?.method ?? 'unknown'}${inv.extraction?.missing?.length ? ` · missing ${inv.extraction.missing.join(', ')}` : ''}${inv.extraction?.uncertain?.length ? ` · entered by reviewer: ${inv.extraction.uncertain.join(', ')}` : ''}`),

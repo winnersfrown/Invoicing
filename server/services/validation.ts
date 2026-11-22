@@ -1,3 +1,4 @@
+import {netLineCents} from '../../dist/arithmetic.js';
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
 import { invoiceDateIssue } from '../../dist/invoice-dates.js';
@@ -78,17 +79,22 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
     if (computed !== l.line_total) out.push({ type: 'line_arithmetic', fields: ['lines'], expected: toMoney(computed), observed: toMoney(l.line_total),
       difference: l.line_total - computed, evidence: { check: 'line_arithmetic', line_id: l.id, line_number: l.line_number, line: lineText(l), computed: toMoney(computed) } });
   }
-  const lineSum = sum(inv.lines.map((l) => l.line_total));
+  const reviewedMoney = (field: string) => {
+    const value: unknown = ex.support_labels?.[field]?.reviewedValue;
+    return typeof value === 'string' && /^\d{1,12}\.\d{2}$/.test(value) ? Math.round(Number(value)*100) : 0;
+  };
+  const shipping = reviewedMoney('shipping'), discount = reviewedMoney('discount');
+  const lineSum = netLineCents(sum(inv.lines.map((l) => l.line_total)),inv.subtotal,inv.tax_amount,ex.support_labels?.taxInclusive?.reviewedValue===true);
   if (inv.subtotal != null && inv.lines.length && lineSum !== inv.subtotal) {
     out.push({ type: 'incorrect_total', fields: ['subtotal', 'lines'], expected: toMoney(lineSum), observed: toMoney(inv.subtotal), difference: inv.subtotal - lineSum,
       evidence: { check: 'subtotal', line_totals: toMoney(lineSum), subtotal: toMoney(inv.subtotal) } });
   }
   const base = inv.subtotal ?? (inv.lines.length ? lineSum : null);
-  if (inv.total_amount != null && base != null && base + (inv.tax_amount ?? 0) !== inv.total_amount) {
-    const expected = base + (inv.tax_amount ?? 0);
+  if (inv.total_amount != null && base != null && base + (inv.tax_amount ?? 0) + shipping - discount !== inv.total_amount) {
+    const expected = base + (inv.tax_amount ?? 0) + shipping - discount;
     out.push({ type: 'incorrect_total', fields: ['total_amount', 'subtotal', 'tax_amount'], expected: toMoney(expected), observed: toMoney(inv.total_amount),
       difference: inv.total_amount - expected, evidence: { check: 'total', subtotal: toMoney(base), subtotal_source: inv.subtotal != null ? 'subtotal' : 'line_totals',
-        tax: toMoney(inv.tax_amount ?? 0), total: toMoney(inv.total_amount) } });
+        tax: toMoney(inv.tax_amount ?? 0), shipping: toMoney(shipping), discount: toMoney(discount), total: toMoney(inv.total_amount) } });
   }
   const taxed = inv.lines.filter((l) => l.tax_amount != null);
   if (taxed.length && inv.tax_amount != null && sum(taxed.map((l) => l.tax_amount!)) !== inv.tax_amount) {
