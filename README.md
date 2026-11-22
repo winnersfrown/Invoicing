@@ -116,9 +116,9 @@ The Vercel rewrite routes `/api/*` to the single function; the daily cron sweeps
 
 ### Open signup for the hosted demo
 
-In Supabase Auth, enable signups and email confirmation. Configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) so confirmation links reach testers outside your Supabase team. Set the [Site URL and allowed redirect URL](https://supabase.com/docs/guides/auth/redirect-urls) to the hosted Rekono URL (`https://invoicing-fawn.vercel.app/` for this deployment).
+In Supabase Auth, enable signups and email confirmation. Configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) so confirmation links reach testers outside your Supabase team. Set the [Site URL and allowed redirect URL](https://supabase.com/docs/guides/auth/redirect-urls) to the hosted Sorikano URL (`https://invoicing-fawn.vercel.app/` for this deployment).
 
-Set `PUBLIC_SIGNUP=true` in the Vercel Production environment and redeploy. A tester can choose **Sign up**, confirm their email, and open their own workspace. Rekono seeds it with invoice NS-1068 ($660) and purchase order PO-2026-042 ($600). Their account has reviewer access. Existing accounts with a workspace continue using their existing membership. Before sharing the signup link, confirm that an email address outside the Supabase team can receive a link and see the sample.
+Set `PUBLIC_SIGNUP=true` in the Vercel Production environment and redeploy. A tester can choose **Sign up**, confirm their email, and open their own workspace. Sorikano seeds it with invoice NS-1068 ($660) and purchase order PO-2026-042 ($600). Their account has reviewer access. Existing accounts with a workspace continue using their existing membership. Before sharing the signup link, confirm that an email address outside the Supabase team can receive a link and see the sample.
 
 ## PDF feedback and guided retest
 

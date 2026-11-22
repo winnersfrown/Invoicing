@@ -1,4 +1,4 @@
-// Thin fetch wrapper for the Rekono API (server/contracts/index.ts). No DOM access: unit-tested under node --test.
+// Thin fetch wrapper for the Sorikano API (server/contracts/index.ts). No DOM access: unit-tested under node --test.
 export const TERMINAL = ['completed', 'insufficient_evidence', 'failed'];
 const CODES = {401: 'unauthenticated', 403: 'forbidden', 404: 'not_found', 400: 'invalid_request', 409: 'conflict', 429: 'rate_limited'};
 const TRANSIENT = new Set(['network', 'internal', 'rate_limited']);

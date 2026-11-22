@@ -65,7 +65,7 @@ async function supabaseUser(session) {
 }
 
 function openAuth(signup = false) {
-  const title = signup ? 'Create your Rekono account' : 'Sign in';
+  const title = signup ? 'Create your Sorikano account' : 'Sign in';
   const error = h('p', {class: 'ocr-error', role: 'alert'});
   const submit = h('button', {type: 'submit', class: 'button primary'}, signup ? 'Create account' : 'Sign in');
   const fields = config.mode === 'dev'
