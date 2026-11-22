@@ -67,13 +67,14 @@ export function parseLayoutText(text,kind,layout=[]){
  const rawRows=[];for(let i=0;i<inputRows.length;i++){const r=inputRows[i],next=inputRows[i+1];if(standalone.test(r.text.trim())&&next&&!(/^invoice$/i.test(r.text.trim())&&/\s/.test(next.text.trim()))&&r.page===next.page&&!standalone.test(next.text.trim())&&!/[:#]/.test(next.text)&&next.text.trim()){rawRows.push({...r,text:r.text.trim().replace(/[:#]$/,'')+': '+next.text.trim(),sourceRows:[r,next]});i++;}else rawRows.push(r);}
  const rows=rawRows.flatMap(row=>row.text.split(/ {2,}(?=(?:vendor|supplier|seller|from|invoice(?:\s+(?:no\.?|number|date))?|purchase order|po(?: reference)?|currency|due(?: date)?|subtotal|tax|total)\s*[:#])/i).map(text=>({...row,text})));
  const d={type:kind,vendor:'',customer:'',number:'',poNumber:'',currency:'',date:'',due:'',subtotal:null,tax:null,taxRate:null,total:null,shipping:null,discount:null,lines:[],note:'Extracted values require source verification.'};
- const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text'};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.startsWith('lines.'))d[key]=value;};
+ const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text',...(row.coordinateSpace?{coordinateSpace:row.coordinateSpace}:{})};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.startsWith('lines.'))d[key]=value;};
  readDocumentMetadata(inputRows,kind,fields,set);
  const summaries=[];
  let table=null, page;
  for(const row of rows){
   if(row.page!==page){table=null;page=row.page;}
   const t=row.text.trim();
+  if (/^(?:brought|carried)\s+forward\b/i.test(t)) continue;
   if(!t)continue;
   const supplierId = t.match(/^(?:supplier\s*id|vendor\s*id|tax\s*id)\s*[:#]\s*(.+)$/i);
   if(supplierId){set('supplierId',supplierId[1].trim(),row);continue;}
@@ -99,17 +100,28 @@ export function parseLayoutText(text,kind,layout=[]){
  const exclusive = summaries.find(s=>s.key==='subtotalExclusive');
  const included = summaries.some(s=>s.included);
  const context = inputRows.map(r=>r.text).join(' ');
+ const usAddress = /\b(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\s+\d{5}(?:-\d{4})?\b/;
+ const dollarSummary = summaries.find(s=>s.marker==='$');
+
  const grossSubtotal = summaries.find(s=>s.key==='subtotal');
  for(const summary of summaries) {
-  const {key,value,row,currency,marker,rate}=summary;
+  const {key,value,row,currency,rate}=summary;
   if(currency && !fields.currency?.evidence.some(e=>e.page===row.page&&e.text.trim()===row.text.trim()))set('currency',currency,row);
-  else if(marker==='R'||marker==='K'){
-   if(marker==='R'&&/\+27\b|\.co\.za\b/.test(context))set('currency','ZAR',row,'uncertain','Rand notation and South African supplier details. Confirm currency.');
-   if(marker==='K'&&/\+260\b|\.co\.zm\b/.test(context))set('currency','ZMW',row,'uncertain','Kwacha notation and Zambian supplier details. Confirm currency.');
-  }
   if(key==='subtotalExclusive')set('subtotal',value,row);
   else if(key!=='subtotal'||(!exclusive&&!included))set(key,value,row);
   if(key==='tax'&&rate!=null)set('taxRate',rate,row);
+ }
+ if(!fields.currency){
+  const region = summaries.find(s=>s.marker==='R'||s.marker==='K');
+  if(region?.marker==='R'&&/\+27\b|\.co\.za\b/.test(context))set('currency','ZAR',region.row,'uncertain','Rand notation and South African supplier details. Confirm currency.');
+  if(region?.marker==='K'&&/\+260\b|\.co\.zm\b/.test(context))set('currency','ZMW',region.row,'uncertain','Kwacha notation and Zambian supplier details. Confirm currency.');
+ }
+ if(!fields.currency && dollarSummary) {
+  const usRows=inputRows.slice(0,18).filter(r=>usAddress.test(r.text));
+  if(usRows.length===1||usRows.length===2) {
+   const rows=[dollarSummary.row,...usRows];
+   set('currency','USD',{...dollarSummary.row,sourceRows:rows},'uncertain','Dollar amount and US address. Confirm the billing currency.');
+  } else set('currency','',dollarSummary.row,'uncertain','The dollar symbol needs currency confirmation.');
  }
  if(included&&!exclusive&&d.tax!=null&&(grossSubtotal||d.total!=null)){
   const gross=grossSubtotal?.value??d.total;
