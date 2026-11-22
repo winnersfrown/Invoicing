@@ -121,9 +121,8 @@ async function readInvoiceFile(file, progress) {
     source=extracted.text; layout=extracted.layout;
     method = /\.pdf$/i.test(file.name) && !ocr ? 'pdf_text' : 'ocr';
   }
-  const raw = parseExtractedText(source, 'invoice',layout);
-  const read = {...raw, currency: /^Currency[ \t]*:/mi.test(source) ? raw.currency : ''}; // the parser defaults USD; a default is not a reading
-  const final = await reviewExisting(structuredClone(raw), source, /\.txt$/i.test(file.name) ? null : file);
+  const read = parseExtractedText(source, 'invoice', layout);
+  const final = await reviewExisting(structuredClone(read), source, /\.txt$/i.test(file.name) ? null : file);
   return final && {method, read, final, sourceText: source};
 }
 
