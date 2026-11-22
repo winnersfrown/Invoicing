@@ -74,8 +74,10 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
   }
   if(final?.taxInclusive===true) supportLabels.taxInclusive={reviewedValue:true};
   // Signed adjustments (charges, discounts, credits, payments) replace the single shipping/discount pair for server checks.
-  if(Array.isArray(final?.adjustments)) supportLabels.adjustments={reviewedValue:final.adjustments.filter(a=>Number.isSafeInteger(a.cents)).map(a=>({kind:a.kind,cents:a.cents,appliesTo:a.appliesTo||'total'}))};
+  if(Array.isArray(final?.adjustments)) supportLabels.adjustments={reviewedValue:final.adjustments.map(a=>({kind:a.kind,cents:Number.isSafeInteger(a.cents)?a.cents:null,appliesTo:a.appliesTo||'total'}))};
   if(final?.pricingCurrency&&final.pricingCurrency!==final.currency) supportLabels.pricingCurrency={reviewedValue:final.pricingCurrency};
+  if(final?.pricingTotal!=null) supportLabels.pricingTotal={reviewedValue:toMoneyString(final.pricingTotal)};
+  if(final?.exchangeRate) supportLabels.exchangeRate={reviewedValue:final.exchangeRate};
   if(final?.amountDue!=null) supportLabels.amountDue={reviewedValue:toMoneyString(final.amountDue)};
 
   return {
@@ -255,15 +257,17 @@ export function createServerInbox({api, root, user}) {
 
   function renderDetail(d, discrepancies, investigations) {
     const {inv, po} = d, cur = inv.currency ?? 'USD';
+    const pricing = inv.extraction?.support_labels?.pricingCurrency?.reviewedValue;
+    const pricingCur = typeof pricing === 'string' && /^[A-Z]{3}$/i.test(pricing) ? pricing.toUpperCase() : cur;
     const customer = inv.extraction?.support_labels?.customer?.reviewedValue;
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
     const original = invoices.find(x => x.id === inv.supersedes_invoice_id), replacement = invoices.find(x => x.supersedes_invoice_id === inv.id);
     const link = (other, prefix) => h('p', {class: 'check'}, prefix, ' ', h('button', {type: 'button', class: 'text-button', onclick: () => openDetail(other.id)}, `${other.invoice_number ?? 'invoice'} (${(INVOICE_STATUS[other.status] ?? [other.status])[0]}) ↗`));
     const field = (name, label, value) => h('tr', {'data-ev': `document:${inv.id}#${name}`}, h('td', {}, label), h('td', {}, h('strong', {}, value ?? 'Not extracted')));
-    const lineRows = (prefix, ls) => ls.map(l => h('tr', {'data-ev': `${prefix}:${l.id}`}, h('td', {}, h('small', {}, `Line ${l.line_number} · ${l.sku ?? 'no SKU'}`), h('strong', {}, l.description)),
-      h('td', {}, String(l.quantity)), h('td', {}, formatMoney(l.unit_price, cur)), h('td', {}, formatMoney(l.line_total, cur))));
-    const lineTable = (prefix, ls, ev) => h('table', {}, h('thead', {}, h('tr', {}, ['LINE / ITEM', 'QTY', 'UNIT', 'AMOUNT'].map(t => h('th', {}, t)))), h('tbody', {'data-ev': ev}, lineRows(prefix, ls)));
+    const lineRows = (prefix, ls, currency) => ls.map(l => h('tr', {'data-ev': `${prefix}:${l.id}`}, h('td', {}, h('small', {}, `Line ${l.line_number} · ${l.sku ?? 'no SKU'}`), h('strong', {}, l.description)),
+      h('td', {}, String(l.quantity)), h('td', {}, formatMoney(l.unit_price, currency)), h('td', {}, formatMoney(l.line_total, currency))));
+    const lineTable = (prefix, ls, ev, currency) => h('table', {}, h('thead', {}, h('tr', {}, ['LINE / ITEM', 'QTY', 'UNIT', 'AMOUNT'].map(t => h('th', {}, t)))), h('tbody', {'data-ev': ev}, lineRows(prefix, ls, currency)));
 
     const invoiceCard = h('article', {class: 'source-card', 'data-ev': `invoice:${inv.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'INVOICE'), h('span', {class: `status ${(INVOICE_STATUS[inv.status] ?? ['', ''])[1]}`}, (INVOICE_STATUS[inv.status] ?? [words(inv.status)])[0])),
@@ -274,19 +278,21 @@ export function createServerInbox({api, root, user}) {
       h('table', {class: 'field-table'}, h('tbody', {},
         typeof customer === 'string' && field('customer', 'Customer (billed to)', customer),
         field('invoice_number', 'Invoice number', inv.invoice_number), field('invoice_date', 'Invoice date', inv.invoice_date), field('due_date', 'Due date', inv.due_date),
-        field('po_reference', 'PO reference', inv.po_reference), field('currency', 'Currency', inv.currency),
-        field('subtotal', 'Subtotal', inv.subtotal && formatMoney(inv.subtotal, cur)), field('tax_amount', 'Tax', inv.tax_amount && formatMoney(inv.tax_amount, cur)),
-        inv.extraction?.support_labels?.shipping?.reviewedValue && field('shipping', 'Shipping / freight', formatMoney(inv.extraction.support_labels.shipping.reviewedValue,cur)),
-        inv.extraction?.support_labels?.discount?.reviewedValue && field('discount', 'Discount', formatMoney(inv.extraction.support_labels.discount.reviewedValue,cur)),
+        field('po_reference', 'PO reference', inv.po_reference), field('currency', 'Payable currency', inv.currency),
+        pricingCur !== cur && field('pricingCurrency', 'Pricing currency', pricingCur),
+        field('subtotal', 'Subtotal', inv.subtotal && formatMoney(inv.subtotal, pricingCur)), field('tax_amount', 'Tax', inv.tax_amount && formatMoney(inv.tax_amount, pricingCur)),
+        inv.extraction?.support_labels?.shipping?.reviewedValue && field('shipping', 'Shipping / freight', formatMoney(inv.extraction.support_labels.shipping.reviewedValue,pricingCur)),
+        inv.extraction?.support_labels?.discount?.reviewedValue && field('discount', 'Discount', formatMoney(inv.extraction.support_labels.discount.reviewedValue,pricingCur)),
+        pricingCur !== cur && field('pricingTotal', 'Pricing total', inv.extraction?.support_labels?.pricingTotal?.reviewedValue && formatMoney(inv.extraction.support_labels.pricingTotal.reviewedValue, pricingCur)),
         field('total_amount', 'Total', inv.total_amount && formatMoney(inv.total_amount, cur)))),
-      lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`),
+      lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`, pricingCur),
       h('p', {class: 'hint'}, `Extraction: ${inv.extraction?.method ?? 'unknown'}${inv.extraction?.missing?.length ? ` · missing ${inv.extraction.missing.join(', ')}` : ''}${inv.extraction?.uncertain?.length ? ` · entered by reviewer: ${inv.extraction.uncertain.join(', ')}` : ''}`),
       docUrl ? h('a', {href: docUrl, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗') : h('p', {class: 'hint'}, 'Original document link unavailable.'),
       canAct && inv.status !== 'superseded' && h('button', {type: 'button', class: 'button secondary', onclick: ev => { const b = ev.currentTarget; pickFile('.json,.txt,.pdf,.png,.jpg,.jpeg,.webp', f => busy(b, () => uploadInvoice(f, inv.id))); }}, '↑ Upload corrected invoice'));
     const poCard = po ? h('article', {class: 'source-card', 'data-ev': `po:${po.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
-      lineTable('po_line', po.lines, null),
+      lineTable('po_line', po.lines, null, po.currency),
       h('div', {class: 'source-totals'}, h('span', {}, `Tax ${formatMoney(po.tax_amount, po.currency)}`), h('strong', {}, `Total ${formatMoney(po.total_amount, po.currency)}`)))
       : h('article', {class: 'source-card'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('p', {}, inv.po_reference ? `No purchase order ${inv.po_reference} is on file yet.` : 'The invoice has no PO reference.'));
 
@@ -328,7 +334,7 @@ export function createServerInbox({api, root, user}) {
       h('dl', {class: 'disc-values'},
         h('div', {}, h('dt', {}, 'EXPECTED'), h('dd', {}, x.expected_value ?? '—')),
         h('div', {}, h('dt', {}, 'OBSERVED'), h('dd', {}, x.observed_value ?? '—')),
-        h('div', {}, h('dt', {}, 'DIFFERENCE'), h('dd', {}, x.difference_amount ? formatMoney(x.difference_amount, cur) : '—'))),
+        h('div', {}, h('dt', {}, 'DIFFERENCE'), h('dd', {}, x.difference_amount ? formatMoney(x.difference_amount, x.deterministic_evidence?.currency ?? cur) : '—'))),
       canAct && open && investigateB, panelHost,
       canAct && open && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
       status,

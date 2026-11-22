@@ -2,7 +2,12 @@ import {invoiceDateIssue} from './invoice-dates.js';
 import {adjustmentCents,arithmeticChecks} from './arithmetic.js';
 import {workflowIssue,effectiveFields} from './workflow-engine.js';
 import {duplicateIssues} from './duplicates-engine.js';
-export const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+export function money(n, currency = 'USD') {
+ if (n == null) return 'unknown';
+ const options = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+ if (typeof currency === 'string' && /^[A-Z]{3}$/i.test(currency)) Object.assign(options, { style: 'currency', currency });
+ return new Intl.NumberFormat('en-US', options).format(n);
+}
 export const cents = n => Math.round(Number(n)*100);
 export function issuesFor(doc, all) {
  const issues=[]; const f=effectiveFields(doc); const workflow=workflowIssue(doc);if(workflow)issues.push(workflow);
