@@ -12,9 +12,10 @@ export function issuesFor(doc, all) {
  const dateIssue=invoiceDateIssue(f.date??doc.invoiceDocument?.date, f.due);
  if(dateIssue)issues.push(dateIssue);
  const checkedDocument=doc.workflow?.state==='resolved'?doc.workflow.case?.revisions.at(-1)?.document:doc.invoiceDocument;
- const adjustment=adjustmentCents(checkedDocument?.shipping,checkedDocument?.discount);
+ const adjustment=adjustmentCents(checkedDocument??{}),dual=checkedDocument?.pricingCurrency&&checkedDocument.pricingCurrency!==checkedDocument.currency;
  if (![f.subtotal,f.tax,f.total].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)) issues.push('Amounts must be valid, nonnegative numbers.');
- else if (cents(f.subtotal)+cents(f.tax)+adjustment!==cents(f.total)) issues.push(`Total mismatch: subtotal + tax + shipping − discount should be ${money((cents(f.subtotal)+cents(f.tax)+adjustment)/100)}.`);
+ else if (adjustment==null) issues.push('An adjustment amount is unreadable; confirm it against the source.');
+ else if (!dual&&cents(f.subtotal)+cents(f.tax)+adjustment!==cents(f.total)) issues.push(`Total mismatch: subtotal + tax + adjustments should be ${money((cents(f.subtotal)+cents(f.tax)+adjustment)/100)}.`);
  if(checkedDocument)issues.push(...arithmeticChecks({...checkedDocument,subtotal:f.subtotal,tax:f.tax,total:f.total}).map(c=>c.message));
  issues.push(...duplicateIssues(doc,all));
  if(doc.lowConfidence&&!doc.verified) issues.push('Confirm the uncertain invoice details against the source.');

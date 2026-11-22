@@ -49,7 +49,7 @@ async function ocrLib(){if(!ocrPromise)ocrPromise=new Promise((resolve,reject)=>
 function invoiceQuality(doc) {
  const lines=doc.lines.filter(line=>line.description&&line.amount!=null);
  const completeSummary=[doc.subtotal,doc.tax,doc.total].every(Number.isFinite);
- const reconciled=completeSummary && Math.abs(toCents(doc.subtotal)+toCents(doc.tax)+adjustmentCents(doc.shipping,doc.discount)-toCents(doc.total))<=1;
+ const reconciled=completeSummary && Math.abs(toCents(doc.subtotal)+toCents(doc.tax)+(adjustmentCents(doc)??NaN)-toCents(doc.total))<=1;
  const totalIssue=doc.arithmetic.some(issue=>issue.path==='total');
  const itemsAgree=lines.length && doc.subtotal!=null && !doc.arithmetic.some(issue=>issue.path==='subtotal');
  return {
@@ -125,7 +125,7 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
     }
     if(crop.height<canvas.height*.90)consider(await retryCrop(crop,'6'));
     const summaryRow=best.findLast(row=>/^\s*(?:total|amount due|balance due)\b/i.test(row.text));
-    if((bestDocument.total==null||bestDocument.arithmetic.some(check=>check.path==='total')) && summaryRow){
+    if((bestDocument.total==null||[...bestDocument.arithmetic,...(bestDocument.arithmeticReview?.uncertain||[]).filter(check=>check.differenceCents!=null)].some(check=>check.path==='total')) && summaryRow){
      const y=Math.max(0,Math.floor(summaryRow.bbox.y0-canvas.height*.065));
      const end=Math.min(canvas.height,Math.ceil(summaryRow.bbox.y1+canvas.height*.026));
      const retryRows=await retryCrop({x:0,y,width:canvas.width,height:end-y},'6');

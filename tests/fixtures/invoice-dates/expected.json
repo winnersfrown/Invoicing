@@ -1,0 +1,19 @@
+{
+  "fr-facture.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "fr-stacked.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "fr-unlabeled.txt": {"issued": "2026-03-09", "due": null},
+  "us-invoice.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "us-named.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "us-net30.txt": {"issued": "2026-03-09", "due": null},
+  "uk-invoice.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "uk-taxpoint.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "de-rechnung.txt": {"issued": "2026-03-03", "due": "2026-04-02"},
+  "es-factura.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "nl-factuur.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "it-fattura.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "pt-fatura.txt": {"issued": "2026-03-09", "due": "2026-04-08"},
+  "settled.txt": {"issued": "2026-05-04", "due": "2026-05-19"},
+  "ambiguous.txt": {"issued": "2026-05-04", "due": null, "ambiguous": ["issued"]},
+  "due-before.txt": {"issued": "2026-03-09", "due": "2026-03-01"},
+  "invalid.txt": {"issued": null, "due": null}
+}

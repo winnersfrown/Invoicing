@@ -1,0 +1,4 @@
+Invoice No: A-1
+Invoice date: 04/05/2026
+Due date: 19/05/2026
+Total: 100.00

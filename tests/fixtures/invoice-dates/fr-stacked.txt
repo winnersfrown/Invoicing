@@ -1,0 +1,6 @@
+FACTURE
+Date de facture
+09/03/2026
+Date d'échéance
+08/04/2026
+Montant TTC : 300,00 €

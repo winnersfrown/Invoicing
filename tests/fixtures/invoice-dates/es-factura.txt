@@ -1,0 +1,6 @@
+FACTURA
+Fecha de pedido: 01/03/2026
+Fecha de entrega: 05/03/2026
+Fecha de factura: 9 de marzo de 2026
+Vencimiento: 08/04/2026
+Total: 50,00 €

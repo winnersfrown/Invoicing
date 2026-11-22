@@ -1,5 +1,5 @@
 import {isCurrency} from './invoice-money.js';
-import {readInvoiceDate} from './invoice-dates.js';
+import {readInvoiceDate, findDate, scanDates, dateOrder, resolveDate} from './invoice-dates.js';
 
 // Read identity fields independently of table rows. A PDF/OCR baseline can contain
 // the buyer block on the left and the invoice or PO reference on the right.
@@ -12,11 +12,13 @@ const patterns = {
   currency: String.raw`(?:invoice\s+)?currency(?:\s+code)?`,
   payee: String.raw`(?:bank\s+)?account\s+(?:holder|name)|payee(?:\s+name)?|beneficiary(?:\s+name)?`,
   customer: String.raw`(?:bill(?:ed)?\s+to|customer(?:\s+name)?)`,
-  date: String.raw`(?:invoice\s+date|issue\s+date|date\s+issued|issued\s+on|date(?=\s*[:#]|\s+\d))`,
-  due: String.raw`(?:due\s+date|payment\s+due|pay\s+by|due(?=\s*[:#]|\s+\d))`,
+  // Issue, due and other (order, delivery, period) date labels in en/fr/de/es/nl/it/pt.
+  date: String.raw`(?:invoice\s+date|date\s+of\s+invoice|issue\s+date|date\s+issued|issued\s+on|issued(?=\s*[:#]|\s+\d)|billing\s+date|tax\s+point(?:\s+date)?|date\s+(?:de\s+(?:la\s+)?)?factur(?:e|ation)|date\s+d['’]\s*[ée]mission|rechnungsdatum|ausstellungsdatum|belegdatum|fecha\s+(?:de\s+)?(?:factura|emisi[oó]n|expedici[oó]n)|factuurdatum|data\s+(?:della\s+)?fattura|data\s+(?:di\s+)?emissione|data\s+documento|data\s+da\s+fatura|data\s+de\s+emiss[aã]o|(?:date|datum|fecha|data)(?=\s*[:#]|\s+\d))`,
+  due: String.raw`(?:payment\s+due\s+date|due\s+date|payment\s+due|pay(?:able)?\s+by|due\s+by|due(?=\s*[:#]|\s+\d)|date\s+d['’]\s*[ée]ch[ée]ance|[ée]ch[ée]ance|date\s+limite\s+de\s+paiement|f[äa]llig(?:keitsdatum|\s+am|\s+bis)?|zahlbar\s+bis|fecha\s+(?:de\s+)?vencimiento|vencimiento|fecha\s+l[ií]mite\s+de\s+pago|vervaldatum|uiterste\s+betaaldatum|te\s+betalen\s+voor|data\s+(?:di\s+)?scadenza|scadenza|data\s+de\s+vencimento|vencimento)`,
+  otherDate: String.raw`(?:(?:order|po|purchase\s+order|delivery|ship(?:ping|ment)?|dispatch|service|supply)\s+date|date\s+(?:of\s+)?(?:order|delivery|shipment|supply|service)|date\s+shipped|(?:billing|service|invoice)\s+period|period|date\s+de\s+(?:commande|livraison)|p[ée]riode|lieferdatum|leistungsdatum|bestelldatum|auftragsdatum|leistungszeitraum|fecha\s+de\s+(?:pedido|entrega)|periodo|leverdatum|besteldatum|orderdatum|data\s+(?:di\s+)?(?:consegna|ordine)|data\s+(?:de|da)\s+(?:entrega|encomenda))`,
   other: String.raw`(?:(?:ship(?:ped)?|deliver(?:ed)?)\s+to|(?:supplier|vendor)\s+(?:inv(?:oice)?\.?\s*(?:number|no\.?|#)|id)|account\s+(?:no\.?|number)|payment\s+terms)`
 };
-const order = ['other', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
+const order = ['other', 'otherDate', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
 const combined = order.map(key => '(' + patterns[key] + ')').join('|');
 const labels = new RegExp(String.raw`(?:^|\s)(?:${combined})(?=\s|[:#=]|(?<=[.#])\d|$)`, 'gi');
 const id = /^[\p{L}\d][\p{L}\d./_-]*$/u;
@@ -50,6 +52,42 @@ function alignedValue(part, below) {
   if (part.x == null || below[0]?.x == null) return below.length === 1 ? below[0] : null;
   return below.filter(p => Math.abs(p.x - part.x) <= 16).sort((a,b) => Math.abs(a.x-part.x)-Math.abs(b.x-part.x))[0];
 }
+const labelKey = match => order[match.slice(1).findIndex(v => v !== undefined)];
+// Lower rank wins: a specific invoice-date label, then a bare "Date", then the tax point.
+const rank = hit => /^tax\s+point/i.test(hit.label) ? 2 : /^(?:date|datum|fecha|data)$/i.test(hit.label) ? 1 : 0;
+function setDate(set, fields, hit, dayOrder, support = 'supported', note = '') {
+  const resolved = resolveDate(hit.token, dayOrder);
+  if (!resolved) return; // Not a calendar date (31/02/2026): never rolled over.
+  const weak = hit.token.uncertain || resolved.weak || !resolved.value;
+  const reason = resolved.value ? [note, resolved.reason].filter(Boolean).join(' ') : resolved.reason;
+  set(hit.key, resolved.value ?? '', hit.source, weak ? 'uncertain' : support, reason);
+  const field = fields[hit.key];
+  if (field.sourceText !== undefined) return; // Conflict path: keep the first source.
+  Object.assign(field, {sourceText: hit.token.text, label: hit.label});
+  if (!resolved.value) Object.assign(field, {value: null, needsConfirmation: true, candidates: resolved.candidates});
+}
+function readDates(rows, hits, inferred, set, fields) {
+  const dayOrder = dateOrder(rows.map(r => r.text).join('\n'));
+  const best = key => {
+    const list = hits.filter(h => h.key === key && resolveDate(h.token, dayOrder) !== null);
+    const top = Math.min(...list.map(rank));
+    return list.filter(h => rank(h) === top);
+  };
+  for (const hit of best('due')) setDate(set, fields, hit, dayOrder);
+  const issued = best('date');
+  for (const hit of issued) setDate(set, fields, hit, dayOrder);
+  if (issued.length || hits.some(h => h.key === 'date')) return;
+  if (inferred) return setDate(set, fields, inferred, dayOrder, 'uncertain', 'Date printed below the invoice number. Confirm it is the invoice date.');
+  // ponytail: first lone date near the top; a layout-aware header model would do better.
+  for (const row of rows.slice(0, 25)) {
+    const found = scanDates(row.text);
+    // A two-digit-year number such as a phone fragment (01.23.45) is too weak without a label.
+    if (found.length !== 1 || found[0].y4 === false || findLabels(row.text).some(m => ['due', 'otherDate', 'date'].includes(labelKey(m)))) continue;
+    const hit = {key: 'date', token: found[0], label: '', source: row};
+    if (!resolveDate(hit.token, dayOrder)) continue;
+    return setDate(set, fields, hit, dayOrder, 'uncertain', 'No date label found; this is the first lone date near the top of the document. Confirm it is the invoice date.');
+  }
+}
 function findLabels(text) {
   return [...text.matchAll(labels)].filter(match => {
     if (!match.index) return true;
@@ -63,13 +101,15 @@ export function readDocumentMetadata(rows, kind, fields, set) {
   const columns = rows.map(parts);
   const payees = [], headings = [], letterheads = [];
   let inBuyerBlock = false;
+  const dateHits = [];
   let invoiceNumberPosition, inferredDate;
   for (const [i, row] of rows.entries()) {
     const cells = columns[i];
     for (const [j, cell] of cells.entries()) {
       const matches = findLabels(cell.text);
       for (const [n, match] of matches.entries()) {
-        const key = order[match.slice(1).findIndex(v => v !== undefined)];
+        const key = labelKey(match);
+        if (key === 'otherDate') continue;
         if (key === 'other') {
           if (/(?:ship(?:ped)?|deliver(?:ed)?)\s+to/i.test(match[0])) inBuyerBlock = true;
           continue;
@@ -88,8 +128,8 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         } else if (key === 'vendor' && !/^[:#=–-]/.test(remainder)
             && !/name|issued by|sold by|billed by/i.test(match[0]) && match.index !== 0) continue;
         if (key === 'date' || key === 'due') {
-          const parsed = readInvoiceDate(value, row.method);
-          if (parsed) set(key, parsed.value, source, parsed.uncertain ? 'uncertain' : 'supported');
+          const token = findDate(value, row.method);
+          if (token) dateHits.push({key, token, source, label: match[0].trim()});
           continue;
         }
         if (key === 'customer' && readInvoiceDate(value, row.method)) continue;
@@ -107,8 +147,8 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         const header = invoiceNumberPosition.cell;
         // Right-aligned metadata often has a different left edge on each row.
         const sameColumn = cell.x == null ? cells.length === 1 : Math.abs(cell.right - header.right) <= 25;
-        const parsed = sameColumn && readInvoiceDate(value, row.method);
-        if (parsed && !inferredDate) inferredDate = {value: parsed.value, source: {...row, sourceRows: [invoiceNumberPosition.row, row]} };
+        const token = sameColumn && findDate(value, row.method);
+        if (token?.whole && !inferredDate) inferredDate = {key: 'date', token, label: '', source: {...row, sourceRows: [invoiceNumberPosition.row, row]}};
       }
       if (i < 6 && !inBuyerBlock && !matches.length) {
         const legalName = /\b(?:LLC|Ltd|Limited|Inc|GmbH|Corporation|Company|Co|CC|PLC|LLP|Pty|KG|AG|Sarl|BV)\b\.?$/i;
@@ -128,9 +168,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
     }
 
   }
-  if (!fields.date && inferredDate) {
-    set('date', inferredDate.value, inferredDate.source, 'uncertain', 'Date printed below the invoice number. Confirm it is the invoice date.');
-  }
+  readDates(rows, dateHits, inferredDate, set, fields);
   const candidates = headings.length ? headings : letterheads;
   const uniqueHeadings = new Map(candidates.map(candidate=>[candidate.value,candidate]));
   if (!fields.vendor && uniqueHeadings.size === 1) {
