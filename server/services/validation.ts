@@ -1,5 +1,6 @@
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
+import { invoiceDateIssue } from '../../dist/invoice-dates.js';
 import { normalizeVendor, similarSupplier } from '../../dist/supplier.js';
 import type { DiscrepancyType, InvoiceStatus, Severity } from '../contracts/index.ts';
 import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type PurchaseOrder } from '../db/index.ts';
@@ -58,6 +59,13 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
     out.push({ type: 'potential_extraction_error', fields: [], expected: 'All required fields read with confidence',
       observed: [missing.length ? `missing: ${missing.join(', ')}` : '', uncertain.length ? `uncertain: ${uncertain.join(', ')}` : ''].filter(Boolean).join('; '),
       difference: null, evidence: { check: 'extraction', missing, uncertain, method: ex.method ?? null } });
+  }
+
+  const dateIssue = invoiceDateIssue(inv.invoice_date, inv.due_date);
+  if (dateIssue) {
+    out.push({ type: 'potential_extraction_error', fields: ['invoice_date', 'due_date'],
+      expected: 'Payment due date on or after invoice date', observed: dateIssue, difference: null,
+      evidence: { check: 'date_order', invoice_date: inv.invoice_date, due_date: inv.due_date } });
   }
 
   if (inv.currency && (inv.currency !== SUPPORTED_CURRENCY || (po && po.currency !== inv.currency))) {

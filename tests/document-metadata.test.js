@@ -68,3 +68,42 @@ test('signed-in ingestion retains source-supported currency and flags a suggeste
   assert.ok(out.extraction.uncertain.includes('supplier_name'));
   assert.equal(out.po_reference,'PO-9');
 });
+
+test('two-column image OCR reads customer and dates and keeps item descriptions out of the SKU field', async () => {
+  const {invoiceDateIssue} = await import('../dist/invoice-dates.js');
+  const rows = [
+    [['Billed to:',116],['Invoice No. 12345',828]],
+    [['Example Customer',116],['30]uly 2025',880]],
+    [['Item',116],['Quantity',532],['Unit Price',690],['Total',921]],
+    [['White',113],['Basic',183],['Tank',242],['Top',299],['2',532],['$80',690],['160',942]],
+    [['Denim Jacket',113],['1',531],['$320',688],['320',941]],
+    [['Bamboo Underwear',113],['3',529],['$50',688],['150',942]],
+    [['Striped Pants',114],['1',533],['$240',690],['240',941]],
+    [['Subtotal',689],['870',941]], [['Tax (10%)',687],['$87',939]], [['Total',689],['$957',922]],
+    [['Account Name: Example Supplier',114]], [['Pay by: 10 July 2025',116]]
+  ].map(cells => ({text: cells.map(([text])=>text).join(' '), page:1, method:'ocr', ocrConfidence:95,
+    tokens:cells.map(([text,x])=>({text,x,width:text.length*11}))}));
+  const d=parseLayoutText('', 'invoice', rows);
+  assert.deepEqual([d.vendor,d.customer,d.number,d.poNumber,d.date,d.due],['Example Supplier','Example Customer','12345','','2025-07-30','2025-07-10']);
+  assert.deepEqual(d.lines.map(l=>[l.sku,l.description,l.quantity,l.unitPrice,l.amount]),[
+    ['','White Basic Tank Top',2,80,160], ['','Denim Jacket',1,320,320],
+    ['','Bamboo Underwear',3,50,150], ['','Striped Pants',1,240,240]
+  ]);
+  assert.deepEqual([d.subtotal,d.taxRate,d.tax,d.total,d.arithmetic],[870,10,87,957,[]]);
+  assert.match(invoiceDateIssue(d.date,d.due), /20 days before invoice date/);
+});
+
+test('date check accepts same-day terms, ignores missing or invalid dates, and tracks edits', async () => {
+  const {invoiceDateIssue,readInvoiceDate}=await import('../dist/invoice-dates.js');
+  const {issuesFor}=await import('../dist/engine.js');
+  assert.equal(readInvoiceDate('July 30, 2025').value,'2025-07-30');
+  assert.equal(readInvoiceDate('31 February 2025'),null);
+  assert.deepEqual(readInvoiceDate('30]uly 2025','ocr'),{value:'2025-07-30',uncertain:true});
+  assert.equal(readInvoiceDate('30]uly 2025','pdf-text'),null);
+  assert.equal(invoiceDateIssue('2025-07-30','2025-07-30'),'');
+  assert.equal(invoiceDateIssue('', '2025-07-10'),'');
+  const doc={id:'test',fields:{vendor:'Example',number:'INV-10',date:'2025-07-30',due:'2025-07-10',subtotal:870,tax:87,total:957}};
+  assert.match(issuesFor(doc,[doc]).join(' '), /20 days before invoice date/);
+  doc.fields.due='2025-07-31';
+  assert.deepEqual(issuesFor(doc,[doc]),[]);
+});

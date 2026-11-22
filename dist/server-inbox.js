@@ -61,11 +61,15 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
     else uncertain.push(field);
   }
   const present = Object.keys(FIELDS).length - missing.length;
+  const supportLabels = {...read?.extraction?.fields};
+  const customer = text(final?.customer)?.slice(0, 250);
+  if (customer) supportLabels.customer = {...supportLabels.customer, reviewedValue: customer};
+
   return {
     supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.date ?? final?.issued), due_date: isoDate(final?.due),
     po_reference: out.po_reference, currency: out.currency, subtotal: toMoneyString(final?.subtotal), tax_amount: out.tax_amount, total_amount: out.total_amount,
     lines: out.lines ?? [], source_text: sourceText == null ? null : String(sourceText).slice(0, 200000),
-    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, source_refs: sourceReferences(read), support_labels: read?.extraction?.fields ?? {}, confidence_meaning: 'Heuristic field agreement, not a calibrated probability.'},
+    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, source_refs: sourceReferences(read), support_labels: supportLabels, confidence_meaning: 'Heuristic field agreement, not a calibrated probability.'},
   };
 }
 const FIELD_KEYS={supplier_name:'vendor',invoice_number:'number',po_reference:'poNumber',currency:'currency',tax_amount:'tax',total_amount:'total'};
@@ -238,6 +242,7 @@ export function createServerInbox({api, root, user}) {
 
   function renderDetail(d, discrepancies, investigations) {
     const {inv, po} = d, cur = inv.currency ?? 'USD';
+    const customer = inv.extraction?.support_labels?.customer?.reviewedValue;
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
     const original = invoices.find(x => x.id === inv.supersedes_invoice_id), replacement = invoices.find(x => x.supersedes_invoice_id === inv.id);
@@ -254,6 +259,7 @@ export function createServerInbox({api, root, user}) {
       replacement && link(replacement, 'Superseded. Replaced by corrected invoice'),
       !original && inv.supersedes_invoice_id && h('p', {class: 'check'}, 'Corrected invoice. It replaces an earlier invoice.'),
       h('table', {class: 'field-table'}, h('tbody', {},
+        typeof customer === 'string' && field('customer', 'Customer (billed to)', customer),
         field('invoice_number', 'Invoice number', inv.invoice_number), field('invoice_date', 'Invoice date', inv.invoice_date), field('due_date', 'Due date', inv.due_date),
         field('po_reference', 'PO reference', inv.po_reference), field('currency', 'Currency', inv.currency),
         field('subtotal', 'Subtotal', inv.subtotal && formatMoney(inv.subtotal, cur)), field('tax_amount', 'Tax', inv.tax_amount && formatMoney(inv.tax_amount, cur)),
