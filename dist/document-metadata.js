@@ -1,3 +1,4 @@
+import {isCurrency} from './invoice-money.js';
 import {readInvoiceDate} from './invoice-dates.js';
 
 // Read identity fields independently of table rows. A PDF/OCR baseline can contain
@@ -13,15 +14,12 @@ const patterns = {
   customer: String.raw`(?:bill(?:ed)?\s+to|customer(?:\s+name)?)`,
   date: String.raw`(?:invoice\s+date|issue\s+date|date\s+issued|issued\s+on|date(?=\s*[:#]|\s+\d))`,
   due: String.raw`(?:due\s+date|payment\s+due|pay\s+by|due(?=\s*[:#]|\s+\d))`,
-  other: String.raw`(?:(?:ship(?:ped)?|deliver(?:ed)?)\s+to|supplier\s+id|vendor\s+id|account\s+(?:no\.?|number)|payment\s+terms)`
+  other: String.raw`(?:(?:ship(?:ped)?|deliver(?:ed)?)\s+to|(?:supplier|vendor)\s+(?:inv(?:oice)?\.?\s*(?:number|no\.?|#)|id)|account\s+(?:no\.?|number)|payment\s+terms)`
 };
 const order = ['other', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
 const combined = order.map(key => '(' + patterns[key] + ')').join('|');
 const labels = new RegExp(String.raw`(?:^|\s)(?:${combined})(?=\s|[:#=]|(?<=[.#])\d|$)`, 'gi');
 const id = /^[\p{L}\d][\p{L}\d./_-]*$/u;
-const moneyCodes = new Set(typeof Intl.supportedValuesOf === 'function'
-  ? Intl.supportedValuesOf('currency') : ['USD','CAD','AUD','NZD','SGD','HKD','EUR','GBP','JPY','CHF','INR','CNY','MXN']);
-const currencySymbols = {'US$':'USD','USD$':'USD','CA$':'CAD','C$':'CAD','AU$':'AUD','A$':'AUD','NZ$':'NZD','HK$':'HKD','S$':'SGD','€':'EUR','₹':'INR'};
 function parts(row) {
   const tokens = row.tokens || [];
   if (!tokens.length) return [{text: row.text.trim()}];
@@ -45,7 +43,7 @@ function validValue(key, value) {
     const candidate = value.split(/\s{2,}|\s+\|/)[0].trim();
     return (id.test(candidate) || /^(?:PO|INV)[ -]\d[\w./-]*$/i.test(candidate)) && !/^(?:number|no\.?|ref|date|total|information)$/i.test(candidate) ? candidate : '';
   }
-  if (key === 'currency') return moneyCodes.has(value.toUpperCase()) ? value.toUpperCase() : '';
+  if (key === 'currency') return isCurrency(value.toUpperCase()) ? value.toUpperCase() : '';
   return /\p{L}/u.test(value) && !/^[\d+]|@/.test(value) ? value : '';
 }
 function alignedValue(part, below) {
@@ -63,7 +61,7 @@ function findLabels(text) {
 }
 export function readDocumentMetadata(rows, kind, fields, set) {
   const columns = rows.map(parts);
-  const payees = [], headings = [], letterheads = [], dollarRows = [];
+  const payees = [], headings = [], letterheads = [];
   let inBuyerBlock = false;
   let invoiceNumberPosition, inferredDate;
   for (const [i, row] of rows.entries()) {
@@ -103,7 +101,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           if (key === 'number') invoiceNumberPosition = {i, cell, row};
         }
       }
-      const value = cell.text.trim();
+      const value = cell.text.trim().replace(/\s+(?:tax\s+)?invoice$/i,'');
       const nearbyNumber = invoiceNumberPosition?.i === i - 1 && invoiceNumberPosition.row.page === row.page;
       if (kind === 'invoice' && nearbyNumber) {
         const header = invoiceNumberPosition.cell;
@@ -128,15 +126,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
     if (/^invoice$/i.test(row.text.trim()) && rows[i+1]?.page === row.page && /^[\w/-]*\d[\w/-]*$/.test(rows[i+1].text.trim()) && !/^\d{4}-\d\d-\d\d$/.test(rows[i+1].text.trim())) {
       set('number', rows[i+1].text.trim(), {...row, sourceRows:[row,rows[i+1]]}, 'uncertain');
     }
-    const t = row.text;
-    for (const m of t.matchAll(/\b([A-Z]{3})(?=\s*[$€£]?\s*\d)|\d[\d,.]*\s+([A-Z]{3})\b/g)) {
-      const code = m[1] || m[2];
-      if (moneyCodes.has(code)) set('currency', code, row);
-    }
-    const totalCode = t.match(/\b(?:total|amount due|balance due)\s*\(([a-z]{3})\)/i)?.[1]?.toUpperCase();
-    if (totalCode && moneyCodes.has(totalCode)) set('currency', totalCode, row);
-    for (const m of t.matchAll(/(?:\b(?:USD|US|CA|C|AU|A|NZ|HK|S)\$|[€₹])(?=\s*\d)/g)) set('currency',currencySymbols[m[0]],row);
-    if (/\$\s*\d/.test(t)) dollarRows.push(row);
+
   }
   if (!fields.date && inferredDate) {
     set('date', inferredDate.value, inferredDate.source, 'uncertain', 'Date printed below the invoice number. Confirm it is the invoice date.');
@@ -149,8 +139,5 @@ export function readDocumentMetadata(rows, kind, fields, set) {
   }
   if (!fields.vendor && kind === 'invoice' && new Set(payees.map(p=>p.value)).size === 1) {
     set('vendor',payees[0].value,payees[0].source,'uncertain','Payment recipient shown on the document. Confirm this is also the supplier.');
-  }
-  if (!fields.currency && dollarRows.length) {
-    set('currency','',dollarRows.at(-1),'uncertain','The $ symbol is printed without a currency code. Confirm USD, CAD, AUD, or the applicable currency.');
   }
 }
