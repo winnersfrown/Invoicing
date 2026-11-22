@@ -9,9 +9,14 @@ function utcDay(value) {
   return Number.isFinite(time) && new Date(time).toISOString().slice(0,10) === value ? time : null;
 }
 
-export function readInvoiceDate(value) {
+export function readInvoiceDate(value, method) {
+  const original = value;
+  if (method === 'ocr') {
+    // OCR can merge the day into a misread capital J, for example "30]uly".
+    value = value.replace(/^(\d{1,2})\s*\](an(?:uary)?|un(?:e)?|ul(?:y)?)(?=\s+\d{4}$)/i, '$1 J$2');
+  }
   let year, monthNumber, day;
-  let uncertain = false;
+  let uncertain = value !== original;
   if (utcDay(value) !== null) return {value, uncertain};
   const numeric = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   const first = value.match(dayFirst);

@@ -73,7 +73,7 @@ test('two-column image OCR reads customer and dates and keeps item descriptions 
   const {invoiceDateIssue} = await import('../dist/invoice-dates.js');
   const rows = [
     [['Billed to:',116],['Invoice No. 12345',828]],
-    [['Example Customer',116],['30 July 2025',863]],
+    [['Example Customer',116],['30]uly 2025',880]],
     [['Item',116],['Quantity',532],['Unit Price',690],['Total',921]],
     [['White',113],['Basic',183],['Tank',242],['Top',299],['2',532],['$80',690],['160',942]],
     [['Denim Jacket',113],['1',531],['$320',688],['320',941]],
@@ -98,6 +98,8 @@ test('date check accepts same-day terms, ignores missing or invalid dates, and t
   const {issuesFor}=await import('../dist/engine.js');
   assert.equal(readInvoiceDate('July 30, 2025').value,'2025-07-30');
   assert.equal(readInvoiceDate('31 February 2025'),null);
+  assert.deepEqual(readInvoiceDate('30]uly 2025','ocr'),{value:'2025-07-30',uncertain:true});
+  assert.equal(readInvoiceDate('30]uly 2025','pdf-text'),null);
   assert.equal(invoiceDateIssue('2025-07-30','2025-07-30'),'');
   assert.equal(invoiceDateIssue('', '2025-07-10'),'');
   const doc={id:'test',fields:{vendor:'Example',number:'INV-10',date:'2025-07-30',due:'2025-07-10',subtotal:870,tax:87,total:957}};

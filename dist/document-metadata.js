@@ -90,11 +90,11 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         } else if (key === 'vendor' && !/^[:#=–-]/.test(remainder)
             && !/name|issued by|sold by|billed by/i.test(match[0]) && match.index !== 0) continue;
         if (key === 'date' || key === 'due') {
-          const parsed = readInvoiceDate(value);
+          const parsed = readInvoiceDate(value, row.method);
           if (parsed) set(key, parsed.value, source, parsed.uncertain ? 'uncertain' : 'supported');
           continue;
         }
-        if (key === 'customer' && readInvoiceDate(value)) continue;
+        if (key === 'customer' && readInvoiceDate(value, row.method)) continue;
         value = validValue(key, value);
         if (!value) continue;
         if (key === 'payee') payees.push({value, source});
@@ -109,7 +109,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         const header = invoiceNumberPosition.cell;
         // Right-aligned metadata often has a different left edge on each row.
         const sameColumn = cell.x == null ? cells.length === 1 : Math.abs(cell.right - header.right) <= 25;
-        const parsed = sameColumn && readInvoiceDate(value);
+        const parsed = sameColumn && readInvoiceDate(value, row.method);
         if (parsed && !inferredDate) inferredDate = {value: parsed.value, source: {...row, sourceRows: [invoiceNumberPosition.row, row]} };
       }
       if (i < 6 && !inBuyerBlock && !matches.length && /\b(?:LLC|Ltd|Limited|Inc|GmbH|Corporation|Company|Co)\b\.?$/i.test(value)) headings.push({value, source:row});
