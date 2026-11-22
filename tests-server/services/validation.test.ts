@@ -179,6 +179,79 @@ describe('deterministic checks', () => {
     expect(ds[0]).toMatchObject({ expected_value: 'USD', observed_value: 'EUR' });
   });
 
+  it('matches EUR documents and stores a normalized currency code', async () => {
+    const org = await orgWithPo(poBody({ currency: 'eur' }));
+    const inv = await upload(org, { ...clean, currency: 'EUR' });
+    expect(inv).toMatchObject({ currency: 'EUR', status: 'validated' });
+    expect(await discrepancies(org, inv.id)).toHaveLength(0);
+  });
+
+  it('leaves missing tax unknown and requests review instead of reporting false differences', async () => {
+    const org = await orgWithPo(poBody({ tax_amount: '20.00', total_amount: '500.00' }));
+    const inv = await upload(org, { ...clean, tax_amount: null, total_amount: '500.00' });
+    expect(inv).toMatchObject({ tax_amount: null, status: 'needs_extraction_review' });
+    const ds = await discrepancies(org, inv.id);
+    expect(ds.map(d => d.discrepancy_type)).toEqual(['potential_extraction_error']);
+    expect(ds[0].deterministic_evidence).toMatchObject({ check: 'financial_inputs', missing: ['tax_amount'] });
+    expect(ds[0].difference_amount).toBeNull();
+  });
+
+  it('does not add incomplete line taxes or substitute zero for an unreadable charge', async () => {
+    const org = await orgWithPo();
+    const inv = await upload(org, {
+      ...clean, po_reference: null, tax_amount: '20.00', total_amount: '510.00',
+      lines: [{ ...clean.lines[0], quantity: 6, line_total: '240.00', tax_amount: '10.00' },
+        { ...clean.lines[0], sku: 'WID-2', quantity: 6, line_total: '240.00' }],
+      extraction: { method: 'manual', confidence: null, support_labels: {
+        adjustments: { reviewedValue: [{ kind: 'freight', cents: null, appliesTo: 'total' }] },
+      } },
+    });
+    const ds = await discrepancies(org, inv.id);
+    expect(ds.map(d => d.discrepancy_type).sort()).toEqual(['missing_purchase_order', 'potential_extraction_error']);
+    expect(ds.find(d => d.discrepancy_type === 'potential_extraction_error')?.deterministic_evidence)
+      .toMatchObject({ check: 'financial_inputs', missing: ['adjustments'] });
+  });
+
+  const dualExtraction = { method: 'manual', confidence: null, support_labels: {
+    pricingCurrency: { reviewedValue: 'EUR' },
+    pricingTotal: { reviewedValue: '480.00' },
+    exchangeRate: { reviewedValue: { base: 'EUR', quote: 'USD', rate: 1.2, decimals: 4 } },
+  } };
+
+  it('keeps a mixed-currency invoice out of direct PO comparisons even with the same payable currency', async () => {
+    const org = await orgWithPo();
+    const inv = await upload(org, { ...clean, total_amount: '576.00', extraction: dualExtraction });
+    const ds = await discrepancies(org, inv.id);
+    expect(ds.map(d => d.discrepancy_type)).toEqual(['potential_extraction_error']);
+    expect(ds[0].deterministic_evidence).toMatchObject({ check: 'mixed_currency_po', pricing_currency: 'EUR', invoice_currency: 'USD' });
+    expect(ds[0].difference_amount).toBeNull();
+  });
+
+  it('flags a printed conversion that disagrees beyond the exchange-rate rounding tolerance', async () => {
+    const org = await orgWithPo();
+    const inv = await upload(org, { ...clean, total_amount: '586.00', extraction: dualExtraction });
+    const ds = await discrepancies(org, inv.id);
+    expect(ds.find(d => (d.deterministic_evidence as any).check === 'currency_conversion')).toMatchObject({
+      discrepancy_type: 'incorrect_total', expected_value: '576.00', difference_amount: '10.00',
+      deterministic_evidence: { currency: 'USD', pricing_currency: 'EUR' },
+    });
+  });
+
+  it('labels internal mixed-currency arithmetic findings in the pricing currency', async () => {
+    const org = await orgWithPo();
+    const inv = await upload(org, {
+      ...clean, total_amount: '588.00', extraction: { ...dualExtraction, support_labels: {
+        ...dualExtraction.support_labels, pricingTotal: { reviewedValue: '490.00' },
+      } },
+    });
+    const ds = await discrepancies(org, inv.id);
+    expect(ds.find(d => (d.deterministic_evidence as any).check === 'total')).toMatchObject({
+      discrepancy_type: 'incorrect_total', expected_value: '480.00', difference_amount: '10.00',
+      deterministic_evidence: { currency: 'EUR' },
+    });
+    expect(ds.some(d => (d.deterministic_evidence as any).check === 'currency_conversion')).toBe(false);
+  });
+
   it('a missing extracted field needs extraction review, not a real discrepancy', async () => {
     const org = await orgWithPo();
     const ex = { method: 'ocr', confidence: 0.6, field_confidence: {}, missing: ['total_amount'], uncertain: [], source_refs: {} };

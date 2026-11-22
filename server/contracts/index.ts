@@ -83,7 +83,7 @@ export const ExtractedInvoice = z.object({
   invoice_date: IsoDate.nullable(),
   due_date: IsoDate.nullable(),
   po_reference: Text(150).nullable(),
-  currency: z.string().length(3).nullable(),
+  currency: z.string().trim().regex(/^[a-z]{3}$/i).toUpperCase().nullable(),
   subtotal: MoneyString.nullable(),
   tax_amount: MoneyString.nullable(),
   total_amount: MoneyString.nullable(),
@@ -117,7 +117,7 @@ export const CreateInvoiceRequest = z.object({
 export const CreatePurchaseOrderRequest = z.object({
   supplier_name: Text(150),
   purchase_order_number: Text(150),
-  currency: z.string().length(3),
+  currency: z.string().trim().regex(/^[a-z]{3}$/i).toUpperCase(),
   tax_amount: MoneyString,
   total_amount: MoneyString,
   lines: z.array(ExtractedLine).min(1).max(100),

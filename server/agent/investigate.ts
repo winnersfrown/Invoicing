@@ -86,7 +86,9 @@ async function run(db: Db, model: Model, limits: Limits, orgId: string, id: stri
     if (!parsed.ok) throw new Stop('The model answer did not match the required format. Retry the investigation.');
     if (ac.signal.aborted) await timedOut;
 
-    const result: InvestigationResult = verifyOutput(parsed.output, { investigationId: id, invoiceId: d.invoice_id, currency: invoice.currency, discrepancy: d as never, evidence: ctx.evidence });
+    const evidenceCurrency = (d.deterministic_evidence as { currency?: unknown })?.currency;
+    const currency = typeof evidenceCurrency === 'string' && /^[A-Z]{3}$/.test(evidenceCurrency) ? evidenceCurrency : invoice.currency;
+    const result: InvestigationResult = verifyOutput(parsed.output, { investigationId: id, invoiceId: d.invoice_id, currency, discrepancy: d as never, evidence: ctx.evidence });
     await finish(db, model, orgId, id, inv.discrepancy_id, {
       status: result.status, findings: result, evidence_references: result.evidence.map((e) => e.id),
       recommended_action: result.recommended_action, confidence: result.confidence, error: null, usage: usageDto() });

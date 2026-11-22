@@ -1,4 +1,4 @@
-import {netLineCents} from '../../dist/arithmetic.js';
+import { adjustmentCents, convertCents, netLineCents } from '../../dist/arithmetic.js';
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
 import { invoiceDateIssue } from '../../dist/invoice-dates.js';
@@ -8,7 +8,7 @@ import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type Pu
 import type { z } from 'zod';
 import { audit, type Actor } from './audit.ts';
 import { duplicateCandidates } from './duplicates.ts';
-import { compareWithPo, lineText, qtyText } from './matching.ts';
+import { compareWithPo, invoicePricingCurrency, lineText, qtyText } from './matching.ts';
 import { canonical, fail, notFound, sha256 } from './util.ts';
 
 type DType = z.infer<typeof DiscrepancyType>;
@@ -18,7 +18,6 @@ export type Finding = {
   difference: number | null; evidence: Record<string, unknown>; poId?: string | null;
 };
 
-const SUPPORTED_CURRENCY = 'USD';
 const LOW_CONFIDENCE = 0.7;
 export const OPEN_STATUSES_SQL = `('open', 'investigating', 'awaiting_supplier')`;
 const PROCESSABLE: Status[] = ['uploaded', 'needs_extraction_review', 'validated', 'exception'];
@@ -69,46 +68,85 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
       evidence: { check: 'date_order', invoice_date: inv.invoice_date, due_date: inv.due_date } });
   }
 
-  if (inv.currency && (inv.currency !== SUPPORTED_CURRENCY || (po && po.currency !== inv.currency))) {
-    out.push({ type: 'currency_mismatch', fields: ['currency'], expected: po?.currency ?? SUPPORTED_CURRENCY, observed: inv.currency, difference: null, poId,
-      evidence: { check: 'currency', invoice_currency: inv.currency, po_currency: po?.currency ?? null, supported_currencies: [SUPPORTED_CURRENCY] } });
+  const payableCurrency = inv.currency?.toUpperCase() ?? null;
+  const pricingCurrency = invoicePricingCurrency(inv);
+  const mixedCurrency = Boolean(payableCurrency && pricingCurrency && payableCurrency !== pricingCurrency);
+  const poCurrency = po?.currency.toUpperCase() ?? null;
+  if (payableCurrency && poCurrency && payableCurrency !== poCurrency) {
+    out.push({ type: 'currency_mismatch', fields: ['currency'], expected: poCurrency, observed: payableCurrency, difference: null, poId,
+      evidence: { check: 'currency', invoice_currency: payableCurrency, pricing_currency: pricingCurrency, po_currency: poCurrency } });
+  } else if (po && mixedCurrency) {
+    out.push({ type: 'potential_extraction_error', fields: ['currency'], expected: 'A single currency for PO comparison',
+      observed: `Invoice lines are priced in ${pricingCurrency} and payable in ${payableCurrency}. Verify against the PO before matching.`,
+      difference: null, poId, evidence: { check: 'mixed_currency_po', pricing_currency: pricingCurrency, invoice_currency: payableCurrency, po_currency: poCurrency } });
   }
 
   for (const l of inv.lines) {
     const computed = lineCents(l.qty_milli, l.unit_price);
     if (computed !== l.line_total) out.push({ type: 'line_arithmetic', fields: ['lines'], expected: toMoney(computed), observed: toMoney(l.line_total),
-      difference: l.line_total - computed, evidence: { check: 'line_arithmetic', line_id: l.id, line_number: l.line_number, line: lineText(l), computed: toMoney(computed) } });
+      difference: l.line_total - computed, evidence: { check: 'line_arithmetic', currency: pricingCurrency, line_id: l.id, line_number: l.line_number, line: lineText(l), computed: toMoney(computed) } });
   }
   const reviewedMoney = (field: string) => {
     const value: unknown = ex.support_labels?.[field]?.reviewedValue;
-    return typeof value === 'string' && /^\d{1,12}\.\d{2}$/.test(value) ? Math.round(Number(value)*100) : 0;
+    return typeof value === 'string' && /^-?\d{1,12}\.\d{2}$/.test(value) ? Math.round(Number(value) * 100) : null;
   };
   const shipping = reviewedMoney('shipping'), discount = reviewedMoney('discount');
-  // Reviewed adjustment list (signed cents, before the invoice total); older records fall back to shipping − discount.
   const listed: unknown = ex.support_labels?.adjustments?.reviewedValue;
-  const adjustments = Array.isArray(listed)
-    ? sum(listed.filter((a) => Number.isSafeInteger(a?.cents) && a.appliesTo !== 'balance').map((a) => a.cents as number))
-    : shipping - discount;
-  // Line items priced in another currency than the payable total: never add amounts across currencies.
-  const pricingCurrency: unknown = ex.support_labels?.pricingCurrency?.reviewedValue;
-  const mixedCurrency = typeof pricingCurrency === 'string' && pricingCurrency !== inv.currency;
-  const lineSum = netLineCents(sum(inv.lines.map((l) => l.line_total)),inv.subtotal,inv.tax_amount,ex.support_labels?.taxInclusive?.reviewedValue===true);
-  if (inv.subtotal != null && inv.lines.length && lineSum !== inv.subtotal) {
-    out.push({ type: 'incorrect_total', fields: ['subtotal', 'lines'], expected: toMoney(lineSum), observed: toMoney(inv.subtotal), difference: inv.subtotal - lineSum,
-      evidence: { check: 'subtotal', line_totals: toMoney(lineSum), subtotal: toMoney(inv.subtotal) } });
+  const adjustments = adjustmentCents({
+    shipping: shipping == null ? null : shipping / 100,
+    discount: discount == null ? null : discount / 100,
+    adjustments: Array.isArray(listed)
+      ? listed.map(a => ({ cents: a?.cents, appliesTo: a?.appliesTo === 'balance' ? 'balance' : 'total' }))
+      : undefined,
+  });
+  const taxInclusive = ex.support_labels?.taxInclusive?.reviewedValue === true;
+  const grossLines = sum(inv.lines.map(l => l.line_total));
+  const lineSum = netLineCents(grossLines, inv.subtotal, inv.tax_amount, taxInclusive);
+  const lineSubtotal = taxInclusive && inv.tax_amount == null && lineSum !== inv.subtotal ? null : lineSum;
+  if (inv.subtotal != null && inv.lines.length && lineSubtotal != null && lineSubtotal !== inv.subtotal) {
+    out.push({ type: 'incorrect_total', fields: ['subtotal', 'lines'], expected: toMoney(lineSubtotal), observed: toMoney(inv.subtotal), difference: inv.subtotal - lineSubtotal,
+      evidence: { check: 'subtotal', currency: pricingCurrency, line_totals: toMoney(lineSubtotal), subtotal: toMoney(inv.subtotal) } });
   }
-  const base = inv.subtotal ?? (inv.lines.length ? lineSum : null);
-  if (!mixedCurrency && inv.total_amount != null && base != null && base + (inv.tax_amount ?? 0) + adjustments !== inv.total_amount) {
-    const expected = base + (inv.tax_amount ?? 0) + adjustments;
-    out.push({ type: 'incorrect_total', fields: ['total_amount', 'subtotal', 'tax_amount'], expected: toMoney(expected), observed: toMoney(inv.total_amount),
-      difference: inv.total_amount - expected, evidence: { check: 'total', subtotal: toMoney(base), subtotal_source: inv.subtotal != null ? 'subtotal' : 'line_totals',
-        tax: toMoney(inv.tax_amount ?? 0), shipping: toMoney(shipping), discount: toMoney(discount), adjustments: toMoney(adjustments), total: toMoney(inv.total_amount) } });
+  const base = inv.subtotal ?? (inv.lines.length && !taxInclusive ? lineSum : null);
+  const pricedTotal = mixedCurrency ? reviewedMoney('pricingTotal') : inv.total_amount;
+  if (pricedTotal != null && base != null && inv.tax_amount != null && adjustments != null) {
+    const expected = base + inv.tax_amount + adjustments;
+    if (expected !== pricedTotal) out.push({ type: 'incorrect_total', fields: [mixedCurrency ? 'pricingTotal' : 'total_amount', inv.subtotal != null ? 'subtotal' : 'lines', 'tax_amount'],
+      expected: toMoney(expected), observed: toMoney(pricedTotal), difference: pricedTotal - expected,
+      evidence: { check: 'total', currency: pricingCurrency, subtotal: toMoney(base), subtotal_source: inv.subtotal != null ? 'subtotal' : 'line_totals',
+        tax: toMoney(inv.tax_amount), shipping: toMoney(shipping), discount: toMoney(discount), adjustments: toMoney(adjustments), total: toMoney(pricedTotal) } });
   }
-  const taxed = inv.lines.filter((l) => l.tax_amount != null);
-  if (taxed.length && inv.tax_amount != null && sum(taxed.map((l) => l.tax_amount!)) !== inv.tax_amount) {
-    const lineTax = sum(taxed.map((l) => l.tax_amount!));
-    out.push({ type: 'tax_mismatch', fields: ['tax_amount', 'lines'], expected: toMoney(lineTax), observed: toMoney(inv.tax_amount), difference: inv.tax_amount - lineTax,
-      evidence: { check: 'line_tax', line_tax: toMoney(lineTax), tax: toMoney(inv.tax_amount) } });
+  const taxNeeded = inv.tax_amount == null && (
+    (pricedTotal != null && base != null && adjustments != null && base + adjustments !== pricedTotal)
+    || (po && !mixedCurrency && payableCurrency === poCurrency && po.tax_amount !== 0));
+  const missingInputs = [taxNeeded && !missing.includes('tax_amount') ? 'tax_amount' : null, adjustments == null ? 'adjustments' : null].filter(Boolean);
+  if (missingInputs.length) out.push({ type: 'potential_extraction_error', fields: [],
+    expected: 'Amounts needed to complete validation', observed: `Missing or unreadable: ${missingInputs.join(', ')}`,
+    difference: null, evidence: { check: 'financial_inputs', missing: missingInputs } });
+
+  if (inv.lines.length && inv.tax_amount != null && inv.lines.every(l => l.tax_amount != null)) {
+    const lineTax = sum(inv.lines.map(l => l.tax_amount!));
+    if (lineTax !== inv.tax_amount) out.push({ type: 'tax_mismatch', fields: ['tax_amount', 'lines'], expected: toMoney(lineTax), observed: toMoney(inv.tax_amount), difference: inv.tax_amount - lineTax,
+      evidence: { check: 'line_tax', currency: pricingCurrency, line_tax: toMoney(lineTax), tax: toMoney(inv.tax_amount) } });
+  }
+
+  // A printed rate links two displayed totals. Unavailable or imprecise evidence goes to review.
+  if (mixedCurrency && inv.total_amount != null) {
+    const rate = ex.support_labels?.exchangeRate?.reviewedValue;
+    const conversion = pricedTotal != null && Number.isFinite(rate?.rate) && rate.rate > 0 && rate.rate <= 1_000_000
+      && Number.isInteger(rate.decimals) && rate.decimals >= 0 && rate.decimals <= 12
+      ? convertCents(pricedTotal, pricingCurrency, payableCurrency, rate) : null;
+    const converted = conversion && Number.isSafeInteger(conversion.cents) && Math.abs(conversion.cents) < 100_000_000_000_000 ? conversion : null;
+    const difference = converted == null ? null : inv.total_amount - converted.cents;
+    if (difference == null || Math.abs(difference) > 1) {
+      const confirmed = difference != null && converted != null && Math.abs(difference) > converted.toleranceCents;
+      out.push({ type: confirmed ? 'incorrect_total' : 'potential_extraction_error', fields: ['pricingTotal', 'exchangeRate', 'total_amount', 'currency'],
+        expected: converted ? toMoney(converted.cents) : 'Pricing total and a printed exchange rate',
+        observed: difference == null ? `Conversion from ${pricingCurrency} to ${payableCurrency} needs verification` : toMoney(inv.total_amount),
+        difference: confirmed ? difference : null,
+        evidence: { check: 'currency_conversion', currency: payableCurrency, pricing_currency: pricingCurrency, pricing_total: toMoney(pricedTotal),
+          rate: rate ?? null, rounding_tolerance_cents: converted?.toleranceCents ?? null } });
+    }
   }
 
   if (!inv.po_reference) {
@@ -140,9 +178,9 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
         else if (il.unit_price !== pl.unit_price) out.push({ ...base, type: 'unit_price_mismatch', expected: toMoney(pl.unit_price), observed: toMoney(il.unit_price) });
         else out.push({ ...base, type: 'quantity_mismatch', expected: qtyText(pl.qty_milli), observed: qtyText(il.qty_milli) });
       }
-      if (c.comparison.taxDifferenceCents !== 0) {
+      if (c.comparison.taxDifferenceCents) {
         const { taxDifferenceCents, differenceCents, invoiceTotal, poTotal } = c.comparison;
-        out.push({ type: 'tax_mismatch', fields: ['tax_amount'], expected: toMoney(po.tax_amount), observed: toMoney(inv.tax_amount ?? 0), difference: taxDifferenceCents, poId,
+        out.push({ type: 'tax_mismatch', fields: ['tax_amount'], expected: toMoney(po.tax_amount), observed: toMoney(inv.tax_amount), difference: taxDifferenceCents, poId,
           evidence: { engine: 'compareDocuments', taxDifferenceCents, differenceCents, invoiceTotal, poTotal } });
       }
     } else if (c.error && !out.some((f) => EXPLAINS_ENGINE_ERROR.has(f.type))) {

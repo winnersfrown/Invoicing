@@ -73,7 +73,7 @@ export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof Create
   return id;
 }
 
-/** Creates a PO the engine accepts (USD, whole quantities, lines + tax = total) and its supplier if new. Returns invoices waiting on it. */
+/** Creates a PO the engine accepts (currency code, whole quantities, lines + tax = total) and its supplier if new. Returns invoices waiting on it. */
 export async function createPurchaseOrder(db: Db, ctx: Ctx, req: z.infer<typeof CreatePurchaseOrderRequest>) {
   const lines = req.lines.map((l) => ({ ...l, ...lineRow(l) }));
   const tax = moneyToCents(req.tax_amount), total = moneyToCents(req.total_amount);

@@ -16,9 +16,13 @@ export function engineDoc(type: 'invoice' | 'purchase_order', d: Side) {
     tax: d.tax == null ? null : d.tax / 100, total: d.total == null ? null : d.total / 100,
   };
 }
-// A missing invoice tax is read as zero, matching the server's own total check.
-export const invoiceDoc = (inv: Invoice) => engineDoc('invoice', { number: inv.invoice_number, vendor: inv.supplier_name_raw, poNumber: inv.po_reference,
-  currency: inv.currency, lines: inv.lines, tax: inv.tax_amount ?? 0, total: inv.total_amount });
+export const invoicePricingCurrency = (inv: Invoice): string | null => {
+  const reviewed: unknown = inv.extraction?.support_labels?.pricingCurrency?.reviewedValue;
+  return typeof reviewed === 'string' && /^[A-Z]{3}$/i.test(reviewed) ? reviewed.toUpperCase() : inv.currency?.toUpperCase() ?? null;
+};
+
+export const invoiceDoc = (inv: Invoice) => ({ ...engineDoc('invoice', { number: inv.invoice_number, vendor: inv.supplier_name_raw, poNumber: inv.po_reference,
+  currency: inv.currency, lines: inv.lines, tax: inv.tax_amount, total: inv.total_amount }), pricingCurrency: invoicePricingCurrency(inv) });
 export const poDoc = (po: PurchaseOrder) => engineDoc('purchase_order', { number: po.purchase_order_number, vendor: po.supplier_name,
   poNumber: po.purchase_order_number, currency: po.currency, lines: po.lines, tax: po.tax_amount, total: po.total_amount });
 
@@ -38,7 +42,7 @@ export function compareWithPo(inv: Invoice, po: PurchaseOrder): { supplier: Supp
   }
   if (!supplier.ok && !supplier.review) return { supplier, comparison: null, error: null };
   try {
-    return { supplier, comparison: compareDocuments(supplier.ok ? i : { ...i, vendor: p.vendor }, p), error: null };
+    return { supplier, comparison: compareDocuments(supplier.ok ? i : { ...i, vendor: p.vendor }, p, { allowMissingInvoiceAmounts: true }), error: null };
   } catch (e: any) {
     return { supplier, comparison: null, error: String(e?.message) };
   }
@@ -50,7 +54,7 @@ const clip = (s: string) => s.slice(0, 2000);
 
 export const invoiceEvidence = (inv: Invoice): EvidenceItem[] => [
   { id: `invoice:${inv.id}`, label: `Invoice ${inv.invoice_number ?? '(no number)'}`.slice(0, 200),
-    value: clip(`Supplier ${inv.supplier_name_raw ?? 'unknown'}; PO reference ${inv.po_reference ?? 'none'}; subtotal ${toMoney(inv.subtotal) ?? 'missing'}; tax ${toMoney(inv.tax_amount) ?? 'missing'}; total ${toMoney(inv.total_amount) ?? 'missing'} ${inv.currency ?? ''}; status ${inv.status}`) },
+    value: clip(`Pricing currency ${invoicePricingCurrency(inv) ?? 'unknown'}; supplier ${inv.supplier_name_raw ?? 'unknown'}; PO reference ${inv.po_reference ?? 'none'}; subtotal ${toMoney(inv.subtotal) ?? 'missing'}; tax ${toMoney(inv.tax_amount) ?? 'missing'}; total ${toMoney(inv.total_amount) ?? 'missing'} ${inv.currency ?? ''}; status ${inv.status}`) },
   ...inv.lines.map((l) => ({ id: `invoice_line:${l.id}`, label: `Invoice line ${l.line_number}`, value: clip(lineText(l)) })),
 ];
 export const poEvidence = (po: PurchaseOrder): EvidenceItem[] => [
