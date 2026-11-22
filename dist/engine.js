@@ -1,3 +1,4 @@
+import {invoiceDateIssue} from './invoice-dates.js';
 import {arithmeticChecks} from './arithmetic.js';
 import {workflowIssue,effectiveFields} from './workflow-engine.js';
 import {duplicateIssues} from './duplicates-engine.js';
@@ -8,6 +9,8 @@ export function issuesFor(doc, all) {
  if (!f.vendor?.trim()) issues.push('Vendor is required.');
  if (!f.number?.trim()) issues.push('Invoice number is required.');
  if (!/^\d{4}-\d{2}-\d{2}$/.test(f.due||'') || !Number.isFinite(Date.parse(f.due))) issues.push('A valid due date is required.');
+ const dateIssue=invoiceDateIssue(f.date??doc.invoiceDocument?.date, f.due);
+ if(dateIssue)issues.push(dateIssue);
  if (![f.subtotal,f.tax,f.total].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)) issues.push('Amounts must be valid, nonnegative numbers.');
  else if (cents(f.subtotal)+cents(f.tax)!==cents(f.total)) issues.push(`Total mismatch: subtotal + tax should be ${money((cents(f.subtotal)+cents(f.tax))/100)}.`);
  const checkedDocument=doc.workflow?.state==='resolved'?doc.workflow.case?.revisions.at(-1)?.document:doc.invoiceDocument;if(checkedDocument)issues.push(...arithmeticChecks({...checkedDocument,subtotal:f.subtotal,tax:f.tax,total:f.total}).map(c=>c.message));
