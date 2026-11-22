@@ -84,17 +84,25 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
     return typeof value === 'string' && /^\d{1,12}\.\d{2}$/.test(value) ? Math.round(Number(value)*100) : 0;
   };
   const shipping = reviewedMoney('shipping'), discount = reviewedMoney('discount');
+  // Reviewed adjustment list (signed cents, before the invoice total); older records fall back to shipping − discount.
+  const listed: unknown = ex.support_labels?.adjustments?.reviewedValue;
+  const adjustments = Array.isArray(listed)
+    ? sum(listed.filter((a) => Number.isSafeInteger(a?.cents) && a.appliesTo !== 'balance').map((a) => a.cents as number))
+    : shipping - discount;
+  // Line items priced in another currency than the payable total: never add amounts across currencies.
+  const pricingCurrency: unknown = ex.support_labels?.pricingCurrency?.reviewedValue;
+  const mixedCurrency = typeof pricingCurrency === 'string' && pricingCurrency !== inv.currency;
   const lineSum = netLineCents(sum(inv.lines.map((l) => l.line_total)),inv.subtotal,inv.tax_amount,ex.support_labels?.taxInclusive?.reviewedValue===true);
   if (inv.subtotal != null && inv.lines.length && lineSum !== inv.subtotal) {
     out.push({ type: 'incorrect_total', fields: ['subtotal', 'lines'], expected: toMoney(lineSum), observed: toMoney(inv.subtotal), difference: inv.subtotal - lineSum,
       evidence: { check: 'subtotal', line_totals: toMoney(lineSum), subtotal: toMoney(inv.subtotal) } });
   }
   const base = inv.subtotal ?? (inv.lines.length ? lineSum : null);
-  if (inv.total_amount != null && base != null && base + (inv.tax_amount ?? 0) + shipping - discount !== inv.total_amount) {
-    const expected = base + (inv.tax_amount ?? 0) + shipping - discount;
+  if (!mixedCurrency && inv.total_amount != null && base != null && base + (inv.tax_amount ?? 0) + adjustments !== inv.total_amount) {
+    const expected = base + (inv.tax_amount ?? 0) + adjustments;
     out.push({ type: 'incorrect_total', fields: ['total_amount', 'subtotal', 'tax_amount'], expected: toMoney(expected), observed: toMoney(inv.total_amount),
       difference: inv.total_amount - expected, evidence: { check: 'total', subtotal: toMoney(base), subtotal_source: inv.subtotal != null ? 'subtotal' : 'line_totals',
-        tax: toMoney(inv.tax_amount ?? 0), shipping: toMoney(shipping), discount: toMoney(discount), total: toMoney(inv.total_amount) } });
+        tax: toMoney(inv.tax_amount ?? 0), shipping: toMoney(shipping), discount: toMoney(discount), adjustments: toMoney(adjustments), total: toMoney(inv.total_amount) } });
   }
   const taxed = inv.lines.filter((l) => l.tax_amount != null);
   if (taxed.length && inv.tax_amount != null && sum(taxed.map((l) => l.tax_amount!)) !== inv.tax_amount) {

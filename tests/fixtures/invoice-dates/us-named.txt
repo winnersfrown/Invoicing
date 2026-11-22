@@ -1,0 +1,5 @@
+INVOICE
+Harbor Tools Inc.
+Invoice Date: Mar 9, 2026
+Due Date: Apr 8, 2026
+Total: $80.00

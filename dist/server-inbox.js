@@ -73,6 +73,10 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
     if (final?.[field]!=null) supportLabels[field]={...supportLabels[field],reviewedValue:toMoneyString(final[field])};
   }
   if(final?.taxInclusive===true) supportLabels.taxInclusive={reviewedValue:true};
+  // Signed adjustments (charges, discounts, credits, payments) replace the single shipping/discount pair for server checks.
+  if(Array.isArray(final?.adjustments)) supportLabels.adjustments={reviewedValue:final.adjustments.filter(a=>Number.isSafeInteger(a.cents)).map(a=>({kind:a.kind,cents:a.cents,appliesTo:a.appliesTo||'total'}))};
+  if(final?.pricingCurrency&&final.pricingCurrency!==final.currency) supportLabels.pricingCurrency={reviewedValue:final.pricingCurrency};
+  if(final?.amountDue!=null) supportLabels.amountDue={reviewedValue:toMoneyString(final.amountDue)};
 
   return {
     supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.date ?? final?.issued), due_date: isoDate(final?.due),

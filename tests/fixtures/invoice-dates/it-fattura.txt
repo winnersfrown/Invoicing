@@ -1,0 +1,4 @@
+FATTURA
+Data ordine: 01/03/2026
+Data fattura: 09/03/2026
+Scadenza: 8 aprile 2026

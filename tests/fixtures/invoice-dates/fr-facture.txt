@@ -1,0 +1,7 @@
+FACTURE
+Atelier Lumière SARL
+12 rue des Lilas, 75011 Paris
+N° de facture : F-2026-031
+Date de facture : 09/03/2026
+Échéance : 08/04/2026
+Total TTC : 1 200,00 €

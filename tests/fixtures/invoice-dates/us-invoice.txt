@@ -1,0 +1,6 @@
+INVOICE
+Vendor: Cedar Supply LLC
+123 Main St, Austin, TX 78701
+Invoice Date: 03/09/2026
+Due Date: 04/08/2026
+Total: $500.00 USD
