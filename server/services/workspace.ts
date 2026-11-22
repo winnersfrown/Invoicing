@@ -25,7 +25,7 @@ export async function ensureWorkspace(db: Db, storage: Storage, userId: string):
     if (existing) return existing;
 
     const [{ id: orgId }] = await tx.query<{ id: string }>(
-      'insert into organizations (name) values ($1) returning id', ['Rekono Demo Workspace']);
+      'insert into organizations (name) values ($1) returning id', ['Sorikano Demo Workspace']);
     const caller = { userId, orgId, role: 'reviewer' } as const;
     await tx.query('insert into organization_memberships (user_id, organization_id, role) values ($1, $2, $3)',
       [userId, orgId, caller.role]);

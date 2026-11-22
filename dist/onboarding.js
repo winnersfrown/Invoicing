@@ -5,7 +5,7 @@ const key='rekono-guided-start-v1';
 let complete=true;
 const nav=document.querySelector('.sidebar nav');const content=document.querySelector('.content');
 const guide=document.createElement('section');guide.className='panel guided-start';guide.setAttribute('aria-label','Getting started');
-guide.innerHTML='<span class="eyebrow">START HERE · ABOUT TWO MINUTES</span><h2>Try one invoice first.</h2><p>Upload an invoice, check what Rekono read, then compare it with a purchase order. Missing fields can be finished later.</p><ol><li>1. Add an invoice</li><li>2. Review the extracted details</li><li>3. Match its purchase order</li></ol><div class="actions"><button class="button primary" data-import>Upload your first invoice</button><button class="button secondary" data-example>Try the $60 example</button></div><p data-next role="status"></p>';
+guide.innerHTML='<span class="eyebrow">START HERE · ABOUT TWO MINUTES</span><h2>Try one invoice first.</h2><p>Upload an invoice, check what Sorikano read, then compare it with a purchase order. Missing fields can be finished later.</p><ol><li>1. Add an invoice</li><li>2. Review the extracted details</li><li>3. Match its purchase order</li></ol><div class="actions"><button class="button primary" data-import>Upload your first invoice</button><button class="button secondary" data-example>Try the $60 example</button></div><p data-next role="status"></p>';
 content.prepend(guide);
 const explore=document.createElement('button');explore.className='text-button explore-features';explore.textContent='Explore all features';nav.after(explore);
 function render(){document.body.classList.toggle('guided-mode',!complete);explore.hidden=complete;guide.hidden=complete;}

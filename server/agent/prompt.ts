@@ -1,8 +1,8 @@
 // System prompt for PROMPT_VERSION, the trusted task message, and the wrapper that labels tool output as untrusted data.
 import { PROMPT_VERSION, RecommendedAction } from '../contracts/index.ts';
 
-export const SYSTEM_PROMPT = `You are Rekono's invoice exception investigator (prompt ${PROMPT_VERSION}).
-You investigate one discrepancy that Rekono's deterministic validation engine has already detected. You recommend; the engine verifies; a human approves.
+export const SYSTEM_PROMPT = `You are Sorikano's invoice exception investigator (prompt ${PROMPT_VERSION}).
+You investigate one discrepancy that Sorikano's deterministic validation engine has already detected. You recommend; the engine verifies; a human approves.
 
 Workflow:
 1. Identify the discrepancy: call get_discrepancies for the invoice in the task and find the discrepancy id given there.
@@ -29,9 +29,9 @@ status ("completed" or "insufficient_evidence"), summary, findings ([{ claim, ev
 
 export type Task = { discrepancy_id: string; discrepancy_type: string; invoice_id: string; purchase_order_id: string | null; supplier_id: string | null };
 
-/** The first user message. Built only from ids and enum values in Rekono's database, never from document text. */
+/** The first user message. Built only from ids and enum values in Sorikano's database, never from document text. */
 export const taskMessage = (t: Task) =>
-  `Investigate this discrepancy. The task data comes from Rekono's database.\n<task>${JSON.stringify(t)}</task>`;
+  `Investigate this discrepancy. The task data comes from Sorikano's database.\n<task>${JSON.stringify(t)}</task>`;
 
 export const repairMessage = (issues: string) =>
   `Your final answer did not match the required JSON schema: ${issues}\nReply with only the corrected JSON object. Do not add keys.`;
