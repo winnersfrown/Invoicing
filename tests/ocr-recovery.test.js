@@ -43,3 +43,48 @@ test('sparse OCR rows sort out-of-order cells by baseline and retain page and co
   assert.deepEqual(rows[0].bbox,{x0:5,y0:4,x1:170,y1:18});
   assert.equal(rows[0].page,3);
 });
+
+test('finds ruled item cells while rejecting summaries without column borders', async () => {
+  const {findItemGrid}=await import('../dist/ocr-grid.js');
+  const width=400,height=500;
+  const data=new Uint8ClampedArray(width*height*4).fill(255);
+  const mark=(x,y)=>data.fill(0,(y*width+x)*4,(y*width+x)*4+3);
+  for(const y of [100,121,150,179])for(let x=24;x<=374;x++)mark(x,y);
+  assert.equal(findItemGrid({data,width,height}),null);
+  for(const x of [24,210,252,310,374])for(let y=100;y<=179;y++)mark(x,y);
+  const grid=findItemGrid({data,width,height});
+  assert.equal(grid.rows.length,3);
+  assert.equal(grid.rows[0].length,4);
+  assert.equal(grid.top,100);
+  assert.equal(grid.bottom,179);
+});
+
+test('partially read grid cells stay separate and unrecognized values remain blank', () => {
+  const layout=[
+    {text:'Invoice No: ABC-100',page:1,method:'ocr'},
+    {text:'Brake pad',gridCells:{description:'Brake pad',quantity:'',unitPrice:'',amount:''},page:1,method:'ocr'},
+    {text:'',gridCells:{description:'',quantity:'',unitPrice:'',amount:''},page:1,method:'ocr'},
+    {text:'Total: USD 60.00',page:1,method:'ocr'}
+  ];
+  const doc=parseExtractedText('','invoice',layout);
+  assert.equal(doc.lines.length,2);
+  assert.equal(doc.lines[0].description,'Brake pad');
+  assert.equal(doc.lines[0].quantity,null);
+  assert.equal(doc.lines[1].amount,null);
+  assert.equal(doc.extraction.fields['lines.1.amount'].support,'uncertain');
+  assert.equal(doc.total,60);
+});
+
+test('preserves previous OCR values only on the overlapping physical row', async () => {
+  const {keepExistingItemReads}=await import('../dist/ocr-grid.js');
+  const rows=[
+    {page:1,bbox:{y0:20,y1:30},text:'Paper 12',gridCells:{description:'Paper',amount:'12'}},
+    {page:1,bbox:{y0:40,y1:50},text:'Pen 25',gridCells:{description:'Pen',amount:'25'}}
+  ];
+  const doc={lines:[{description:'Paper',quantity:2,unitPrice:6.5,amount:13}],
+    extraction:{fields:{'lines.0.description':{evidence:[{page:1,bbox:{y0:22,y1:28},text:'Paper 2 6.50 13.00'}]}}}};
+  keepExistingItemReads(rows,doc);
+  assert.equal(rows[0].gridCells.amount,'13');
+  assert.equal(rows[0].sourceRows.length,2);
+  assert.equal(rows[1].gridCells.amount,'25');
+});

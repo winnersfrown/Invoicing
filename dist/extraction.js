@@ -1,6 +1,7 @@
 import {parseLayoutText,groupPdfRows} from './layout-extraction.js';
 import {enhanceScan,straightenPhoto} from './ocr-image.js';
 import {alignOcrRows,ocrRows} from './ocr-layout.js';
+import {keepExistingItemReads,readRuledItems} from './ocr-grid.js';
 import {toCents,adjustmentCents} from './arithmetic.js';
 
 export function parseExtractedText(text,kind,layout=[]) {
@@ -144,6 +145,18 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
   }catch{
    // A failed optional OCR retry must not discard the usable first pass.
    onProgress('Continuing with the available OCR text…');
+  }
+  // Keep the independently read headers and totals. Only replace rows inside
+  // a validated table, when the general OCR pass cannot account for its items.
+  if(quality.weak&&kind==='invoice'&&!best.some(row=>row.coordinateSpace))try {
+   const grid=await readRuledItems(canvas,worker,page,onProgress);
+   if(grid && grid.rows.length>bestDocument.lines.length){
+    const outside=best.filter(row=>(row.bbox.y0+row.bbox.y1)/2<grid.top ||
+      (row.bbox.y0+row.bbox.y1)/2>grid.bottom);
+    best=[...outside,...keepExistingItemReads(grid.rows,bestDocument)].sort((a,b)=>a.bbox.y0-b.bbox.y0);
+   }
+  }catch{
+   onProgress('Continuing with the available table rows…');
   }
   layout.push(...best);
   return best.length?best.map(row=>row.text).join('\n'):initial.text;
