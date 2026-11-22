@@ -13,7 +13,7 @@ const patterns = {
   customer: String.raw`(?:bill(?:ed)?\s+to|customer(?:\s+name)?)`,
   date: String.raw`(?:invoice\s+date|issue\s+date|date\s+issued|issued\s+on|date(?=\s*[:#]|\s+\d))`,
   due: String.raw`(?:due\s+date|payment\s+due|pay\s+by|due(?=\s*[:#]|\s+\d))`,
-  other: String.raw`(?:ship(?:ped)?\s+to|supplier\s+id|vendor\s+id|account\s+(?:no\.?|number)|payment\s+terms)`
+  other: String.raw`(?:(?:ship(?:ped)?|deliver(?:ed)?)\s+to|supplier\s+id|vendor\s+id|account\s+(?:no\.?|number)|payment\s+terms)`
 };
 const order = ['other', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
 const combined = order.map(key => '(' + patterns[key] + ')').join('|');
@@ -63,7 +63,7 @@ function findLabels(text) {
 }
 export function readDocumentMetadata(rows, kind, fields, set) {
   const columns = rows.map(parts);
-  const payees = [], headings = [], dollarRows = [];
+  const payees = [], headings = [], letterheads = [], dollarRows = [];
   let inBuyerBlock = false;
   let invoiceNumberPosition, inferredDate;
   for (const [i, row] of rows.entries()) {
@@ -73,7 +73,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
       for (const [n, match] of matches.entries()) {
         const key = order[match.slice(1).findIndex(v => v !== undefined)];
         if (key === 'other') {
-          if (/ship(?:ped)?\s+to/i.test(match[0])) inBuyerBlock = true;
+          if (/(?:ship(?:ped)?|deliver(?:ed)?)\s+to/i.test(match[0])) inBuyerBlock = true;
           continue;
         }
         if (key === 'customer') inBuyerBlock = true;
@@ -112,7 +112,16 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         const parsed = sameColumn && readInvoiceDate(value, row.method);
         if (parsed && !inferredDate) inferredDate = {value: parsed.value, source: {...row, sourceRows: [invoiceNumberPosition.row, row]} };
       }
-      if (i < 6 && !inBuyerBlock && !matches.length && /\b(?:LLC|Ltd|Limited|Inc|GmbH|Corporation|Company|Co)\b\.?$/i.test(value)) headings.push({value, source:row});
+      if (i < 6 && !inBuyerBlock && !matches.length) {
+        const legalName = /\b(?:LLC|Ltd|Limited|Inc|GmbH|Corporation|Company|Co|CC|PLC|LLP|Pty|KG|AG|Sarl|BV)\b\.?$/i;
+        if (legalName.test(value)) headings.push({value, source:row});
+        else if (i < 3 && /^[\p{L}][\p{L} .&'’()-]+$/u.test(value) && value.split(/\s+/).length >= 2 &&
+            !/\b(?:invoice|purchase order|statement|receipt|draft|bill|ship|customer|page|credit note|tax|bank|phone|email)\b/i.test(value)) {
+          const nearby = rows.slice(i+1,i+6);
+          if (nearby.some(r=>r.page===row.page&&/(?:@|\b(?:tel|phone|vat reg|vat no|tax id|email)\b)/i.test(r.text)) &&
+              rows.slice(0,4).some(r=>r.page===row.page&&/\binvoice\b/i.test(r.text))) letterheads.push({value,source:row});
+        }
+      }
     }
     // Standalone document titles are common. Only use a following identifier,
     // never a buyer, a date, a street address or the word "Invoice" itself.
@@ -132,7 +141,12 @@ export function readDocumentMetadata(rows, kind, fields, set) {
   if (!fields.date && inferredDate) {
     set('date', inferredDate.value, inferredDate.source, 'uncertain', 'Date printed below the invoice number. Confirm it is the invoice date.');
   }
-  if (!fields.vendor && headings.length === 1) set('vendor',headings[0].value,headings[0].source,'uncertain','Possible supplier from the document heading. Confirm the issuer.');
+  const candidates = headings.length ? headings : letterheads;
+  const uniqueHeadings = new Map(candidates.map(candidate=>[candidate.value,candidate]));
+  if (!fields.vendor && uniqueHeadings.size === 1) {
+    const {value,source} = uniqueHeadings.values().next().value;
+    set('vendor',value,source,'uncertain','Possible supplier from the document letterhead. Confirm the issuer.');
+  }
   if (!fields.vendor && kind === 'invoice' && new Set(payees.map(p=>p.value)).size === 1) {
     set('vendor',payees[0].value,payees[0].source,'uncertain','Payment recipient shown on the document. Confirm this is also the supplier.');
   }
