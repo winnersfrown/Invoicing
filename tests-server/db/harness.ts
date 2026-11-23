@@ -70,11 +70,11 @@ export interface TestDb {
   close(): Promise<void>;
 }
 
-export async function createTestDb(opts: { storage?: boolean } = {}): Promise<TestDb> {
+export async function createTestDb(opts: { storage?: boolean; through?: string } = {}): Promise<TestDb> {
   const db = await PGlite.create();
   await db.exec(SUPABASE_PRELUDE);
   if (opts.storage) await db.exec(STORAGE_STUB);
-  for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql') && (!opts.through || f <= opts.through)).sort()) {
     try {
       await db.exec(readFileSync(MIGRATIONS_DIR + file, 'utf8'));
     } catch (e) {

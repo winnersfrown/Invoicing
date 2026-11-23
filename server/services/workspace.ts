@@ -2,7 +2,7 @@ import invoice from '../../dist/samples/matching-invoice.json' with { type: 'jso
 import purchaseOrder from '../../dist/samples/matching-po.json' with { type: 'json' };
 import { centsToMoney, CreateInvoiceRequest, CreatePurchaseOrderRequest } from '../contracts/index.ts';
 import { asUser, type Db } from '../db/index.ts';
-import { getMembership, type Caller } from './auth.ts';
+import { getMembership, requireReviewer, type Caller } from './auth.ts';
 import { createInvoice, createPurchaseOrder } from './invoices.ts';
 import type { Storage } from './storage.ts';
 import { sha256 } from './util.ts';
@@ -22,7 +22,7 @@ export async function ensureWorkspace(db: Db, storage: Storage, userId: string):
   return db.transaction(async (tx) => {
     await tx.query('select pg_advisory_xact_lock(hashtext($1))', [userId]);
     const existing = await getMembership(tx, userId);
-    if (existing) return existing;
+    if (existing) return requireReviewer(existing);
 
     const [{ id: orgId }] = await tx.query<{ id: string }>(
       'insert into organizations (name) values ($1) returning id', ['Sorikano Demo Workspace']);

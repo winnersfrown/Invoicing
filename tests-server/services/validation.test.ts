@@ -17,8 +17,8 @@ async function upload(org: { reviewer: string }, over: Record<string, unknown> =
   expect(r.status, JSON.stringify(r.body)).toBe(201);
   return InvoiceDto.parse(r.body.data);
 }
-async function discrepancies(org: { viewer: string }, invoiceId: string) {
-  const r = await env.call('GET', `/api/invoices/${invoiceId}/discrepancies`, { user: org.viewer });
+async function discrepancies(org: { reviewer: string }, invoiceId: string) {
+  const r = await env.call('GET', `/api/invoices/${invoiceId}/discrepancies`, { user: org.reviewer });
   expect(r.status).toBe(200);
   return DiscrepancyDto.array().parse(r.body.data);
 }
@@ -46,11 +46,11 @@ describe('required scenario: price mismatch, then corrected invoice supersedes i
     expect(corrected.supersedes_invoice_id).toBe(original.id);
     expect(await discrepancies(org, corrected.id)).toHaveLength(0);
 
-    const again = await env.call('GET', `/api/invoices/${original.id}`, { user: org.viewer });
+    const again = await env.call('GET', `/api/invoices/${original.id}`, { user: org.reviewer });
     expect(again.status).toBe(200);
     expect(again.body.data.status).toBe('superseded');
     expect(again.body.data.document_url).toMatch(/^https:\/\//);
-    expect((await env.call('GET', `/api/invoices/${corrected.id}`, { user: org.viewer })).body.data.total_amount).toBe('480.00');
+    expect((await env.call('GET', `/api/invoices/${corrected.id}`, { user: org.reviewer })).body.data.total_amount).toBe('480.00');
 
     const audit = await env.db.query<{ event_type: string; target_id: string; previous_state: any; new_state: any }>(
       'select event_type, target_id, previous_state, new_state from audit_events where organization_id = $1 order by id', [org.id]);
@@ -102,7 +102,7 @@ describe('deterministic checks', () => {
     expect(d).toBeDefined();
     expect((d.deterministic_evidence as any).other_invoice_id).toBe(first.id);
     expect((d.deterministic_evidence as any).level).toBe('Strong field match');
-    const dup = await env.call('GET', `/api/invoices/${second.id}/duplicate-candidates`, { user: org.viewer });
+    const dup = await env.call('GET', `/api/invoices/${second.id}/duplicate-candidates`, { user: org.reviewer });
     expect(dup.body.data.candidates[0].other_invoice_id).toBe(first.id);
     expect(dup.body.data.evidence[0].id).toMatch(/^duplicate:/);
   });

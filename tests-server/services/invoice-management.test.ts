@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { asUser } from '../../server/db/index';
 import { runJobs } from '../../server/services/jobs';
@@ -27,7 +28,7 @@ const change = async (org: Org, id: string, action: string, body = {}) => {
   return r.body.data;
 };
 const openFindings = async (org: Org, id: string) =>
-  (await read(path(id, 'discrepancies'), org.viewer)).filter((d: any) => !['dismissed', 'resolved'].includes(d.status));
+  (await read(path(id, 'discrepancies'), org.reviewer)).filter((d: any) => !['dismissed', 'resolved'].includes(d.status));
 
 describe('invoice management', () => {
   it('archives and restores the original invoice, fields, findings, decisions, and document', async () => {
@@ -40,29 +41,29 @@ describe('invoice management', () => {
     });
     expect(decision.status).toBe(200);
     const resolutionHistory = `/api/discrepancies/${price.id}/history`;
-    const before = await read(path(inv.id), org.viewer);
-    const findings = await read(path(inv.id, 'discrepancies'), org.viewer);
-    const history = await read(resolutionHistory, org.viewer);
+    const before = await read(path(inv.id), org.reviewer);
+    const findings = await read(path(inv.id, 'discrepancies'), org.reviewer);
+    const history = await read(resolutionHistory, org.reviewer);
 
     const archived = await change(org, inv.id, 'archive');
     expect(archived).toMatchObject({ archived_at: expect.any(String), archived_by: org.reviewer, status: before.status });
-    expect(await read('/api/invoices', org.viewer)).toEqual([]);
-    expect(await read('/api/invoices/archived', org.viewer)).toMatchObject([{ id: inv.id }]);
-    expect(await read(path(inv.id), org.viewer)).toMatchObject({
+    expect(await read('/api/invoices', org.reviewer)).toEqual([]);
+    expect(await read('/api/invoices/archived', org.reviewer)).toMatchObject([{ id: inv.id }]);
+    expect(await read(path(inv.id), org.reviewer)).toMatchObject({
       document_url: expect.stringMatching(/^https:\/\//), extraction: before.extraction, lines: before.lines,
       total_amount: before.total_amount, purchase_order_id: before.purchase_order_id,
     });
-    expect(await read(path(inv.id, 'discrepancies'), org.viewer)).toEqual(findings);
-    expect(await read(resolutionHistory, org.viewer)).toEqual(history);
+    expect(await read(path(inv.id, 'discrepancies'), org.reviewer)).toEqual(findings);
+    expect(await read(resolutionHistory, org.reviewer)).toEqual(history);
     expect((await post(org, inv.id, 'process')).status).toBe(409);
     expect((await post(org, inv.id, 'unlink-purchase-order', { purchase_order_id: inv.purchase_order_id })).status).toBe(409);
 
     const restored = await change(org, inv.id, 'restore');
     expect(restored).toMatchObject({ archived_at: null, archived_by: null, purchase_order_id: before.purchase_order_id });
-    expect(await read('/api/invoices/archived', org.viewer)).toEqual([]);
-    expect(await read('/api/invoices', org.viewer)).toMatchObject([{ id: inv.id }]);
-    expect(await read(resolutionHistory, org.viewer)).toEqual(history);
-    const events = await read(path(inv.id, 'history'), org.viewer);
+    expect(await read('/api/invoices/archived', org.reviewer)).toEqual([]);
+    expect(await read('/api/invoices', org.reviewer)).toMatchObject([{ id: inv.id }]);
+    expect(await read(resolutionHistory, org.reviewer)).toEqual(history);
+    const events = await read(path(inv.id, 'history'), org.reviewer);
     expect(events).toMatchObject([
       { event_type: 'invoice.restored', actor_id: org.reviewer, new_state: { archived_at: null, archived_by: null } },
       { event_type: 'invoice.archived', actor_id: org.reviewer, new_state: { archived_by: org.reviewer } },
@@ -76,17 +77,17 @@ describe('invoice management', () => {
     const po = await create('/api/purchase-orders', org, poBody());
     const inv = await create('/api/invoices', org, invoiceBody());
     const unlink = { purchase_order_id: po.id };
-    expect((await post(org, inv.id, 'unlink-purchase-order', unlink, org.viewer)).status).toBe(403);
-    expect((await post(org, inv.id, 'archive', {}, org.viewer)).status).toBe(403);
-    expect((await post(org, inv.id, 'unlink-purchase-order', unlink, other.admin)).status).toBe(404);
-    expect((await post(org, inv.id, 'archive', {}, other.admin)).status).toBe(404);
+    expect((await post(org, inv.id, 'unlink-purchase-order', unlink, randomUUID())).status).toBe(403);
+    expect((await post(org, inv.id, 'archive', {}, randomUUID())).status).toBe(403);
+    expect((await post(org, inv.id, 'unlink-purchase-order', unlink, other.reviewer)).status).toBe(404);
+    expect((await post(org, inv.id, 'archive', {}, other.reviewer)).status).toBe(404);
     await change(org, inv.id, 'archive');
-    expect((await post(org, inv.id, 'restore', {}, org.viewer)).status).toBe(403);
-    expect((await post(org, inv.id, 'restore', {}, other.admin)).status).toBe(404);
-    expect(await read('/api/invoices/archived', other.admin)).toEqual([]);
-    expect((await env.call('GET', path(inv.id, 'history'), { user: other.admin })).status).toBe(404);
-    expect((await env.call('DELETE', path(inv.id), { user: other.admin })).status).toBe(404);
-    expect(await read('/api/invoices/archived', org.viewer)).toMatchObject([{ id: inv.id }]);
+    expect((await post(org, inv.id, 'restore', {}, randomUUID())).status).toBe(403);
+    expect((await post(org, inv.id, 'restore', {}, other.reviewer)).status).toBe(404);
+    expect(await read('/api/invoices/archived', other.reviewer)).toEqual([]);
+    expect((await env.call('GET', path(inv.id, 'history'), { user: other.reviewer })).status).toBe(404);
+    expect((await env.call('DELETE', path(inv.id), { user: other.reviewer })).status).toBe(404);
+    expect(await read('/api/invoices/archived', org.reviewer)).toMatchObject([{ id: inv.id }]);
   });
 
   it('unlinks an exact pair, closes PO-dependent findings, and keeps the PO and its other links', async () => {
@@ -99,10 +100,10 @@ describe('invoice management', () => {
     const body = { purchase_order_id: po.id };
     expect(await change(org, inv.id, 'unlink-purchase-order', body)).toMatchObject({ purchase_order_id: null, po_reference: 'PO-1001' });
     expect(await openFindings(org, inv.id)).toMatchObject([{ deterministic_evidence: { check: 'po_manually_unlinked' } }]);
-    expect(await read(path(inv.id, 'discrepancies'), org.viewer)).toContainEqual(expect.objectContaining({ id: price.id, status: 'dismissed' }));
-    expect(await read('/api/purchase-orders', org.viewer)).toMatchObject([{ id: po.id, total_amount: '480.00' }]);
-    expect(await read(path(other.id), org.viewer)).toMatchObject({ purchase_order_id: po.id });
-    expect(await read(path(inv.id, 'history'), org.viewer)).toMatchObject([{
+    expect(await read(path(inv.id, 'discrepancies'), org.reviewer)).toContainEqual(expect.objectContaining({ id: price.id, status: 'dismissed' }));
+    expect(await read('/api/purchase-orders', org.reviewer)).toMatchObject([{ id: po.id, total_amount: '480.00' }]);
+    expect(await read(path(other.id), org.reviewer)).toMatchObject({ purchase_order_id: po.id });
+    expect(await read(path(inv.id, 'history'), org.reviewer)).toMatchObject([{
       event_type: 'invoice.purchase_order_unlinked', actor_id: org.reviewer, timestamp: expect.any(String),
       previous_state: { purchase_order_id: po.id }, new_state: { purchase_order_id: null },
     }]);
@@ -142,14 +143,14 @@ describe('invoice management', () => {
     const org = await env.newOrg();
     const first = await create('/api/invoices', org, invoiceBody());
     const second = await create('/api/invoices', org, invoiceBody({ source_text: 'Second scan' }));
-    expect((await read(path(second.id, 'duplicate-candidates'), org.viewer)).candidates).toMatchObject([{ other_invoice_id: first.id }]);
+    expect((await read(path(second.id, 'duplicate-candidates'), org.reviewer)).candidates).toMatchObject([{ other_invoice_id: first.id }]);
     await change(org, first.id, 'archive');
-    expect((await read(path(first.id, 'duplicate-candidates'), org.viewer)).candidates).toEqual([]);
-    expect((await read(path(second.id, 'duplicate-candidates'), org.viewer)).candidates).toEqual([]);
+    expect((await read(path(first.id, 'duplicate-candidates'), org.reviewer)).candidates).toEqual([]);
+    expect((await read(path(second.id, 'duplicate-candidates'), org.reviewer)).candidates).toEqual([]);
     await runJobs(env.db, { now: () => new Date('2026-11-15T12:01:00Z') });
     expect((await openFindings(org, second.id)).map((d: any) => d.discrepancy_type)).not.toContain('duplicate_candidate');
     await change(org, first.id, 'restore');
-    expect((await read(path(first.id, 'duplicate-candidates'), org.viewer)).candidates).toMatchObject([{ other_invoice_id: second.id }]);
+    expect((await read(path(first.id, 'duplicate-candidates'), org.reviewer)).candidates).toMatchObject([{ other_invoice_id: second.id }]);
     expect((await openFindings(org, first.id)).map((d: any) => d.discrepancy_type)).toContain('duplicate_candidate');
   });
 
@@ -160,7 +161,7 @@ describe('invoice management', () => {
     await change(org, inv.id, 'archive');
     const po = await create('/api/purchase-orders', org, poBody());
     expect(await env.db.query('select id from jobs where organization_id = $1 and kind = $2', [org.id, 'process_invoice'])).toEqual([]);
-    expect(await read(path(inv.id), org.viewer)).toMatchObject({ purchase_order_id: null });
+    expect(await read(path(inv.id), org.reviewer)).toMatchObject({ purchase_order_id: null });
     expect(await change(org, inv.id, 'restore')).toMatchObject({ purchase_order_id: po.id });
   });
 });

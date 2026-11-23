@@ -17,13 +17,13 @@ describe('dev server', () => {
     await expect(startDevServer({ port: 0, env: { NODE_ENV: 'production' } })).rejects.toThrow(/production/i);
   });
 
-  it('GET /api/config returns the three dev users', async () => {
+  it('GET /api/config returns one dev reviewer', async () => {
     const res = await get('/api/config');
     expect(res.status).toBe(200);
     const { data } = await res.json();
     const config = ConfigDto.parse(data);
     expect(config.mode).toBe('dev');
-    if (config.mode === 'dev') expect(config.dev_users.map((u) => u.role).sort()).toEqual(['admin', 'reviewer', 'viewer']);
+    if (config.mode === 'dev') expect(config.dev_users.map((u) => u.role).sort()).toEqual(['reviewer']);
   });
 
   it('serves dist/ and refuses paths outside it', async () => {
@@ -37,19 +37,19 @@ describe('dev server', () => {
 
   it('the seeded spec scenario can be investigated over HTTP with the scripted model', async () => {
     const { data } = await (await get('/api/config')).json();
-    const token = (role: string) => data.dev_users.find((u: { role: string }) => u.role === role).token;
+    const [reviewer] = data.dev_users;
     expect((await get('/api/invoices')).status).toBe(401);
-    const invoices = (await (await get('/api/invoices', token('viewer'))).json()).data;
+    const invoices = (await (await get('/api/invoices', reviewer.token)).json()).data;
     const inv = invoices.find((i: { supplier_name: string; status: string }) => i.supplier_name === 'Example Office Supply' && i.status === 'exception');
     expect(inv).toMatchObject({ total_amount: '540.00', open_discrepancy_count: 1 });
-    const [d] = (await (await get(`/api/invoices/${inv.id}/discrepancies`, token('viewer'))).json()).data;
-    expect((await post(`/api/discrepancies/${d.id}/investigate`, token('viewer'))).status).toBe(403);
-    const started = await post(`/api/discrepancies/${d.id}/investigate`, token('reviewer'));
+    const [d] = (await (await get(`/api/invoices/${inv.id}/discrepancies`, reviewer.token)).json()).data;
+    expect((await post(`/api/discrepancies/${d.id}/investigate`, 'dev-viewer')).status).toBe(401);
+    const started = await post(`/api/discrepancies/${d.id}/investigate`, reviewer.token);
     expect(started.status).toBe(202);
     const id = (await started.json()).data.id;
     let dto: any;
     for (let i = 0; i < 100; i++) {
-      dto = (await (await get(`/api/investigations/${id}`, token('viewer'))).json()).data;
+      dto = (await (await get(`/api/investigations/${id}`, reviewer.token)).json()).data;
       if (!['queued', 'in_progress'].includes(dto.investigation_status)) break;
       await new Promise((r) => setTimeout(r, 50));
     }

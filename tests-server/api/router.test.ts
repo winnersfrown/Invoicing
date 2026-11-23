@@ -15,7 +15,7 @@ beforeAll(async () => {
   [a, b] = [await env.newOrg(), await env.newOrg()];
   for (const org of [a, b]) await env.call('POST', '/api/purchase-orders', { user: org.reviewer, body: poBody() });
   const inv = await env.call('POST', '/api/invoices', { user: a.reviewer, body: invoiceBody() });
-  const disc = await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: a.viewer });
+  const disc = await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: a.reviewer });
   const investigation = await env.call('POST', `/api/discrepancies/${disc.body.data[0].id}/investigate`, { user: a.reviewer });
   ids = { invoice: inv.body.data.id, discrepancy: disc.body.data[0].id, investigation: investigation.body.data.id };
 });
@@ -50,26 +50,26 @@ describe('authentication and roles', () => {
     expect((await env.call('GET', '/api/invoices', { user: randomUUID() })).status).toBe(403);
   });
 
-  it.each(userRoutes.filter((r) => r.startsWith('POST')))('viewer cannot call %s', async (route) => {
+  it.each(userRoutes.filter((r) => r.startsWith('POST')))('a user without membership cannot call %s', async (route) => {
     const { method, url } = urlFor(route);
-    const r = await env.call(method, url, { user: a.viewer, body: validBody(route) });
+    const r = await env.call(method, url, { user: randomUUID(), body: validBody(route) });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('forbidden');
   });
 
   it.each(userRoutes.filter((r) => r.includes(':id')))('%s on another organisation\'s row is not_found', async (route) => {
     const { method, url } = urlFor(route);
-    const r = await env.call(method, url, { user: b.admin, body: validBody(route) });
+    const r = await env.call(method, url, { user: b.reviewer, body: validBody(route) });
     expect(r.status).toBe(404);
     expect(r.body.error.code).toBe('not_found');
-    const missing = await env.call(method, url.replace(/[0-9a-f-]{36}/, randomUUID()), { user: b.admin, body: validBody(route) });
+    const missing = await env.call(method, url.replace(/[0-9a-f-]{36}/, randomUUID()), { user: b.reviewer, body: validBody(route) });
     expect(missing.body).toEqual(r.body); // indistinguishable from a missing row
   });
 
   it('lists never include another organisation\'s rows, and foreign ids in bodies are not_found', async () => {
-    const invoices = await env.call('GET', '/api/invoices', { user: b.viewer });
+    const invoices = await env.call('GET', '/api/invoices', { user: b.reviewer });
     expect(invoices.body.data.map((i: { id: string }) => i.id)).not.toContain(ids.invoice);
-    const pos = await env.call('GET', '/api/purchase-orders', { user: b.viewer });
+    const pos = await env.call('GET', '/api/purchase-orders', { user: b.reviewer });
     expect(pos.body.data).toHaveLength(1);
     const supersede = await env.call('POST', '/api/invoices', { user: b.reviewer, body: invoiceBody({ invoice_number: 'B-1' }, { supersedes_invoice_id: ids.invoice }) });
     expect(supersede.status).toBe(404);
@@ -79,9 +79,9 @@ describe('authentication and roles', () => {
   });
 
   it('malformed ids and unknown routes are not_found', async () => {
-    expect((await env.call('GET', '/api/invoices/not-a-uuid', { user: a.viewer })).status).toBe(404);
-    expect((await env.call('GET', '/api/nothing', { user: a.viewer })).status).toBe(404);
-    expect((await env.call('DELETE', `/api/invoices/${ids.invoice}`, { user: a.admin })).status).toBe(404);
+    expect((await env.call('GET', '/api/invoices/not-a-uuid', { user: a.reviewer })).status).toBe(404);
+    expect((await env.call('GET', '/api/nothing', { user: a.reviewer })).status).toBe(404);
+    expect((await env.call('DELETE', `/api/invoices/${ids.invoice}`, { user: a.secondReviewer })).status).toBe(404);
   });
 });
 
@@ -129,7 +129,7 @@ describe('request validation', () => {
 describe('resolution, idempotency and concurrency', () => {
   async function freshDiscrepancy(org: Org) {
     const inv = await env.call('POST', '/api/invoices', { user: org.reviewer, body: invoiceBody({ invoice_number: `R-${randomUUID()}`, source_text: randomUUID() }) });
-    const ds = await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: org.viewer });
+    const ds = await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: org.reviewer });
     return { invoiceId: inv.body.data.id as string, id: ds.body.data.find((d: any) => d.discrepancy_type === 'unit_price_mismatch').id as string };
   }
   const approve = { decision: 'approved', approved_action: 'approve_review_completion', notes: 'Price change confirmed with buyer' };
@@ -153,7 +153,7 @@ describe('resolution, idempotency and concurrency', () => {
 
   it('two concurrent approvals: exactly one succeeds', async () => {
     const d = await freshDiscrepancy(a);
-    const results = await Promise.all([a.reviewer, a.admin].map((user) =>
+    const results = await Promise.all([a.reviewer, a.secondReviewer].map((user) =>
       env.call('POST', `/api/discrepancies/${d.id}/resolve`, { user, body: approve })));
     expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
     expect(await env.db.query('select * from resolution_actions where discrepancy_id = $1', [d.id])).toHaveLength(1);
@@ -168,7 +168,7 @@ describe('resolution, idempotency and concurrency', () => {
     expect(r.body.data.invoice_status).toBe('exception');
     const [after] = await env.db.query('select subtotal, tax_amount, total_amount, purchase_order_id from invoices where id = $1', [d.invoiceId]);
     expect(after).toEqual(before);
-    const history = await env.call('GET', `/api/discrepancies/${d.id}/history`, { user: a.viewer });
+    const history = await env.call('GET', `/api/discrepancies/${d.id}/history`, { user: a.reviewer });
     expect(history.body.data.resolutions).toHaveLength(1);
     expect(history.body.data.audit.map((e: any) => e.event_type)).toEqual(
       ['discrepancy.created', 'resolution.recorded', 'discrepancy.status_changed']);
@@ -182,7 +182,7 @@ describe('resolution, idempotency and concurrency', () => {
       for (let i = 0; i < 3; i++) statuses.push((await limited.call('POST', '/api/purchase-orders',
         { user: org.reviewer, body: poBody({ purchase_order_number: `PO-${i}` }) })).status);
       expect(statuses).toEqual([201, 201, 429]);
-      const other = await limited.call('POST', '/api/purchase-orders', { user: org.admin, body: poBody({ purchase_order_number: 'PO-x' }) });
+      const other = await limited.call('POST', '/api/purchase-orders', { user: org.secondReviewer, body: poBody({ purchase_order_number: 'PO-x' }) });
       expect(other.status).toBe(201);
     } finally { await limited.close(); }
   });
@@ -197,7 +197,7 @@ describe('investigation, drafts and the worker endpoint', () => {
     expect(dto).toMatchObject({ investigation_status: 'queued', model_identifier: 'test-model', prompt_version: 'investigate-v2', result: null });
     const jobs = await env.db.query<{ payload: any }>(`select payload from jobs where kind = 'investigate' and organization_id = $1`, [a.id]);
     expect(jobs).toEqual([{ payload: { investigation_id: ids.investigation, discrepancy_id: ids.discrepancy } }]);
-    const got = await env.call('GET', `/api/investigations/${ids.investigation}`, { user: a.viewer });
+    const got = await env.call('GET', `/api/investigations/${ids.investigation}`, { user: a.reviewer });
     expect(got.body.data.id).toBe(ids.investigation);
   });
 
@@ -215,7 +215,7 @@ describe('investigation, drafts and the worker endpoint', () => {
   it('POST /api/jobs/run needs the cron secret', async () => {
     expect((await env.call('POST', '/api/jobs/run', { key: null })).status).toBe(401);
     expect((await env.call('POST', '/api/jobs/run', { key: null, headers: { authorization: 'Bearer wrong' } })).status).toBe(401);
-    expect((await env.call('POST', '/api/jobs/run', { key: null, user: a.admin })).status).toBe(401);
+    expect((await env.call('POST', '/api/jobs/run', { key: null, user: a.secondReviewer })).status).toBe(401);
     const ok = await env.call('POST', '/api/jobs/run', { key: null, headers: { authorization: 'Bearer cron-secret-for-tests' } });
     expect(ok.status).toBe(200);
     expect(Array.isArray(ok.body.data.results)).toBe(true);

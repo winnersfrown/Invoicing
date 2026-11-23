@@ -1,8 +1,8 @@
 // One router for every path in ROUTES. Handlers are thin: authenticate, check role, validate with Zod, call a service.
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import { ZodError, type z } from 'zod';
+import { ZodError } from 'zod';
 import {
-  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ReviewLineMatchRequest, ROUTES, UnlinkPurchaseOrderRequest, type Role,
+  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ReviewLineMatchRequest, ROUTES, UnlinkPurchaseOrderRequest,
 } from '../contracts/index.ts';
 import { asUser, type Db } from '../db/index.ts';
 import { authenticate, verifyBearer, type Caller, type TokenVerifier } from '../services/auth.ts';
@@ -36,7 +36,6 @@ type JobRequest = { kind: string; payload: Record<string, unknown>; idempotencyK
 type Ctx = { tx: Db; caller: Caller; id: string; body: unknown; deps: Deps };
 type Result = { status?: number; data: unknown; jobs?: JobRequest[] };
 
-const RANK: Record<z.infer<typeof Role>, number> = { viewer: 0, reviewer: 1, admin: 2 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const user = (c: Ctx) => ({ orgId: c.caller.orgId, userId: c.caller.userId });
 
@@ -161,7 +160,6 @@ export function createRouter(deps: Deps) {
         res = { status: 200, body: { data: { role: caller.role } } };
       } else {
         caller = await authenticate(deps.db, deps.verifyToken, header(req.headers, 'authorization'));
-        if (RANK[caller.role] < RANK[ROUTES[key] as z.infer<typeof Role>]) fail('forbidden', 'Your role does not allow this action');
         if (id && !UUID.test(id)) notFound();
         const mutating = req.method !== 'GET';
         const idemKey = mutating ? IdempotencyKey.safeParse(header(req.headers, 'idempotency-key')) : null;

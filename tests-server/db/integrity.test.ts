@@ -13,7 +13,7 @@ let a: Graph;
 let b: Graph;
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ through: '0003_invoice_management.sql' });
   s = await seedTwoOrgs(t);
   a = await seedGraph(t, s.orgA);
   b = await seedGraph(t, s.orgB);

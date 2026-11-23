@@ -191,8 +191,7 @@ async function readInvoiceFile(file, progress) {
   return final && {method, read, final, sourceText: source};
 }
 
-export function createServerInbox({api, root, user}) {
-  const canAct = user.role !== 'viewer';
+export function createServerInbox({api, root}) {
   let invoices = [], archivedInvoices = [], stopped = false;
   const live = h('div', {class: 'match-message', role: 'status', 'aria-live': 'polite'});
   const say = msg => { live.textContent = msg; if (detail?.live) detail.live.textContent = msg; };
@@ -213,8 +212,8 @@ export function createServerInbox({api, root, user}) {
     h('section', {class: 'panel'},
       h('div', {class: 'panel-heading'},
         h('div', {}, h('h2', {}, 'Workspace invoice inbox'), h('p', {}, 'Open an invoice to review its purchase order and resolve discrepancies.')),
-        h('div', {class: 'actions'}, canAct && uploadInvoiceButton, canAct && uploadPoButton, refreshButton)),
-      canAct && h('p', {class: 'match-note'}, 'Uploads: PDF, image, JSON or labeled TXT up to 3 MB. Fields are extracted in this browser and you review them before upload; the server re-validates everything.'),
+        h('div', {class: 'actions'}, uploadInvoiceButton, uploadPoButton, refreshButton)),
+      h('p', {class: 'match-note'}, 'Uploads: PDF, image, JSON or labeled TXT up to 3 MB. Fields are extracted in this browser and you review them before upload; the server re-validates everything.'),
       h('div', {class: 'table-scroll'}, h('table', {}, h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'PROCESSING', 'OPEN FINDINGS', 'AI INVESTIGATION', ''].map(t => h('th', {}, t)))), rows))),
     archivePanel, live);
   root.prepend(section);
@@ -236,7 +235,7 @@ export function createServerInbox({api, root, user}) {
         h('td', {}, String(inv.open_discrepancy_count)),
         h('td', {}, inv.investigation_status ? AI_STATUS[inv.investigation_status] ?? words(inv.investigation_status) : 'Not investigated'),
         openCell(inv));
-    }) : [h('tr', {}, h('td', {colspan: '6', class: 'empty'}, canAct ? 'No invoices yet. Upload an invoice to start.' : 'No invoices yet.'))]));
+    }) : [h('tr', {}, h('td', {colspan: '6', class: 'empty'}, 'No invoices yet. Upload an invoice to start.'))]));
   }
   async function refresh() {
     try {
@@ -424,7 +423,7 @@ export function createServerInbox({api, root, user}) {
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
     const archived = Boolean(inv.archived_at);
-    const editable = canAct && !archived && !['rejected', 'superseded'].includes(inv.status);
+    const editable = !archived && !['rejected', 'superseded'].includes(inv.status);
     const lifecycle = archived ? {
       title: 'Restore Invoice', action: 'restore',
       message: 'Return this invoice to the active inbox and recheck matching and duplicates.',
@@ -544,7 +543,7 @@ export function createServerInbox({api, root, user}) {
         h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close invoice', onclick: () => d.dialog.close()}, '×')),
       h('div', {class: 'server-detail-body'},
         h('div', {class: 'actions invoice-management-actions'},
-          archived && h('span', {class: 'status'}, `Archived ${when(inv.archived_at)}`), canAct && managementButton(lifecycle)),
+          archived && h('span', {class: 'status'}, `Archived ${when(inv.archived_at)}`), managementButton(lifecycle)),
         h('div', {class: 'pair-documents'}, invoiceCard, poCard), evidenceBox,
         sections.length ? sections : h('p', {class: 'check ok'}, 'No open findings.'),
         groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history')),
@@ -560,7 +559,7 @@ export function createServerInbox({api, root, user}) {
   function discrepancyCard(d, x, investigation, cur, showEvidence, view, actions) {
     let inv = view.group === 'Review required' && investigation?.prompt_version === 'investigate-v1' ? null : investigation;
     const open = !CLOSED.includes(x.status);
-    const actionable = canAct && open && !d.inv.archived_at && !['rejected', 'superseded'].includes(d.inv.status) && !view.manualReview;
+    const actionable = open && !d.inv.archived_at && !['rejected', 'superseded'].includes(d.inv.status) && !view.manualReview;
     const panelHost = h('div');
     const status = h('p', {class: 'disc-status', role: 'status'});
     const notes = h('textarea', {name: 'notes', rows: '2', maxlength: '2000', 'aria-label': 'Decision notes', placeholder: 'What did you check? (recorded with your decision)'});

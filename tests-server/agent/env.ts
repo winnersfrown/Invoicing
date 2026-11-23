@@ -46,10 +46,8 @@ export async function agentEnv(model: Model, limits: Partial<Limits> = {}) {
 
   async function newOrg(name = 'Demo Org') {
     const [org] = await db.query<{ id: string }>('insert into organizations (name) values ($1) returning id', [name]);
-    const users = { admin: randomUUID(), reviewer: randomUUID(), viewer: randomUUID() };
-    for (const [role, id] of Object.entries(users)) {
-      await db.query('insert into organization_memberships (user_id, organization_id, role) values ($1, $2, $3)', [id, org.id, role]);
-    }
+    const users = { reviewer: randomUUID() };
+    await db.query("insert into organization_memberships (user_id, organization_id, role) values ($1, $2, 'reviewer')", [users.reviewer, org.id]);
     return { id: org.id, ...users };
   }
   type Org = Awaited<ReturnType<typeof newOrg>>;
@@ -70,7 +68,7 @@ export async function agentEnv(model: Model, limits: Partial<Limits> = {}) {
     });
     const inv = await http('POST', '/api/invoices', org.reviewer, { file: fileOf(Buffer.from(JSON.stringify({ ...ex, nonce: randomUUID() }))), extracted: ex });
     if (inv.status !== 201) throw new Error(`Invoice setup failed: ${JSON.stringify(inv.body)}`);
-    const disc = await http('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, org.viewer);
+    const disc = await http('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, org.reviewer);
     return { invoiceId: inv.body.data.id as string, discrepancies: disc.body.data as { id: string; discrepancy_type: string; purchase_order_id: string | null }[] };
   }
 
