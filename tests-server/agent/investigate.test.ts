@@ -188,7 +188,7 @@ describe('discrepancy types with the scripted model', () => {
     const org = await env.newOrg();
     const s = await env.scenario(org, { invoice: matching });
     expect(s.discrepancies).toEqual([]);
-    expect((await env.http('GET', `/api/invoices/${s.invoiceId}`, org.viewer)).body.data.status).toBe('validated');
+    expect((await env.http('GET', `/api/invoices/${s.invoiceId}`, org.reviewer)).body.data.status).toBe('validated');
     await env.work(model.model);
     expect(model.requests).toHaveLength(0);
   });
@@ -371,7 +371,7 @@ describe('concurrency and router wiring', () => {
     expect((res.body as any).data.investigation_status).toBe('queued');
     expect(pending).toHaveLength(1);
     await Promise.all(pending);
-    const dto = (await env.http('GET', `/api/investigations/${(res.body as any).data.id}`, org.viewer)).body.data;
+    const dto = (await env.http('GET', `/api/investigations/${(res.body as any).data.id}`, org.reviewer)).body.data;
     expect(dto.investigation_status).toBe('completed');
   });
 });

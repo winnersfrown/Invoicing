@@ -1,5 +1,5 @@
 // Local development server: dist/ as static files, the real router at /api, PGlite with the real migrations,
-// in-memory storage, three fake users, the spec scenario seeded, jobs run in-process. Never for production.
+// in-memory storage, one fake reviewer, the spec scenario seeded, jobs run in-process. Never for production.
 //   npm run dev (PORT defaults to 8787; scripted unless AGENT_MODE=openai explicitly opts in)
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -33,7 +33,7 @@ export async function startDevServer(o: { port?: number; env?: Record<string, st
   registerJobHandler('investigate', investigateHandler({ model }));
 
   const [org] = await db.query<{ id: string }>(`insert into organizations (name) values ('Dev Org') returning id`);
-  const users = (['admin', 'reviewer', 'viewer'] as const).map((role) => ({ label: `Dev ${role}`, role, token: `dev-${role}`, id: randomUUID() }));
+  const users = [{ label: 'Dev reviewer', role: 'reviewer' as const, token: 'dev-reviewer', id: randomUUID() }];
   for (const u of users) await db.query('insert into organization_memberships (user_id, organization_id, role) values ($1, $2, $3)', [u.id, org.id, u.role]);
   const byToken = new Map(users.map((u) => [u.token, u.id]));
 

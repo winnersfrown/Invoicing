@@ -108,13 +108,15 @@ Validation: `npm test` includes extraction/coordinate fixtures, an actual sample
 
 ## Hybrid workspace: no OpenAI costs
 
-Run `npm ci`, then `npm run dev`. Open the printed local URL, choose **Sign in**, and select **Dev reviewer**. The shared demo is seeded with a $540 invoice and $480 PO. Open its discrepancy, investigate it, inspect the $60 engine evidence, draft a correction request, and record a reviewer decision. The investigator is scripted; it does not call OpenAI. The local database and files reset when this process stops. Dev identities are local test accounts and are never served by the production API.
+Run `npm ci`, then `npm run dev`. Open the printed local URL, choose **Try the demo**, then **Sign in** with the local test reviewer. The shared demo is seeded with a $540 invoice and $480 PO. Open its discrepancy, investigate it, inspect the $60 engine evidence, draft a correction request, and record a reviewer decision. The investigator is scripted; it does not call OpenAI. The local database and files reset when this process stops. Dev identities are local test accounts and are never served by the production API.
 
-Both the local server and Vercel API now default to `AGENT_MODE=scripted`, even if `OPENAI_API_KEY` is already configured. Paid calls require explicit `AGENT_MODE=openai`; keep that disabled for this phase. `.env.example` lists server-only production settings. Scripted mode eliminates OpenAI model charges, but hosting/database providers may have their own costs. A hosted shared workspace still requires Supabase migrations, organization membership provisioning, private storage, and the documented environment variables. GitHub Pages serves the browser-local demo only.
+Both the local server and Vercel API now default to `AGENT_MODE=scripted`, even if `OPENAI_API_KEY` is already configured. Paid calls require explicit `AGENT_MODE=openai`; keep that disabled for this phase. `.env.example` lists server-only production settings. Scripted mode eliminates OpenAI model charges, but hosting/database providers may have their own costs. A hosted shared workspace still requires Supabase migrations, organization membership provisioning, private storage, and the documented environment variables. GitHub Pages serves the public landing page. The Reviewer workspace requires the hosted API.
 
 The Vercel rewrite routes `/api/*` to the single function; the daily cron sweeps jobs missed by immediate background execution. Do not deploy the dev server or its fake users publicly. Configure `CRON_SECRET` for the production job endpoint. The verifier checks cited IDs, supported numeric amounts, and common price-direction contradictions; it does not establish general natural-language entailment. Human review remains required. AI output cannot recommend closing an open discrepancy directly.
 
 ### Open signup for the hosted demo
+
+See [Reviewer-only rollout](docs/REVIEWER_ONLY.md) for the membership migration and production preflight.
 
 In Supabase Auth, enable signups and email confirmation. Configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) so confirmation links reach testers outside your Supabase team. Set the [Site URL and allowed redirect URL](https://supabase.com/docs/guides/auth/redirect-urls) to the hosted Sorikano URL (`https://invoicing-fawn.vercel.app/` for this deployment).
 

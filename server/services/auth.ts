@@ -31,12 +31,13 @@ export async function getMembership(db: Db, userId: string): Promise<Caller | un
   if (membership) return { userId, orgId: membership.organization_id, role: membership.role };
 }
 
-/**
- * Verifies the bearer token and loads the caller's membership (privileged read). The organisation always
- * comes from membership. ponytail: a user in several organisations acts in the oldest membership until the
- * contract adds an organisation selector validated against membership.
- */
+export function requireReviewer(caller: Caller): Caller {
+  if (caller.role !== 'reviewer') fail('forbidden', 'Your workspace access needs review. Contact Sorikano support.');
+  return caller;
+}
+
+/** Authenticates a Reviewer in their original workspace. The oldest membership is the default for existing multi-organization users. */
 export async function authenticate(db: Db, verify: TokenVerifier, header: string | undefined): Promise<Caller> {
   const userId = await verifyBearer(verify, header);
-  return await getMembership(db, userId) ?? fail('forbidden', 'No organisation membership');
+  return requireReviewer(await getMembership(db, userId) ?? fail('forbidden', 'No organisation membership'));
 }

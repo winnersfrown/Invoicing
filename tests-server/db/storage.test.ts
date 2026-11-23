@@ -16,7 +16,7 @@ const put = (tx: { query: (q: string, p: unknown[]) => Promise<unknown> }, name:
   tx.query(`insert into storage.objects (bucket_id, name) values ('invoice-documents', $1)`, [name]);
 
 beforeAll(async () => {
-  t = await createTestDb({ storage: true });
+  t = await createTestDb({ storage: true, through: '0003_invoice_management.sql' });
   s = await seedTwoOrgs(t);
   aPath = pathFor(s.orgA.id);
   bPath = pathFor(s.orgB.id);

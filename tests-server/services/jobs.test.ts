@@ -77,7 +77,7 @@ describe('jobs', () => {
     expect(inv.body.data.purchase_order_id).toBeNull();
     await env.call('POST', '/api/purchase-orders', { user: org.reviewer, body: poBody() });
     await runJobs(env.db, { now: () => at(10) });
-    const types = (await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: org.viewer })).body.data
+    const types = (await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: org.reviewer })).body.data
       .map((d: { discrepancy_type: string; status: string }) => `${d.discrepancy_type}:${d.status}`).sort();
     expect(types).toEqual(['missing_purchase_order:dismissed', 'unit_price_mismatch:open']);
     const [actor] = await env.db.query<{ actor_type: string }>(

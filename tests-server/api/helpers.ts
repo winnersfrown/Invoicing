@@ -35,9 +35,9 @@ export async function setup(opts: { rateLimitPerMinute?: number } = {}) {
 
   async function newOrg() {
     const [org] = await db.query<{ id: string }>(`insert into organizations (name) values ('Org') returning id`);
-    const users = { admin: randomUUID(), reviewer: randomUUID(), viewer: randomUUID() };
-    for (const [role, id] of Object.entries(users)) {
-      await db.query('insert into organization_memberships (user_id, organization_id, role) values ($1, $2, $3)', [id, org.id, role]);
+    const users = { reviewer: randomUUID(), secondReviewer: randomUUID() };
+    for (const id of Object.values(users)) {
+      await db.query("insert into organization_memberships (user_id, organization_id, role) values ($1, $2, 'reviewer')", [id, org.id]);
     }
     return { id: org.id, ...users };
   }
