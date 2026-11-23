@@ -51,8 +51,9 @@ async function run(db: Db, model: Model, limits: Limits, orgId: string, id: stri
 
   try {
     const d = await loadDiscrepancy(db, orgId, inv.discrepancy_id);
-    const [invoice] = await db.query<{ currency: string | null; supplier_id: string | null; purchase_order_id: string | null }>(
-      'select currency, supplier_id, purchase_order_id from invoices where id = $1 and organization_id = $2', [d.invoice_id, orgId]);
+    const [invoice] = await db.query<{ currency: string | null; supplier_id: string | null; purchase_order_id: string | null; archived_at: Date | null }>(
+      'select currency, supplier_id, purchase_order_id, archived_at from invoices where id = $1 and organization_id = $2', [d.invoice_id, orgId]);
+    if (invoice.archived_at) throw new Stop('Restore the archived invoice before starting an investigation.');
     const ctx: ToolContext = { db, orgId, investigationId: id, discrepancyId: d.id, requestedBy: inv.requested_by, evidence: new Map<string, EvidenceItem>() };
     const messages: Message[] = [{ role: 'user', content: taskMessage({ discrepancy_id: d.id, discrepancy_type: d.discrepancy_type, invoice_id: d.invoice_id,
       purchase_order_id: d.purchase_order_id ?? invoice.purchase_order_id, supplier_id: invoice.supplier_id }) }];

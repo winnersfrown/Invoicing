@@ -73,6 +73,7 @@ export type Invoice = {
   subtotal: number | null; tax_amount: number | null; total_amount: number | null;
   status: z.infer<typeof InvoiceStatus>; document_storage_path: string; document_sha256: string; source_text: string | null;
   extraction_confidence: number | null; extraction: any; supersedes_invoice_id: string | null;
+  archived_at: string | null; archived_by: string | null;
   created_by: string; created_at: string; updated_at: string; lines: Line[];
 };
 export type PurchaseOrder = {
@@ -83,7 +84,7 @@ export type PurchaseOrder = {
 export const INVOICE_COLUMNS = `i.id, i.organization_id, i.supplier_id, i.supplier_name_raw, i.invoice_number, i.invoice_date::text as invoice_date,
   i.due_date::text as due_date, i.po_reference, i.purchase_order_id, i.currency, i.subtotal::text as subtotal, i.tax_amount::text as tax_amount,
   i.total_amount::text as total_amount, i.status, i.document_storage_path, i.document_sha256, i.source_text,
-  i.extraction_confidence::text as extraction_confidence, i.extraction, i.supersedes_invoice_id, i.created_by, i.created_at, i.updated_at`;
+  i.extraction_confidence::text as extraction_confidence, i.extraction, i.supersedes_invoice_id, i.archived_at, i.archived_by, i.created_by, i.created_at, i.updated_at`;
 
 const lineFromRow = (r: any): Line => ({
   id: r.id, line_number: r.line_number, sku: r.sku, description: r.description, qty_milli: toMilli(r.quantity),
@@ -92,6 +93,7 @@ const lineFromRow = (r: any): Line => ({
 export const invoiceFromRow = (r: any, lines: Line[] = []): Invoice => ({
   ...r, subtotal: toCents(r.subtotal), tax_amount: toCents(r.tax_amount), total_amount: toCents(r.total_amount),
   extraction_confidence: r.extraction_confidence == null ? null : Number(r.extraction_confidence),
+  archived_at: isoOrNull(r.archived_at),
   created_at: iso(r.created_at), updated_at: iso(r.updated_at), lines,
 });
 

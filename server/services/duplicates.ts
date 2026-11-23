@@ -14,13 +14,14 @@ export const duplicateEngineDoc = (inv: Invoice) => ({id:inv.id,status:inv.statu
  * ponytail: loads every live invoice in the org; prefilter by supplier/total/hash in SQL past ~10k invoices.
  */
 export async function duplicateCandidates(db: Db, orgId: string, inv: Invoice) {
+  if (inv.archived_at) return [];
   const others = await db.query(
     `select id from invoices
-     where organization_id = $1 and id <> $2 and status not in ('superseded', 'rejected')
+     where organization_id = $1 and id <> $2 and archived_at is null and status not in ('superseded', 'rejected')
        and id is distinct from $3::uuid and supersedes_invoice_id is distinct from $2::uuid`, [orgId, inv.id, inv.supersedes_invoice_id]);
   const me = duplicateEngineDoc(inv);
   const loaded=await Promise.all(others.map(o=>loadInvoice(db,orgId,o.id)));
-  return loaded.filter((o): o is Invoice=>!!o).map((o) => {
+  return loaded.filter((o): o is Invoice=>!!o && !o.archived_at).map((o) => {
     const { stamp: _stamp, ...pair } = comparePair(me, duplicateEngineDoc(o));
     return { other: { id: o.id as string, invoice_number: o.invoice_number as string | null }, pair };
   }).filter((x) => x.pair.candidate);

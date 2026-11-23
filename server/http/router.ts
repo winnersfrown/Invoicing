@@ -2,15 +2,15 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { ZodError, type z } from 'zod';
 import {
-  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ReviewLineMatchRequest, ROUTES, type Role,
+  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ReviewLineMatchRequest, ROUTES, UnlinkPurchaseOrderRequest, type Role,
 } from '../contracts/index.ts';
 import { asUser, type Db } from '../db/index.ts';
 import { authenticate, verifyBearer, type Caller, type TokenVerifier } from '../services/auth.ts';
 import { findDuplicateCandidates } from '../services/duplicates.ts';
-import { createInvoice, createPurchaseOrder, reviewInvoiceFields } from '../services/invoices.ts';
+import { createInvoice, createPurchaseOrder, reviewInvoiceFields, setInvoiceArchived, unlinkPurchaseOrder } from '../services/invoices.ts';
 import { enqueue, runJobs } from '../services/jobs.ts';
 import { draftSupplierMessage } from '../services/matching.ts';
-import { discrepancyHistory, getDiscrepancies, getInvoiceDto, listInvoices, listPurchaseOrders } from '../services/records.ts';
+import { discrepancyHistory, getDiscrepancies, getInvoiceDto, invoiceManagementHistory, listInvoices, listPurchaseOrders } from '../services/records.ts';
 import { getInvestigation, requestInvestigation, resolveDiscrepancy } from '../services/resolution.ts';
 import type { Storage } from '../services/storage.ts';
 import { ApiError, canonical, fail, notFound, sha256, STATUS } from '../services/util.ts';
@@ -46,6 +46,7 @@ const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/r
     return { status: 201, data: await getInvoiceDto(c.tx, c.caller.orgId, id) };
   },
   'GET /api/invoices': async (c) => ({ data: await listInvoices(c.tx, c.caller.orgId) }),
+  'GET /api/invoices/archived': async (c) => ({ data: await listInvoices(c.tx, c.caller.orgId, true) }),
   'GET /api/invoices/:id': async (c) => ({
     data: await getInvoiceDto(c.tx, c.caller.orgId, c.id, (path) => c.deps.storage.signedUrl(path, c.deps.signedUrlSeconds ?? 300)),
   }),
@@ -61,6 +62,20 @@ const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/r
     await reviewLineMatch(c.tx, c.caller.orgId, c.id, { type: 'user', id: c.caller.userId }, ReviewLineMatchRequest.parse(c.body));
     return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
   },
+  'POST /api/invoices/:id/unlink-purchase-order': async (c) => {
+    await unlinkPurchaseOrder(c.tx, user(c), c.id, UnlinkPurchaseOrderRequest.parse(c.body).purchase_order_id);
+    return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
+  },
+  'POST /api/invoices/:id/archive': async (c) => {
+    const affected = await setInvoiceArchived(c.tx, user(c), c.id, true);
+    return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id),
+      jobs: affected.map(id => ({ kind: 'process_invoice', payload: { invoice_id: id }, idempotencyKey: `archive_duplicate_recheck:${randomUUID()}` })) };
+  },
+  'POST /api/invoices/:id/restore': async (c) => {
+    await setInvoiceArchived(c.tx, user(c), c.id, false);
+    return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
+  },
+  'GET /api/invoices/:id/history': async (c) => ({ data: await invoiceManagementHistory(c.tx, c.caller.orgId, c.id) }),
   'GET /api/invoices/:id/discrepancies': async (c) => ({ data: (await getDiscrepancies(c.tx, c.caller.orgId, c.id)).data }),
   'GET /api/invoices/:id/duplicate-candidates': async (c) => {
     const r = await findDuplicateCandidates(c.tx, c.caller.orgId, c.id);

@@ -116,6 +116,8 @@ export const ReviewLineMatchRequest = z.strictObject({
   decision: z.enum(['confirm', 'reject']),
 });
 
+export const UnlinkPurchaseOrderRequest = z.strictObject({ purchase_order_id: Id });
+
 export const CreateInvoiceRequest = z.object({
   file: z.object({
     name: Text(255),
@@ -149,6 +151,7 @@ export const InvoiceDto = z.object({
   subtotal: MoneyString.nullable(), tax_amount: MoneyString.nullable(), total_amount: MoneyString.nullable(),
   status: InvoiceStatus, extraction_confidence: z.number().nullable(), extraction: ExtractedInvoice.shape.extraction,
   supersedes_invoice_id: Id.nullable(), created_at: z.string(), updated_at: z.string(),
+  archived_at: z.string().nullable(), archived_by: Id.nullable(),
   // list view extras
   open_discrepancy_count: z.number().int(), investigation_status: InvestigationStatus.nullable(),
   lines: z.array(LineItemDto).optional(), document_url: z.string().url().optional(), // signed, short-lived
@@ -276,10 +279,15 @@ export const IdempotencyKey = z.string().min(8).max(128).regex(/^[A-Za-z0-9._:-]
 export const ROUTES = {
   'POST /api/invoices': 'reviewer',
   'GET /api/invoices': 'viewer',
+  'GET /api/invoices/archived': 'viewer',
   'GET /api/invoices/:id': 'viewer',
   'POST /api/invoices/:id/process': 'reviewer',
   'POST /api/invoices/:id/review-fields': 'reviewer',
   'POST /api/invoices/:id/review-line-match': 'reviewer',
+  'POST /api/invoices/:id/unlink-purchase-order': 'reviewer',
+  'POST /api/invoices/:id/archive': 'reviewer',
+  'POST /api/invoices/:id/restore': 'reviewer',
+  'GET /api/invoices/:id/history': 'viewer',
   'GET /api/invoices/:id/discrepancies': 'viewer',
   'GET /api/invoices/:id/duplicate-candidates': 'viewer',
   'POST /api/purchase-orders': 'reviewer',

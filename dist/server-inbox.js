@@ -123,6 +123,16 @@ const safeUrl = u => { try { const x = new URL(u); return ['https:', 'http:'].in
 const REVIEW_LABELS = {supplier_name: 'Supplier name', currency: 'Payable currency', po_reference: 'Purchase-order reference'};
 export function warningPresentation(warning) {
   const e = warning.deterministic_evidence ?? {};
+  if (e.check === 'po_manually_unlinked') return {
+    group: 'Review required', title: 'Purchase order unlinked',
+    message: `A reviewer unlinked ${e.po_reference}. This invoice will stay unlinked from that order.`,
+    fields: ['po_reference'], manualReview: true,
+  };
+  if (e.check === 'po_supplier_identity') return {
+    group: 'Review required', title: e.review ? 'Confirm supplier identity' : 'Supplier mismatch',
+    message: `Invoice supplier: ${warning.observed_value}. Purchase order ${e.po_reference} supplier: ${warning.expected_value}. Verify the supplier and PO reference before matching.`,
+    fields: ['supplier_name', 'po_reference'], manualReview: true,
+  };
   if (e.check === 'line_match_review') return {group: 'Review required', title: 'Review suggested product matches'};
   if (warning.discrepancy_type === 'missing_purchase_order' || e.suspected_type === 'missing_purchase_order') {
     const reference = e.po_reference ?? warning.observed_value;
@@ -183,13 +193,19 @@ async function readInvoiceFile(file, progress) {
 
 export function createServerInbox({api, root, user}) {
   const canAct = user.role !== 'viewer';
-  let invoices = [], stopped = false;
+  let invoices = [], archivedInvoices = [], stopped = false;
   const live = h('div', {class: 'match-message', role: 'status', 'aria-live': 'polite'});
   const say = msg => { live.textContent = msg; if (detail?.live) detail.live.textContent = msg; };
   const fail = e => say(e.message || String(e));
   const pickFile = (accept, onFile) => { const input = h('input', {type: 'file', accept, hidden: true, onchange: () => { const f = input.files[0]; input.remove(); if (f) onFile(f); }}); (document.querySelector('dialog[open]') ?? document.body).append(input); input.click(); };
 
   const rows = h('tbody');
+  const archivedRows = h('tbody');
+  const archiveTitle = h('h2', {}, 'Archived Invoices');
+  const archivePanel = h('details', {class: 'panel archived-invoices'},
+    h('summary', {}, archiveTitle),
+    h('div', {class: 'table-scroll'}, h('table', {},
+      h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'ARCHIVED', ''].map(label => h('th', {}, label)))), archivedRows)));
   const uploadInvoiceButton = h('button', {type: 'button', class: 'button primary', onclick: () => pickFile('.json,.txt,.pdf,.png,.jpg,.jpeg,.webp', f => busy(uploadInvoiceButton, () => uploadInvoice(f)))}, '↑ Upload invoice');
   const uploadPoButton = h('button', {type: 'button', class: 'button secondary', onclick: () => pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', f => busy(uploadPoButton, () => uploadPo(f)))}, '↑ Upload purchase order');
   const refreshButton = h('button', {type: 'button', class: 'button secondary', onclick: () => busy(refreshButton, refresh)}, '↻ Refresh');
@@ -200,23 +216,39 @@ export function createServerInbox({api, root, user}) {
         h('div', {class: 'actions'}, canAct && uploadInvoiceButton, canAct && uploadPoButton, refreshButton)),
       canAct && h('p', {class: 'match-note'}, 'Uploads: PDF, image, JSON or labeled TXT up to 3 MB. Fields are extracted in this browser and you review them before upload; the server re-validates everything.'),
       h('div', {class: 'table-scroll'}, h('table', {}, h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'PROCESSING', 'OPEN FINDINGS', 'AI INVESTIGATION', ''].map(t => h('th', {}, t)))), rows))),
-    live);
+    archivePanel, live);
   root.prepend(section);
 
+  function identityCell(inv) {
+    return h('td', {}, h('div', {class: 'vendor'}, h('span', {class: 'file-icon', 'aria-hidden': 'true'}, '▤'),
+      h('div', {}, h('strong', {}, inv.invoice_number ?? 'No invoice number'), h('small', {}, inv.supplier_name ?? 'Unknown supplier'))));
+  }
+  function openCell(inv) {
+    return h('td', {}, h('button', {type: 'button', class: 'row-action', onclick: () => openDetail(inv.id)}, 'Open ↗'));
+  }
   function renderRows() {
     fill(rows, ...(invoices.length ? invoices.map(inv => {
       const [label, cls] = INVOICE_STATUS[inv.status] ?? [words(inv.status), ''];
       return h('tr', {},
-        h('td', {}, h('div', {class: 'vendor'}, h('span', {class: 'file-icon', 'aria-hidden': 'true'}, '▤'), h('div', {}, h('strong', {}, inv.invoice_number ?? 'No invoice number'), h('small', {}, inv.supplier_name ?? 'Unknown supplier')))),
+        identityCell(inv),
         h('td', {}, formatMoney(inv.total_amount, inv.currency ?? 'USD')),
         h('td', {}, h('span', {class: `status ${cls}`}, label)),
         h('td', {}, String(inv.open_discrepancy_count)),
         h('td', {}, inv.investigation_status ? AI_STATUS[inv.investigation_status] ?? words(inv.investigation_status) : 'Not investigated'),
-        h('td', {}, h('button', {type: 'button', class: 'row-action', onclick: () => openDetail(inv.id)}, 'Open ↗')));
+        openCell(inv));
     }) : [h('tr', {}, h('td', {colspan: '6', class: 'empty'}, canAct ? 'No invoices yet. Upload an invoice to start.' : 'No invoices yet.'))]));
   }
   async function refresh() {
-    try { invoices = await api.get('/api/invoices'); if (!stopped) renderRows(); } catch (e) { fail(e); }
+    try {
+      [invoices, archivedInvoices] = await Promise.all([api.get('/api/invoices'), api.get('/api/invoices/archived')]);
+      if (stopped) return;
+      renderRows();
+      archiveTitle.textContent = `Archived Invoices (${archivedInvoices.length})`;
+      fill(archivedRows, archivedInvoices.length ? archivedInvoices.map(inv => h('tr', {},
+        identityCell(inv), h('td', {}, formatMoney(inv.total_amount, inv.currency ?? 'USD')),
+        h('td', {}, when(inv.archived_at)), openCell(inv)))
+        : h('tr', {}, h('td', {colspan: '4', class: 'empty'}, 'No archived invoices.')));
+    } catch (e) { fail(e); }
   }
 
   let lastUpload = null; // kept after a transient failure so "Try again" resends the same body (same Idempotency-Key)
@@ -327,10 +359,48 @@ export function createServerInbox({api, root, user}) {
     await loadDetail(d);
   }
 
+  function confirmManagement(d, {title, message, action, body, success}) {
+    const error = h('p', {class: 'match-error', role: 'alert', hidden: true});
+    const dialog = h('dialog', {class: 'invoice-management-dialog', 'aria-labelledby': 'invoice-management-title', 'aria-describedby': 'invoice-management-description'});
+    const cancel = h('button', {type: 'button', class: 'button secondary', autofocus: true, onclick: () => dialog.close()}, 'Cancel');
+    const confirm = h('button', {type: 'button', class: 'button primary', onclick: ev => busy(ev.currentTarget, async () => {
+      cancel.disabled = true;
+      try {
+        await api.send('POST', `/api/invoices/${d.id}/${action}`, body);
+      } catch (e) {
+        if (e.code === 'conflict') {
+          dialog.close();
+          await loadDetail(d);
+          say(e.message);
+        } else {
+          error.textContent = e.message;
+          error.hidden = false;
+        }
+        return;
+      } finally { cancel.disabled = false; }
+      dialog.close();
+      if (action === 'archive') archivePanel.open = true;
+      await Promise.all([refresh(), loadDetail(d)]);
+      say(success);
+    })}, title);
+    dialog.addEventListener('cancel', e => { if (confirm.disabled) e.preventDefault(); });
+    dialog.addEventListener('close', () => dialog.remove(), {once: true});
+    dialog.append(h('div', {},
+      h('h2', {id: 'invoice-management-title'}, title),
+      h('div', {id: 'invoice-management-description'},
+        h('p', {}, h('strong', {}, `${d.inv.invoice_number ?? 'Unnumbered invoice'} · ${d.inv.supplier_name ?? 'Unknown supplier'}`)),
+        h('p', {}, message)),
+      error, h('div', {class: 'actions'}, cancel, confirm)));
+    document.body.append(dialog);
+    dialog.showModal();
+  }
+
   async function loadDetail(d) {
-    let inv, discrepancies, pos = [];
+    let inv, discrepancies, management, pos = [];
     try {
-      [inv, discrepancies] = await Promise.all([api.get(`/api/invoices/${d.id}`), api.get(`/api/invoices/${d.id}/discrepancies`)]);
+      [inv, discrepancies, management] = await Promise.all([
+        api.get(`/api/invoices/${d.id}`), api.get(`/api/invoices/${d.id}/discrepancies`), api.get(`/api/invoices/${d.id}/history`),
+      ]);
       if (inv.purchase_order_id) pos = await api.get('/api/purchase-orders');
     } catch (e) { d.live.textContent = e.message; return; }
     if (d.closed) return;
@@ -343,17 +413,29 @@ export function createServerInbox({api, root, user}) {
     if (d.closed) return;
     d.ctrl.abort(); // stop pollers from the previous render of this dialog
     Object.assign(d, {ctrl: new AbortController(), inv, po: pos.find(p => p.id === inv.purchase_order_id) ?? null});
-    renderDetail(d, discrepancies, investigations);
+    renderDetail(d, discrepancies, investigations, management);
   }
 
-  function renderDetail(d, discrepancies, investigations) {
+  function renderDetail(d, discrepancies, investigations, management) {
     const {inv, po} = d, cur = inv.currency ?? 'USD';
     const pricing = inv.extraction?.support_labels?.pricingCurrency?.reviewedValue;
     const pricingCur = typeof pricing === 'string' && /^[A-Z]{3}$/i.test(pricing) ? pricing.toUpperCase() : cur;
     const customer = inv.extraction?.support_labels?.customer?.reviewedValue;
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
-    const editable = canAct && !['rejected', 'superseded'].includes(inv.status);
+    const archived = Boolean(inv.archived_at);
+    const editable = canAct && !archived && !['rejected', 'superseded'].includes(inv.status);
+    const lifecycle = archived ? {
+      title: 'Restore Invoice', action: 'restore',
+      message: 'Return this invoice to the active inbox and recheck matching and duplicates.',
+      success: 'Invoice restored to the active inbox.',
+    } : {
+      title: 'Archive Invoice', action: 'archive',
+      message: 'Move this invoice out of the active inbox. Its original document, findings, and reviewer decisions will remain available.',
+      success: 'Invoice moved to Archived Invoices.',
+    };
+    const managementButton = (config) => h('button', {type: 'button', class: 'button secondary',
+      onclick: () => confirmManagement(d, config)}, config.title);
     const recheck = h('button', {type: 'button', class: 'button secondary', onclick: ev => busy(ev.currentTarget, async () => {
       try {
         await api.send('POST', `/api/invoices/${inv.id}/process`);
@@ -373,7 +455,8 @@ export function createServerInbox({api, root, user}) {
       const b = ev.currentTarget;
       pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', f => busy(b, () => uploadPo(f, d)));
     }}, 'Upload purchase order');
-    const original = invoices.find(x => x.id === inv.supersedes_invoice_id), replacement = invoices.find(x => x.supersedes_invoice_id === inv.id);
+    const allInvoices = [...invoices, ...archivedInvoices];
+    const original = allInvoices.find(x => x.id === inv.supersedes_invoice_id), replacement = allInvoices.find(x => x.supersedes_invoice_id === inv.id);
     const link = (other, prefix) => h('p', {class: 'check'}, prefix, ' ', h('button', {type: 'button', class: 'text-button', onclick: () => openDetail(other.id)}, `${other.invoice_number ?? 'invoice'} (${(INVOICE_STATUS[other.status] ?? [other.status])[0]}) ↗`));
     const field = (name, label, value) => h('tr', {'data-ev': `document:${inv.id}#${name}`}, h('td', {}, label), h('td', {}, h('strong', {}, value ?? 'Not extracted')));
     const lineRows = (prefix, ls, currency) => ls.map(l => h('tr', {'data-ev': `${prefix}:${l.id}`}, h('td', {}, h('small', {}, `Line ${l.line_number} · ${l.sku ?? 'no SKU'}`), h('strong', {}, l.description)),
@@ -404,7 +487,12 @@ export function createServerInbox({api, root, user}) {
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
       lineTable('po_line', po.lines, null, po.currency),
-      h('div', {class: 'source-totals'}, h('span', {}, `Tax ${formatMoney(po.tax_amount, po.currency)}`), h('strong', {}, `Total ${formatMoney(po.total_amount, po.currency)}`)))
+      h('div', {class: 'source-totals'}, h('span', {}, `Tax ${formatMoney(po.tax_amount, po.currency)}`), h('strong', {}, `Total ${formatMoney(po.total_amount, po.currency)}`)),
+      editable && managementButton({
+        title: 'Unlink Purchase Order', action: 'unlink-purchase-order', body: {purchase_order_id: po.id},
+        message: `Remove the link to ${po.purchase_order_number} from ${po.supplier_name}. The order stays in the workspace and Sorikano will recheck this invoice’s findings.`,
+        success: 'Purchase order unlinked. Invoice findings rechecked.',
+      }))
       : h('article', {class: 'source-card'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('p', {}, inv.po_reference ? `Reference on invoice: ${inv.po_reference}` : 'No PO reference saved.'));
 
     function showEvidence(item) {
@@ -456,15 +544,24 @@ export function createServerInbox({api, root, user}) {
       h('div', {class: 'dialog-top'}, h('div', {}, h('span', {class: 'eyebrow'}, 'SHARED WORKSPACE · INVOICE'), h('h2', {id: 'server-detail-title'}, `${inv.invoice_number ?? 'Invoice'} · ${inv.supplier_name ?? 'Unknown supplier'}`)),
         h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close invoice', onclick: () => d.dialog.close()}, '×')),
       h('div', {class: 'server-detail-body'},
+        h('div', {class: 'actions invoice-management-actions'},
+          archived && h('span', {class: 'status'}, `Archived ${when(inv.archived_at)}`), canAct && managementButton(lifecycle)),
         h('div', {class: 'pair-documents'}, invoiceCard, poCard), evidenceBox,
         sections.length ? sections : h('p', {class: 'check ok'}, 'No open findings.'),
-        groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history'))),
+        groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history')),
+        h('details', {}, h('summary', {}, 'Invoice management history'),
+          management.length ? management.map(event => h('div', {class: 'activity-item'},
+            h('strong', {}, {'invoice.archived': 'Invoice archived', 'invoice.restored': 'Invoice restored',
+              'invoice.purchase_order_unlinked': 'Purchase order unlinked'}[event.event_type]),
+            h('small', {}, `${when(event.timestamp)} · reviewer ${event.actor_id}`)))
+            : h('p', {}, 'No archive, restore, or unlink actions recorded.'))),
       d.live);
   }
 
   function discrepancyCard(d, x, investigation, cur, showEvidence, view, actions) {
     let inv = view.group === 'Review required' && investigation?.prompt_version === 'investigate-v1' ? null : investigation;
     const open = !CLOSED.includes(x.status);
+    const actionable = canAct && open && !d.inv.archived_at && !['rejected', 'superseded'].includes(d.inv.status) && !view.manualReview;
     const panelHost = h('div');
     const status = h('p', {class: 'disc-status', role: 'status'});
     const notes = h('textarea', {name: 'notes', rows: '2', maxlength: '2000', 'aria-label': 'Decision notes', placeholder: 'What did you check? (recorded with your decision)'});
@@ -482,17 +579,17 @@ export function createServerInbox({api, root, user}) {
         h('div', {}, h('dt', {}, 'EXPECTED'), h('dd', {}, x.expected_value ?? '—')),
         h('div', {}, h('dt', {}, 'OBSERVED'), h('dd', {}, x.observed_value ?? '—')),
         h('div', {}, h('dt', {}, 'DIFFERENCE'), h('dd', {}, x.difference_amount ? formatMoney(x.difference_amount, x.deterministic_evidence?.currency ?? cur) : '—'))),
-      canAct && open && view.group !== 'Missing documents' && investigateB, panelHost,
-      canAct && open && view.group !== 'Missing documents' && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
+      actionable && view.group !== 'Missing documents' && investigateB, panelHost,
+      actionable && view.group !== 'Missing documents' && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
       status,
       h('div', {class: 'actions'},
-        canAct && d.po && open && view.group === 'Discrepancies' && h('button', {type: 'button', class: 'text-button', onclick: ev => busy(ev.currentTarget, draft)}, 'Draft supplier correction request'),
+        actionable && d.po && view.group === 'Discrepancies' && h('button', {type: 'button', class: 'text-button', onclick: ev => busy(ev.currentTarget, draft)}, 'Draft supplier correction request'),
         h('button', {type: 'button', class: 'text-button', 'aria-expanded': 'false', onclick: ev => busy(ev.currentTarget, () => history(ev.currentTarget))}, 'View resolution history')),
       draftHost, historyHost);
 
     function sync() {
       const v = investigationView(inv);
-      fill(panelHost, renderInvestigation(v, {canAct: canAct && open, onRetry: ev => busy(ev.currentTarget, investigate), onEvidence: showEvidence}));
+      fill(panelHost, (!view.manualReview || inv) && renderInvestigation(v, {canAct: actionable, onRetry: ev => busy(ev.currentTarget, investigate), onEvidence: showEvidence}));
       investigateB.hidden = v.state !== 'none';
       approveB.disabled = !v.result;
       rejectB.disabled = !v.result;
