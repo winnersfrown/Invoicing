@@ -3,7 +3,7 @@ import { adjustmentCents, convertCents, netLineCents } from '../../dist/arithmet
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
 import { invoiceDateIssue } from '../../dist/invoice-dates.js';
 import { normalizeVendor } from '../../dist/supplier.js';
-import type { DiscrepancyType, InvoiceStatus, Severity } from '../contracts/index.ts';
+import type { DiscrepancyType, InvoiceStatus, ReviewLineMatchRequest, Severity } from '../contracts/index.ts';
 import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type PurchaseOrder } from '../db/index.ts';
 import type { z } from 'zod';
 import { audit, type Actor } from './audit.ts';
@@ -166,9 +166,22 @@ export function findDiscrepancies({ inv, po, poMatches, duplicates }: CheckInput
     }
     if (c.comparison) {
       const supplierEvidenceText = c.supplier.ok ? c.supplier.evidence : null;
+      if (c.comparison.pendingLineMatches.length) {
+        const candidates = c.comparison.pendingLineMatches.map(candidate => ({
+          invoice_line_id: inv.lines[candidate.invoiceLine - 1].id,
+          po_line_id: po.lines[candidate.poLine - 1].id,
+          description: candidate.description, same_quantity: candidate.sameQuantity,
+        }));
+        const pending = new Set(candidates.map(candidate => candidate.invoice_line_id)).size;
+        out.push({ type: 'ambiguous_reference', fields: [], expected: 'Reviewer confirmation of product matches',
+          observed: `${pending} invoice line${pending === 1 ? '' : 's'} with possible PO matches`,
+          difference: null, poId, evidence: { check: 'line_match_review', candidates } });
+      }
       for (const l of c.comparison.lines.filter((x) => x.changed)) {
         const il = l.invoiceLine ? inv.lines[l.invoiceLine - 1] : null, pl = l.poLine ? po.lines[l.poLine - 1] : null;
-        const evidence = { engine: 'compareDocuments', line: l, invoice_line_id: il?.id ?? null, po_line_id: pl?.id ?? null, supplier_evidence: supplierEvidenceText };
+        const { matchBasis, ...line } = l;
+        const evidence = { engine: 'compareDocuments', line, invoice_line_id: il?.id ?? null, po_line_id: pl?.id ?? null, supplier_evidence: supplierEvidenceText,
+          ...(matchBasis === 'reviewer_confirmed' ? { match_basis: matchBasis } : {}) };
         const base = { fields: ['lines'], difference: l.differenceCents, evidence, poId };
         // A line with both a price and a quantity change is one unit_price_mismatch carrying the engine's whole line difference.
         if (!il || !pl) out.push({ ...base, type: 'unmatched_line', expected: pl ? lineText(pl) : 'Not on the purchase order', observed: il ? lineText(il) : 'Not invoiced' });
@@ -216,6 +229,24 @@ export async function deriveInvoiceStatus(db: Db, invoiceId: string): Promise<St
   return c.extraction ? 'needs_extraction_review' : c.open ? 'exception' : c.total ? 'resolved' : 'validated';
 }
 
+/** Record a decision only on a current candidate for the linked PO, then refresh findings in the same transaction. */
+export async function reviewLineMatch(db: Db, orgId: string, invoiceId: string, actor: Actor, req: z.infer<typeof ReviewLineMatchRequest>) {
+  const inv = await loadInvoice(db, orgId, invoiceId, true) ?? notFound();
+  if (!PROCESSABLE.includes(inv.status) || inv.purchase_order_id !== req.purchase_order_id) {
+    fail('conflict', 'The invoice or its linked purchase order changed. Reload before reviewing the match.');
+  }
+  const po = await loadPurchaseOrder(db, orgId, req.purchase_order_id) ?? notFound();
+  const { comparison } = compareWithPo(inv, po);
+  const current = comparison?.pendingLineMatches.some(candidate =>
+    inv.lines[candidate.invoiceLine - 1].id === req.invoice_line_id && po.lines[candidate.poLine - 1].id === req.po_line_id);
+  if (!current) fail('conflict', 'This suggested match is no longer pending. Reload to see the latest comparison.');
+
+  const extraction = { ...inv.extraction, po_line_decisions: [...(inv.extraction?.po_line_decisions ?? []), req] };
+  await db.query('update invoices set extraction = $1::jsonb where id = $2 and organization_id = $3', [JSON.stringify(extraction), invoiceId, orgId]);
+  await audit(db, { orgId, actor, event: 'invoice.line_match_reviewed', targetType: 'invoice', targetId: invoiceId, next: req });
+  return processInvoice(db, orgId, invoiceId, actor);
+}
+
 /**
  * Runs every check. Review reminders and PO availability track the current evidence; past findings and decisions stay in history.
  */
@@ -250,7 +281,8 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
             and a.event_type = 'discrepancy.status_changed' order by a.id desc limit 1
        ), false) as automatic
        from discrepancies d where d.invoice_id = $1 and d.organization_id = $2
-         and (d.deterministic_evidence ->> 'check' in ('extraction', 'po_reference', 'po_lookup', 'supplier_on_file', 'currency')
+         and (d.deterministic_evidence ->> 'check' in ('extraction', 'po_reference', 'po_lookup', 'supplier_on_file', 'currency', 'line_match_review')
+           or (d.deterministic_evidence ->> 'engine' = 'compareDocuments' and d.discrepancy_type in ('unmatched_line', 'unit_price_mismatch', 'quantity_mismatch', 'tax_mismatch'))
            or (d.discrepancy_type = 'potential_extraction_error' and d.deterministic_evidence ? 'unsure_fields'))`,
       [inv.id, orgId]);
     for (const reminder of reminders) {

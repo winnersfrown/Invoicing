@@ -4,6 +4,7 @@ import {percentageCents,toCents} from './arithmetic.js';
 import {extractFile, parseExtractedText} from './extraction.js';
 import {extractAndReview, reviewExisting} from './extraction-review.js';
 import {validateDocument} from './matching-engine.js';
+import {renderLineMatchReview} from './line-match-review.js';
 import {ACTION_TEXT, evidenceText, fill, formatMoney, h, investigationView, renderInvestigation} from './investigation-ui.js';
 
 export const UPLOAD_MAX_BYTES = 3 * 1024 * 1024; // server/contracts UPLOAD_MAX_BYTES
@@ -122,6 +123,7 @@ const safeUrl = u => { try { const x = new URL(u); return ['https:', 'http:'].in
 const REVIEW_LABELS = {supplier_name: 'Supplier name', currency: 'Payable currency', po_reference: 'Purchase-order reference'};
 export function warningPresentation(warning) {
   const e = warning.deterministic_evidence ?? {};
+  if (e.check === 'line_match_review') return {group: 'Review required', title: 'Review suggested product matches'};
   if (warning.discrepancy_type === 'missing_purchase_order' || e.suspected_type === 'missing_purchase_order') {
     const reference = e.po_reference ?? warning.observed_value;
     return reference
@@ -133,6 +135,9 @@ export function warningPresentation(warning) {
     const fields = flagged.filter(f => Object.hasOwn(REVIEW_LABELS, f));
     if (flagged.length === 1 && fields[0] === 'currency') return {
       group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields,
+    };
+    if (flagged.length === 1 && flagged[0] === 'tax_amount' && e.missing?.includes('tax_amount')) return {
+      group: 'Review required', title: 'Invoice tax amount missing', message: 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
     };
     const title = e.check === 'date_order' ? 'Review invoice dates'
       : ['currency_conversion', 'mixed_currency_po'].includes(e.check) ? 'Review currency details' : 'Review extracted fields';
@@ -349,6 +354,16 @@ export function createServerInbox({api, root, user}) {
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
     const editable = canAct && !['rejected', 'superseded'].includes(inv.status);
+    const recheck = h('button', {type: 'button', class: 'button secondary', onclick: ev => busy(ev.currentTarget, async () => {
+      try {
+        await api.send('POST', `/api/invoices/${inv.id}/process`);
+        await loadDetail(d);
+        await refresh();
+        say('Line matches rechecked.');
+      } catch (e) { fail(e); }
+    })}, 'Recheck line matches');
+    const legacyUnmatched = discrepancies.some(x => !CLOSED.includes(x.status) && x.discrepancy_type === 'unmatched_line' &&
+      x.deterministic_evidence?.line && !x.deterministic_evidence?.check);
     const correct = field => h('button', {type: 'button', class: 'button secondary', onclick: () => reviewField(d, field)}, field === 'currency' ? 'Confirm currency' : field === 'po_reference' ? 'Correct PO reference' : 'Correct field');
     const correctedUpload = () => h('button', {type: 'button', class: 'button secondary', onclick: ev => {
       const b = ev.currentTarget;
@@ -384,7 +399,7 @@ export function createServerInbox({api, root, user}) {
       lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`, pricingCur),
       h('p', {class: 'hint'}, inv.extraction?.reviewed_fields?.includes('currency') ? `Currency confirmed by reviewer · ${inv.currency}` : `Extraction: ${inv.extraction?.method ?? 'unknown'}`),
       docUrl ? h('a', {href: docUrl, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗') : h('p', {class: 'hint'}, 'Original document link unavailable.'),
-      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload()));
+      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload(), po && legacyUnmatched && recheck));
     const poCard = po ? h('article', {class: 'source-card', 'data-ev': `po:${po.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
@@ -412,7 +427,27 @@ export function createServerInbox({api, root, user}) {
       const actions = editable && !closed ? (view.fields ?? []).map(correct) : [];
       if (editable && !closed && view.upload) actions.push(uploadOrder());
       if (editable && !closed && view.needsSourceReview) actions.push(correctedUpload());
-      const card = discrepancyCard(d, x, investigations[i], cur, showEvidence, view, actions);
+      const evidence = x.deterministic_evidence;
+      const summarize = lines => lines.map(line => ({...line, number: line.line_number}));
+      const card = evidence?.check === 'line_match_review' && !closed && po?.id === x.purchase_order_id
+        ? renderLineMatchReview({
+          candidates: evidence.candidates.map(c => ({invoiceLine: c.invoice_line_id, poLine: c.po_line_id, description: c.description, sameQuantity: c.same_quantity})),
+          invoiceLines: summarize(inv.lines ?? []), poLines: summarize(po.lines),
+          onReview: editable ? async (match, decision) => {
+            try {
+              await api.send('POST', `/api/invoices/${inv.id}/review-line-match`, {
+                purchase_order_id: po.id, invoice_line_id: match.invoiceLine, po_line_id: match.poLine, decision,
+              });
+              await loadDetail(d);
+              await refresh();
+              say(decision === 'confirm' ? 'Product match confirmed. Line differences rechecked.' : 'Match rejected. Remaining candidates rechecked.');
+            } catch (e) {
+              if (e.code === 'conflict') await loadDetail(d);
+              fail(e);
+            }
+          } : null,
+        })
+        : discrepancyCard(d, x, investigations[i], cur, showEvidence, view, actions);
       groups.set(group, [...(groups.get(group) ?? []), card]);
     }
     const sections = ['Review required', 'Missing documents', 'Discrepancies'].flatMap(group => groups.has(group)
@@ -440,6 +475,8 @@ export function createServerInbox({api, root, user}) {
     const card = h('article', {class: 'discrepancy-card', 'data-ev': `discrepancy:${x.id}`, tabindex: '-1'},
       h('div', {class: 'source-heading'}, h('strong', {}, view.title), h('span', {class: `status ${open ? 'review' : 'approved'}`}, view.group === 'Discrepancies' ? `${DISC_STATUS[x.status] ?? words(x.status)} · ${x.severity} severity` : DISC_STATUS[x.status])),
       view.message && h('p', {}, view.message),
+      x.deterministic_evidence?.match_basis === 'reviewer_confirmed' && h('p', {},
+        `${x.deterministic_evidence.line.description} · ${x.deterministic_evidence.line.invoice.sku} ↔ ${x.deterministic_evidence.line.po.sku} · Confirmed by reviewer`),
       actions.length > 0 && h('div', {class: 'actions'}, actions),
       view.group === 'Discrepancies' && h('dl', {class: 'disc-values'},
         h('div', {}, h('dt', {}, 'EXPECTED'), h('dd', {}, x.expected_value ?? '—')),

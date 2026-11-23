@@ -12,7 +12,7 @@ The default **Match invoice & PO** page demonstrates the complete discrepancy wo
 4. Click **Draft correction request**. Edit the message and download it as text. No email is sent.
 5. Confirm that you reviewed the evidence, then export CSV or JSON. JSON includes per-line evidence. Both formats explicitly retain `paymentApproved: false` and `ON_HOLD` for discrepancies. Reviewing does not mark the invoice corrected or authorize payment.
 
-Comparison validates document type, vendor, PO reference, USD currency, unique SKUs, positive whole-number quantities, prices and document arithmetic. Changed or missing items and tax differences stay visible even if opposing differences net to zero. Replacing either source invalidates its previous review and draft. These matching-session documents and drafts stay in memory until reload; use export to keep the reviewed data. The existing inbox continues to use browser-local persistence.
+Comparison validates document type, vendor, PO reference, matching currencies, unique SKUs, quantities, prices and document arithmetic. Identical SKUs match automatically. Similar descriptions and quantities can suggest pairs for reviewer confirmation. The comparison calculates line differences after the reviewer confirms the pair. Missing invoice tax stays a separate review item. Replacing either source invalidates its previous review and draft. These matching-session documents and drafts stay in memory until reload; use export to keep the reviewed data. The existing inbox continues to use browser-local persistence.
 
 The matching inputs accept structured `.json` documents under 500 KB with the schema illustrated in `dist/samples/matching-invoice.json` and `matching-po.json`. PDF text extraction and English OCR for images/scanned PDFs are connected in Match invoice & PO. Upload PDF, PNG, JPEG or WebP (15 MB; PDFs up to 5 pages). Verify extracted fields and line items in the review dialog. Field detection uses simple patterns and does not reliably interpret every vendor layout; missing rows can be added manually. Currency defaults to USD and must be verified. PDF.js 4.10.38 and Tesseract.js 5.1.1 load pinned browser code from jsDelivr; OCR also loads English language data. Internet access is needed for these assets, but document bytes remain in the browser. No API key is needed. Real email sending and accounting integrations remain disconnected.
 
@@ -66,7 +66,7 @@ A revision that still differs stays on hold. A matching revision requires a revi
 Run `npm run benchmark` from the repository root (Node 18+; no network needed).
 The dataset contains exactly 30 synthetic documents: 20 invoices, 6 POs and 4 credit notes, each with JSON and readable TXT representations. `benchmark/ground-truth.json` holds predefined expected results; `benchmark/generate.mjs` regenerates the fixtures deterministically.
 
-The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Version 3 writes `LATEST.md` and `latest.json` under `benchmark/results/v3/`. The original reports stay in their existing paths. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
+The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Version 4 writes `LATEST.md` and `latest.json` under `benchmark/results/v4/`. The original reports stay in their existing paths. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
 
 This benchmark tests structured detection and explanation facts. It does not measure PDF/image OCR or live upload concurrency. Credit notes currently receive an unsupported-type rejection; credit reconciliation is not implemented. TXT files are human-readable evidence, not inbox-import fixtures.
 
@@ -76,13 +76,13 @@ Supported copy/resend suffixes and common O/0 or I/L/1 OCR confusions now trigge
 
 PO matching normalizes company suffixes and punctuation. One-character supplier spelling differences require explicit identity confirmation and a note in the UI before comparison can proceed; the decision is scoped to the supplier names and document references and exported with the evidence. Credit-note JSON receives a clear unsupported message; credit processing is still not implemented.
 
-Run `npm run benchmark:holdout` to rerun the 30 historical holdout fixtures. [Version 3](benchmark/version.json) pins the current engine and writes to `benchmark/holdout/results/v3/`. [The original holdout report](benchmark/holdout/results/LATEST.md) records the first evaluation.
+Run `npm run benchmark:holdout` to rerun the 30 historical holdout fixtures. [Version 4](benchmark/version.json) pins the current engine and writes to `benchmark/holdout/results/v4/`. [The original holdout report](benchmark/holdout/results/LATEST.md) records the first evaluation.
 
 ### Reissued-reference regression
 
 The previously missed `REISSUED-8600` / `8600` pair is now detected for human review. Standalone reissue/resent/copy labels can appear at either reference edge; matching supplier, amount and strong content evidence are still required. Arbitrary reference changes are not universally detected.
 
-Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The version 1 holdout snapshot is preserved. The current holdout command checks the version 3 engine hashes. This rerun is regression testing, not fresh holdout validation.
+Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The version 1 holdout snapshot is preserved. The current holdout command checks the version 4 engine hashes. This rerun is regression testing, not fresh holdout validation.
 
 ## Connected inbox workflow
 

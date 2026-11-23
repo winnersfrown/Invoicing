@@ -234,6 +234,48 @@ describe('deterministic checks', () => {
     expect(ds[0].difference_amount).toBeNull();
   });
 
+  it('groups the sample product suggestions and detects the banner price difference after confirmation', async () => {
+    const item = (sku: string, description: string, quantity: number, price: number) => ({
+      sku, description, quantity, unit_price: price.toFixed(2), line_total: (quantity * price).toFixed(2), tax_amount: null,
+    });
+    const org = await orgWithPo(poBody({ tax_amount: '74.50', total_amount: '819.50', lines: [
+      item('LG-001', 'Logo (Design)', 1, 500), item('BN-002', 'Banner (2x6m)', 2, 40), item('PS-003', 'Poster (1x2m)', 3, 55),
+    ] }));
+    const inv = await upload(org, { subtotal: '755.00', total_amount: '755.00', tax_amount: null, lines: [
+      item('LGO-001', 'Logo', 1, 500), item('BAN-002', 'Banner (2x6m)', 2, 45), item('PST-003', 'Poster (1x2m)', 3, 55),
+    ] });
+    await env.db.query(`insert into discrepancies (organization_id, invoice_id, purchase_order_id, discrepancy_type, severity, status, deterministic_evidence, evidence_hash)
+      select $1, $2, $3, 'unmatched_line', 'medium', 'open', '{"engine":"compareDocuments"}'::jsonb, 'legacy-unmatched-' || n
+      from generate_series(1, 6) n`, [org.id, inv.id, inv.purchase_order_id]);
+    expect((await env.call('POST', `/api/invoices/${inv.id}/process`, { user: org.reviewer })).status).toBe(200);
+    const previous = (await discrepancies(org, inv.id)).filter(d => d.discrepancy_type === 'unmatched_line');
+    expect(previous.map(d => d.status)).toEqual(Array(6).fill('dismissed'));
+    const open = async () => (await discrepancies(org, inv.id)).filter(d => d.status === 'open');
+    const pending = (await open()).find(d => d.discrepancy_type === 'ambiguous_reference')!;
+    const evidence = pending.deterministic_evidence as { check: string; candidates: { invoice_line_id: string; po_line_id: string }[] };
+    expect(evidence.check).toBe('line_match_review');
+    expect(evidence.candidates).toHaveLength(3);
+    expect((await open()).map(d => d.discrepancy_type).sort()).toEqual(['ambiguous_reference', 'potential_extraction_error']);
+    const path = `/api/invoices/${inv.id}/review-line-match`;
+    const review = (candidate: typeof evidence.candidates[number]) => env.call('POST', path, {
+      user: org.reviewer, body: { purchase_order_id: inv.purchase_order_id, invoice_line_id: candidate.invoice_line_id,
+        po_line_id: candidate.po_line_id, decision: 'confirm' },
+    });
+    expect((await review({ ...evidence.candidates[0], po_line_id: evidence.candidates[1].po_line_id })).status).toBe(409);
+    for (const candidate of evidence.candidates) expect((await review(candidate)).status).toBe(200);
+    expect((await review(evidence.candidates[1])).status).toBe(409);
+    expect((await env.call('POST', `/api/invoices/${inv.id}/process`, { user: org.reviewer })).status).toBe(200);
+    const findings = await open();
+    expect(findings.map(d => d.discrepancy_type).sort()).toEqual(['potential_extraction_error', 'unit_price_mismatch']);
+    expect(findings.find(d => d.discrepancy_type === 'unit_price_mismatch')).toMatchObject({
+      expected_value: '40.00', observed_value: '45.00', difference_amount: '10.00',
+      deterministic_evidence: { match_basis: 'reviewer_confirmed', line: { invoice: { sku: 'BAN-002' }, po: { sku: 'BN-002' } } },
+    });
+    expect(findings.find(d => d.discrepancy_type === 'potential_extraction_error')?.deterministic_evidence).toMatchObject({
+      check: 'financial_inputs', missing: ['tax_amount'],
+    });
+  });
+
   it('does not add incomplete line taxes or substitute zero for an unreadable charge', async () => {
     const org = await orgWithPo();
     const inv = await upload(org, {

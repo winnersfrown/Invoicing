@@ -109,6 +109,13 @@ export const ReviewInvoiceFieldsRequest = z.strictObject({
     .refine(values => Object.keys(values).length > 0, 'Provide a field to review'),
 });
 
+export const ReviewLineMatchRequest = z.strictObject({
+  purchase_order_id: Id,
+  invoice_line_id: Id,
+  po_line_id: Id,
+  decision: z.enum(['confirm', 'reject']),
+});
+
 export const CreateInvoiceRequest = z.object({
   file: z.object({
     name: Text(255),
@@ -272,6 +279,7 @@ export const ROUTES = {
   'GET /api/invoices/:id': 'viewer',
   'POST /api/invoices/:id/process': 'reviewer',
   'POST /api/invoices/:id/review-fields': 'reviewer',
+  'POST /api/invoices/:id/review-line-match': 'reviewer',
   'GET /api/invoices/:id/discrepancies': 'viewer',
   'GET /api/invoices/:id/duplicate-candidates': 'viewer',
   'POST /api/purchase-orders': 'reviewer',
