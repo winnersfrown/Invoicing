@@ -15,7 +15,8 @@
         <a class="wordmark" href="#top"><span class="brand-mark" aria-hidden="true"></span>Sorikano</a>
         <nav aria-label="Main navigation">
           <a href="#workflow">How it works</a>
-          <a class="button button-outline" href="demo.html">Try the demo</a>
+          <a class="button button-outline" href="demo.html?account=login">Log in</a>
+          <a class="button button-primary nav-signup" href="demo.html?account=signup">Sign up</a>
         </nav>
       </header>
       <div class="hero-inner shell">
@@ -23,7 +24,10 @@
           <p class="eyebrow">Accounts payable</p>
           <h1>Know what you’re paying for.</h1>
           <p class="intro">Match invoices to purchase orders, spot unexpected charges, and see the evidence behind every discrepancy.</p>
-          <a class="button button-primary" href="demo.html">Try the demo</a>
+          <div class="hero-actions">
+            <a class="button button-primary" href="demo.html">Try the demo</a>
+            <a class="button button-outline" href="demo.html?account=signup">Create an account</a>
+          </div>
           <p class="demo-note">Explore with sample invoices. No sign-up needed.</p>
         </div>
         <figure class="product">
@@ -42,9 +46,22 @@
           </div>
           <div class="finding">
             <span class="finding-icon" aria-hidden="true">!</span>
-            <div><strong>Unit price mismatch</strong><p>12 boxes × $5.00 above the PO price</p></div>
+            <div><strong>Unit price mismatch</strong><p>12 cases × $5.00 above the PO price</p></div>
             <strong class="variance">+$60.00</strong>
           </div>
+          <details class="price-breakdown">
+            <summary>See the line items</summary>
+            <div class="price-table">
+              <table>
+                <caption class="visually-hidden">Sample invoice and purchase order unit prices</caption>
+                <thead><tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">PO unit</th><th scope="col">Invoice unit</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">A4 copy paper</th><td>12</td><td>$40</td><td>$45</td></tr>
+                  <tr><th scope="row">Project folders</th><td>4</td><td>$30</td><td>$30</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
           <figcaption>Sample comparison</figcaption>
         </figure>
       </div>
@@ -72,6 +89,17 @@
         </article>
       </div>
     </section>
+    <section class="faq shell" id="faq" aria-labelledby="faq-title">
+      <div>
+        <p class="eyebrow">FAQ</p>
+        <h2 id="faq-title">Common questions</h2>
+      </div>
+      <div class="faq-list">
+        <details><summary>Do I need an account to try Sorikano?</summary><p>No. Open the demo and choose <strong>Load complete $60 example</strong> to explore a sample invoice and purchase order.</p></details>
+        <details><summary>What does a workspace give me?</summary><p>With an account, you can sign in to a private workspace, upload invoices and purchase orders, and save your review decisions.</p></details>
+        <details><summary>Does Sorikano send emails or make payments?</summary><p>Sorikano can draft a supplier correction request for you to review and send yourself. It does not move money.</p></details>
+      </div>
+    </section>
     <section class="closing shell" aria-labelledby="closing-title">
       <div><h2 id="closing-title">Can you find the $60 difference?</h2><p>Open the demo and load the sample to trace the discrepancy.</p></div>
       <a class="button button-dark" href="demo.html">Try the demo</a>
@@ -79,6 +107,11 @@
   </main>
   <footer class="shell footer">
     <a class="wordmark" href="#top"><span class="brand-mark" aria-hidden="true"></span>Sorikano</a>
+    <nav aria-label="Footer navigation">
+      <a href="#faq">FAQ</a>
+      <a href="demo.html?account=login">Log in</a>
+      <a href="demo.html?account=signup">Sign up</a>
+    </nav>
   </footer>
 </body>
 </html>

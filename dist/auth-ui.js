@@ -124,9 +124,14 @@ function openAuth(signup = false) {
 }
 
 async function start() {
-  renderArea();
+  const account = new URLSearchParams(location.search).get('account');
+  const wantsAccount = account === 'login' || account === 'signup';
+  renderArea(wantsAccount ? 'Loading account access…' : '');
   config = await api.loadConfig();
-  if (!config) return; // static hosting: local demo only
+  if (!config) {
+    if (wantsAccount) renderArea('Account access is unavailable right now. You can still use the demo.');
+    return;
+  }
   renderArea();
   try {
     if (config.mode === 'dev') {
@@ -138,6 +143,15 @@ async function start() {
       const {data} = await supabase.auth.getSession();
       if (data.session) enter(await supabaseUser(data.session));
     }
-  } catch (e) { renderArea(e.message); }
+  } catch (e) {
+    renderArea(e.message);
+    return;
+  }
+  if (user || !wantsAccount) return;
+  if (account === 'signup' && !config.public_signup) {
+    renderArea('Sign up is unavailable right now. You can still use the demo or sign in to an existing account.');
+    return;
+  }
+  openAuth(account === 'signup');
 }
 start();
