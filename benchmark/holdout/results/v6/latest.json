@@ -1,0 +1,3305 @@
+{
+  "benchmarkVersion": 6,
+  "dataset": "benchmark/holdout",
+  "humanRecovery": [
+    {
+      "invoice": "I20",
+      "matchedAfterConfirmation": true
+    }
+  ],
+  "baselineGitHubCommit": "b84fa0be0ecf22a0977e58b9a91d05cc98bcabaa",
+  "scope": "Structured JSON engine checks only; no OCR, UI upload, live concurrency or customer performance claims.",
+  "groundTruthSha256": "139000e3fedd5d756233de1598fe034bd57ee641090e5dc78f7b08079313b55b",
+  "engineSha256": {
+    "dist/app.js": "0b3920e8e78fbc517def6ea4f85e040a0c1c2befff9671ca5ea3e28b7b087cd5",
+    "dist/arithmetic.js": "473756a97439381514ac8b026061bae1a3465b92eb66440db42212641354d423",
+    "dist/case-engine.js": "86856b9cb51f9327c5530718b4611aef1d9eff655337307d4a9d75f6087e71a0",
+    "dist/case-ui.js": "8b65515fe9025cd1538a2f027e0b25f1e9ffbbabf1c9f801a75c0f4f71d5068f",
+    "dist/document-metadata.js": "660f6a249247cd52b67f32194daaa0e63c2a9bea9f7a3da45d24b9cc2680f8f8",
+    "dist/duplicates-engine.js": "a909b0f4ef43e1f77f96e219f68d28e496dfda35e2cbbfd59e275c52b372ec5a",
+    "dist/duplicates-ui.js": "a3f5036cfda76ddfaf25b195968c9c8c184be178a295cdd4389ca2d75bc49514",
+    "dist/engine.js": "c3cf512c12a6148abc45afb9437a000fab47c1754b07511597e7542f27d6d0bb",
+    "dist/extraction-review.js": "807815941e09b252bcf84c810c4880f0bac47533137a157dfa9e1eb67b968f4e",
+    "dist/extraction-validation.js": "7e9c18a8bc346ccdc8c67e009041cb1d358bfa382c8a6413326a00b7f28dd3c8",
+    "dist/extraction.js": "8be06919397f21ed506ba14fa8c0ca02b174abadf31c8e58c6f63ebdff49729d",
+    "dist/invoice-dates.js": "7821537b765c2886ecaf2a17298ceeddfef4941b7d282ebbe4a560a9a79a3b83",
+    "dist/invoice-money.js": "bf355d4e5f5f27f64f92b34060ecf80c46c0d73ab74fcae2a210421cb15ad2fb",
+    "dist/layout-extraction.js": "7784449c027b54b7fc6b702f352f1d1f5b0992bb05c3b47046d89be8f094e251",
+    "dist/line-match-review.js": "016c92ef1cb546b04bdfb8b76cf5df041272dfcb01b011190a4103d2da2f3311",
+    "dist/line-matching.js": "8d8a189751f57ee8de0f29569c46d3a5d5f4be9ed03ab5803bc77135050faf39",
+    "dist/matching-engine.js": "8147658732f49173e655699451d137d95925bb4b7926a3f77f7b1ddbff1eb879",
+    "dist/matching.js": "40d7f6c705075ebfa85a453c9b1f6e5df742c8bdd4f1acf5710f11a722b7da96",
+    "dist/ocr-grid.js": "51af3b0c290745f7b6350b50f27cd0f23bc2bff70ba703b3ed4d0a06c0eef891",
+    "dist/ocr-image.js": "4fbaee9dc7b1a610bafe7da596724e876d6c36f8228a7be603e97d778d48285f",
+    "dist/ocr-layout.js": "f22f72ca319f9be78bc9f967696b8b5ef6b99d972ed89e45de557ff7b907d73b",
+    "dist/samples.js": "5e12f92e65f89a9a014be404dbf6241e8115d11ce127b728b5c501fa825d13bb",
+    "dist/supplier.js": "69e10890fdfea95dc4a63b2e0032a307e0622350c7f630ccaa2d28732b9973fe",
+    "dist/workflow-engine.js": "e0dd599e39cd3b1567cbd4040e4f7bea766af2995ca655a758e4016ee0c28679"
+  },
+  "datasetSha256": "b1be6ca323519fd37984c0e01d13223f87c997b9b654e286d6e7e9a86fc17671",
+  "duplicates": {
+    "tp": 6,
+    "fp": 0,
+    "tn": 184,
+    "fn": 0,
+    "accuracy": 1,
+    "precision": 1,
+    "recall": 1,
+    "falsePositiveRate": 0,
+    "pairs": [
+      {
+        "pair": [
+          "I01",
+          "I02"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I03"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I07"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+          "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
+        ]
+      },
+      {
+        "pair": [
+          "I01",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I01",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I03"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I08"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 94% of unique words (a similarity signal, not a probability).",
+          "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
+        ]
+      },
+      {
+        "pair": [
+          "I02",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I02",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I04"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I09"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 95% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I03",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I03",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I05"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I10"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Invoice references agree after harmless prefix and formatting normalization.",
+          "Document totals agree.",
+          "Extracted content shares 92% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I04",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I04",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I06"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I11"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Invoice references agree after harmless prefix and formatting normalization.",
+          "Document totals agree.",
+          "Extracted content shares 97% of unique words (a similarity signal, not a probability)."
+        ]
+      },
+      {
+        "pair": [
+          "I05",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I05",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I07"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I12"
+        ],
+        "expectedDuplicate": true,
+        "detected": true,
+        "result": "TP",
+        "evidence": [
+          "Supplier names agree after punctuation and company-suffix normalization.",
+          "Document totals agree.",
+          "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
+          "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
+        ]
+      },
+      {
+        "pair": [
+          "I06",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I06",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I08"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I07",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I09"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I08",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I10"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I09",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I11"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I10",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I12"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I11",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I13"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I12",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I14"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I13",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I15"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I14",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I16"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I15",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I17"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I16",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I18"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I17",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I18",
+          "I19"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I18",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      },
+      {
+        "pair": [
+          "I19",
+          "I20"
+        ],
+        "expectedDuplicate": false,
+        "detected": false,
+        "result": "TN",
+        "evidence": []
+      }
+    ]
+  },
+  "comparison": {
+    "exactClassificationCorrect": 18,
+    "total": 20,
+    "issuesDetected": 7,
+    "issueCount": 7,
+    "falseAlarms": 1,
+    "cleanCount": 13,
+    "explanationCorrect": 18,
+    "results": [
+      {
+        "invoice": "I01",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-1",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-1",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I02",
+        "po": "P2",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-2",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-2",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I03",
+        "po": "P3",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-3",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-3",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-3",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-3",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-3",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-3",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I04",
+        "po": "P4",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-4",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-4",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I05",
+        "po": "P5",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-5",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-5",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-5",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-5",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-5",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-5",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I06",
+        "po": "P6",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-6",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-6",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-6",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-6",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-6",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-6",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I07",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-1",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-1",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I08",
+        "po": "P2",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-2",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-2",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I09",
+        "po": "P3",
+        "expected": "invalid_reference",
+        "reason": "Invoice reference missing.",
+        "error": [
+          "number"
+        ],
+        "actual": "invalid_reference",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Document needs a valid number."
+        }
+      },
+      {
+        "invoice": "I10",
+        "po": "P4",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match after punctuation and company-suffix normalization; verify legal identity during review.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-4",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-4",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I11",
+        "po": "P5",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-5",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-5",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-5",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-5",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-5",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-5",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I12",
+        "po": "P6",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-6",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-6",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-6",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-6",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-6",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-6",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I13",
+        "po": "P1",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "matched",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-1",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-1",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": false,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": ""
+        }
+      },
+      {
+        "invoice": "I14",
+        "po": "P2",
+        "expected": "discrepancy",
+        "reason": "Four units priced $2.25 above PO.",
+        "difference": 900,
+        "lines": [
+          {
+            "sku": "KIT-2",
+            "difference": 900,
+            "invoiceLine": 1,
+            "poLine": 1,
+            "invoicePrice": 74.5,
+            "poPrice": 72.25,
+            "invoiceQty": 4,
+            "poQty": 4
+          }
+        ],
+        "draft": [
+          "4 × $74.50",
+          "4 × $72.25",
+          "$9.00"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-2",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 74.5
+                },
+                "po": {
+                  "sku": "KIT-2",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 29800,
+                "expectedCents": 28900,
+                "differenceCents": 900,
+                "changed": true,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-2",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-2",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 900,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 338,
+            "poTotal": 329
+          },
+          "draft": "Subject: Please review invoice 8201 against ORDER-72\n\nHello Cobalt Hardware Inc,\n\nWhile reviewing invoice 8201, we found differences from purchase order ORDER-72:\n\nKIT-2 (Workshop assembly kit with sealed components and inspection label): invoice line 1 shows 4 × $74.50; PO line 1 shows 4 × $72.25. Line difference: $9.00.\n\nThe invoice total is $338.00 and the purchase order total is $329.00, a net difference of $9.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I15",
+        "po": "P3",
+        "expected": "discrepancy",
+        "reason": "Packing line omitted from invoice.",
+        "difference": -2550,
+        "lines": [
+          {
+            "sku": "PACK-3",
+            "difference": -2550,
+            "invoiceLine": null,
+            "poLine": 2,
+            "invoicePrice": null,
+            "poPrice": 8.5,
+            "invoiceQty": null,
+            "poQty": 3
+          }
+        ],
+        "draft": [
+          "invoice line missing",
+          "PO line 2",
+          "-$25.50"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-3",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-3",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-3",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-3",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": null,
+                "po": {
+                  "sku": "PACK-3",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 0,
+                "expectedCents": 2550,
+                "differenceCents": -2550,
+                "changed": true,
+                "invoiceLine": null,
+                "poLine": 2,
+                "matchBasis": "unmatched"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": -2550,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 303.5,
+            "poTotal": 329
+          },
+          "draft": "Subject: Please review invoice 8301 against ORDER-73\n\nHello Linden Catering Ltd,\n\nWhile reviewing invoice 8301, we found differences from purchase order ORDER-73:\n\nPACK-3 (Protective packing and scheduled delivery to regional distribution depot): invoice line missing shows no item; PO line 2 shows 3 × $8.50. Line difference: -$25.50.\n\nThe invoice total is $303.50 and the purchase order total is $329.00, a net difference of -$25.50. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I16",
+        "po": "P4",
+        "expected": "invalid_total",
+        "reason": "Declared total is $1 too high.",
+        "error": [
+          "line amounts + tax",
+          "document total"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": false,
+        "explanationPass": false,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [
+              {
+                "code": "calculated_total",
+                "path": "total",
+                "label": "Total from line calculations, tax and adjustments",
+                "currency": "USD",
+                "displayedCents": 33000,
+                "expectedCents": 32900,
+                "numbers": {
+                  "displayed": "330.00 USD",
+                  "calculated": "329.00 USD",
+                  "inputs": {
+                    "lines": "314.50 USD",
+                    "tax": "14.50 USD"
+                  }
+                },
+                "evidence": [],
+                "status": "contradiction",
+                "differenceCents": 100,
+                "message": "Total from line calculations, tax and adjustments: displayed 330.00 USD; calculated 329.00 USD.",
+                "document": "invoice"
+              }
+            ],
+            "lines": [
+              {
+                "sku": "KIT-4",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "po": {
+                  "sku": "KIT-4",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 28900,
+                "expectedCents": 28900,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-4",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "po": {
+                  "sku": "PACK-4",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2550,
+                "expectedCents": 2550,
+                "differenceCents": 0,
+                "changed": false,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 100,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 330,
+            "poTotal": 329
+          },
+          "draft": "Subject: Please review invoice 8401 against ORDER-74\n\nHello Meadow Textile Co.,\n\nWhile reviewing invoice 8401, we found differences from purchase order ORDER-74:\n\nInvoice arithmetic: Total from line calculations, tax and adjustments: displayed 330.00 USD; calculated 329.00 USD.\n\nThe invoice total is $330.00 and the purchase order total is $329.00, a net difference of $1.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I17",
+        "po": "P5",
+        "expected": "vendor_mismatch",
+        "reason": "Different supplier.",
+        "error": [
+          "Vendor mismatch"
+        ],
+        "actual": "vendor_mismatch",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Vendor mismatch. Select documents from the same vendor."
+        }
+      },
+      {
+        "invoice": "I18",
+        "po": "P6",
+        "expected": "po_mismatch",
+        "reason": "Wrong PO reference.",
+        "error": [
+          "reference mismatch"
+        ],
+        "actual": "po_mismatch",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "error": "Purchase order reference mismatch. Select the PO referenced on the invoice."
+        }
+      },
+      {
+        "invoice": "I19",
+        "po": "P1",
+        "expected": "discrepancy",
+        "reason": "Offsetting charges with unchanged invoice total.",
+        "difference": 0,
+        "lines": [
+          {
+            "sku": "KIT-1",
+            "difference": 300,
+            "invoiceLine": 1,
+            "poLine": 1,
+            "invoicePrice": 73,
+            "poPrice": 72.25,
+            "invoiceQty": 4,
+            "poQty": 4
+          },
+          {
+            "sku": "PACK-1",
+            "difference": -300,
+            "invoiceLine": 2,
+            "poLine": 2,
+            "invoicePrice": 7.5,
+            "poPrice": 8.5,
+            "invoiceQty": 3,
+            "poQty": 3
+          }
+        ],
+        "draft": [
+          "$3.00",
+          "-$3.00",
+          "4 × $73.00",
+          "3 × $7.50"
+        ],
+        "actual": "discrepancy",
+        "classificationPass": true,
+        "explanationPass": true,
+        "output": {
+          "comparison": {
+            "vendorEvidence": "Supplier names match.",
+            "arithmetic": [],
+            "lines": [
+              {
+                "sku": "KIT-1",
+                "description": "Workshop assembly kit with sealed components and inspection label",
+                "invoice": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 73
+                },
+                "po": {
+                  "sku": "KIT-1",
+                  "description": "Workshop assembly kit with sealed components and inspection label",
+                  "quantity": 4,
+                  "unitPrice": 72.25
+                },
+                "invoicedCents": 29200,
+                "expectedCents": 28900,
+                "differenceCents": 300,
+                "changed": true,
+                "invoiceLine": 1,
+                "poLine": 1,
+                "matchBasis": "exact_sku"
+              },
+              {
+                "sku": "PACK-1",
+                "description": "Protective packing and scheduled delivery to regional distribution depot",
+                "invoice": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 7.5
+                },
+                "po": {
+                  "sku": "PACK-1",
+                  "description": "Protective packing and scheduled delivery to regional distribution depot",
+                  "quantity": 3,
+                  "unitPrice": 8.5
+                },
+                "invoicedCents": 2250,
+                "expectedCents": 2550,
+                "differenceCents": -300,
+                "changed": true,
+                "invoiceLine": 2,
+                "poLine": 2,
+                "matchBasis": "exact_sku"
+              }
+            ],
+            "pendingLineMatches": [],
+            "lineDecisions": [],
+            "taxDifferenceCents": 0,
+            "differenceCents": 0,
+            "hasDiscrepancy": true,
+            "invoiceTotal": 329,
+            "poTotal": 329
+          },
+          "draft": "Subject: Please review invoice 8102 against ORDER-71\n\nHello Birch Laboratory LLC,\n\nWhile reviewing invoice 8102, we found differences from purchase order ORDER-71:\n\nKIT-1 (Workshop assembly kit with sealed components and inspection label): invoice line 1 shows 4 × $73.00; PO line 1 shows 4 × $72.25. Line difference: $3.00.\nPACK-1 (Protective packing and scheduled delivery to regional distribution depot): invoice line 2 shows 3 × $7.50; PO line 2 shows 3 × $8.50. Line difference: -$3.00.\n\nThe invoice total is $329.00 and the purchase order total is $329.00, a net difference of $0.00. Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]"
+        }
+      },
+      {
+        "invoice": "I20",
+        "po": "P2",
+        "expected": "matched",
+        "reason": "Amounts agree with PO; supplier identity is the same in fictional master records.",
+        "actual": "supplier_review",
+        "classificationPass": false,
+        "explanationPass": false,
+        "output": {
+          "error": "Similar supplier names require identity review. Verify supplier records before comparing these documents."
+        }
+      }
+    ]
+  },
+  "credits": [
+    {
+      "id": "C1",
+      "rejected": true,
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
+      "supported": false
+    },
+    {
+      "id": "C2",
+      "rejected": true,
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
+      "supported": false
+    },
+    {
+      "id": "C3",
+      "rejected": true,
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
+      "supported": false
+    },
+    {
+      "id": "C4",
+      "rejected": true,
+      "creditSpecificExplanation": true,
+      "error": "Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.",
+      "supported": false
+    }
+  ],
+  "probes": {
+    "reverseOrderInvariant": true,
+    "mixedQueueStatusInvariant": true
+  }
+}

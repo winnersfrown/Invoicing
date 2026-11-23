@@ -162,6 +162,13 @@ export function reviewExisting(data,text,file=null){
    for(const [path,value] of Object.entries(choices))if(!formInput(path))d=correctField(d,path,value);
    return d;
   }
+  // "lines.3.sku" → "Line 4 item code"; other paths keep a readable form of their own name.
+  function fieldName(path){
+   const names={sku:'item code',description:'description',quantity:'quantity',unitPrice:'unit price',amount:'amount',date:'Invoice date',due:'Due date',currency:'Currency',pricingCurrency:'Pricing currency',total:'Total',subtotal:'Subtotal',tax:'Tax'};
+   const line=path.match(/^lines\.(\d+)\.(\w+)$/);
+   if(line)return `Line ${Number(line[1])+1} ${names[line[2]]||line[2]}`;
+   return names[path]||path.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/\./g,' ');
+  }
   function renderConfirmations(pending){
    confirmHost.replaceChildren();
    if(!pending.length)return;
@@ -169,10 +176,10 @@ export function reviewExisting(data,text,file=null){
    for(const p of pending){
     const choose=value=>{const target=formInput(p.path);if(target&&value!=null)target.value=String(value);else if(value!=null)choices[p.path]=value;confirmed.add(p.path);reviewed.checked=false;renderChecks();};
     const f=fields[p.path]||{};
-    const numeric=!['date','due','currency','pricingCurrency'].includes(p.path);
+    const numeric=!['date','due','currency','pricingCurrency','vendor','number','poNumber'].includes(p.path)&&!/\.(sku|description)$/.test(p.path);
     const other=el('input',{type:numeric?'number':'text',step:numeric?'any':null,'aria-label':'Correct value'});
     confirmHost.append(el('fieldset',{className:'check'},
-     el('legend',{text:f.label||p.path}),el('p',{text:p.reason}),
+     el('legend',{text:f.label||fieldName(p.path)}),el('p',{text:p.reason}),
      f.sourceText?el('p',{},el('small',{text:'Source: '}),el('mark',{text:f.sourceText})):null,
      p.evidence.map(v=>el('p',{},el('small',{text:`Page ${v.page}, text row ${v.row} (${v.method}): `}),el('mark',{text:v.text}))),
      p.candidates.map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),

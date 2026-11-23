@@ -1,0 +1,44 @@
+{
+  "vendor": "Bright Arc Electrical",
+  "number": "BAE-5562",
+  "subtotal": 844.8,
+  "tax": 67.58,
+  "total": 912.38,
+  "lines": [
+    {
+      "sku": "OUT-15A",
+      "description": "Duplex outlet 15A",
+      "quantity": 12,
+      "unitPrice": 4.25,
+      "amount": 51
+    },
+    {
+      "sku": "BRK-20",
+      "description": "Circuit breaker 20A",
+      "quantity": 4,
+      "unitPrice": 18.9,
+      "amount": 75.6
+    },
+    {
+      "sku": "WIR-12",
+      "description": "Copper wire 12 AWG (250 ft)",
+      "quantity": 1,
+      "unitPrice": 129,
+      "amount": 129
+    },
+    {
+      "sku": "BOX-1G",
+      "description": "Single gang box",
+      "quantity": 12,
+      "unitPrice": 1.6,
+      "amount": 19.2
+    },
+    {
+      "sku": "LAB-HR",
+      "description": "Electrician labor",
+      "quantity": 6,
+      "unitPrice": 95,
+      "amount": 570
+    }
+  ]
+}

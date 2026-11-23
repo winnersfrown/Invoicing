@@ -2,6 +2,7 @@ const skuKey = sku => sku.trim().toLowerCase();
 const descriptionTokens = description => new Set(description.match(/[\p{L}\p{N}]+/gu) ?? []);
 const dimensions = description => (description.match(/\d+(?:[.,]\d+)?/g) ?? []).sort().join(' ');
 const generic = new Set(['item', 'product', 'service', 'misc', 'miscellaneous', 'goods', 'fee']);
+const skuNumber = sku => sku.match(/\d+/g)?.join('-') ?? '';
 const pairKey = ({invoiceLine, poLine}) => `${invoiceLine}:${poLine}`;
 
 function normalizeDescription(description) {
@@ -30,9 +31,15 @@ function suggestion(invoice, po) {
  const contained = common.length === short && common.length / long >= 0.5;
  const overlap = common.length >= 2 && common.length / (left.size + right.size - common.length) >= 0.5;
  if (!exact && !(sameQuantity && (contained || overlap)) && !(contained && common.length >= 2)) return null;
+ // Evidence for the reviewer. A shared SKU number only supports the other reasons; it never creates a suggestion.
+ const reasons = [exact ? 'Same description words' : `Similar description: both mention ${common.join(', ')}`];
+ if (sameQuantity) reasons.push(`Same quantity (${invoice.quantity})`);
+ const number = skuNumber(invoice.sku);
+ if (number && number === skuNumber(po.sku)) reasons.push(`SKU codes share the number ${number} (${invoice.sku} and ${po.sku})`);
  return {
   description: exact ? 'same' : 'similar',
   sameQuantity,
+  reasons,
  };
 }
 

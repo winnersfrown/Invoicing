@@ -1,0 +1,30 @@
+{
+  "vendor": "Cedar Lane Landscaping",
+  "number": "CLL-1190",
+  "subtotal": 435,
+  "tax": null,
+  "total": 435,
+  "lines": [
+    {
+      "sku": "",
+      "description": "Hedge trimming",
+      "quantity": 2.5,
+      "unitPrice": 60,
+      "amount": 150
+    },
+    {
+      "sku": "",
+      "description": "Leaf removal",
+      "quantity": 4,
+      "unitPrice": 45,
+      "amount": 180
+    },
+    {
+      "sku": "",
+      "description": "Irrigation check",
+      "quantity": 1.5,
+      "unitPrice": 70,
+      "amount": 105
+    }
+  ]
+}

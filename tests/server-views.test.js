@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {extractedInvoice, fileUpload, purchaseOrderRequest, toMoneyString, warningPresentation} from '../dist/server-inbox.js';
 import {applyConfirmations} from '../dist/extraction-review.js';
-import {investigationView, formatMoney} from '../dist/investigation-ui.js';
+import {investigationView, formatMoney, decisionMessage, alreadyApproved} from '../dist/investigation-ui.js';
 import {parseExtractedText} from '../dist/extraction.js';
 
 const sample = {type: 'invoice', number: 'NS-1068', vendor: 'Northstar Paper Co.', poNumber: 'PO-2026-042', currency: 'USD', issued: '2026-11-13', due: '2026-12-13',
@@ -202,4 +202,43 @@ test('preserves printed contradictions, dates and source review labels in upload
  const raw=parseExtractedText('Vendor: Example\nInvoice: X\nPO reference: P\nCurrency: USD\nInvoice date: 2026-11-16\nA Boxes 2 50.00 90.00\nTax: 0.00\nTotal: 100.00','invoice');
  const x=extractedInvoice({method:'pdf_text',read:raw,final:raw});
  assert.equal(x.lines[0].line_total,'90.00');assert.equal(x.invoice_date,'2026-11-16');assert.ok(x.extraction.uncertain.includes('lines'));assert.match(x.extraction.source_refs['lines.0.amount'].excerpt,/90.00/);assert.match(x.extraction.confidence_meaning,/not a calibrated probability/);
+});
+
+test('a missing purchase order is a missing document with an upload action, never an extraction failure', () => {
+  const w = warningPresentation({discrepancy_type: 'missing_purchase_order', deterministic_evidence: {check: 'po_lookup', po_reference: 'PO-2025-042'}});
+  assert.equal(w.kind, 'missing_document');
+  assert.equal(w.upload, true);
+  assert.match(w.message, /Upload the purchase order PO-2025-042 to compare this invoice\./);
+  assert.doesNotMatch(w.message, /OCR|extract/i);
+});
+
+test('extraction warnings name the field and cite the source text instead of blaming image quality', () => {
+  const extraction = {field_confidence: {currency: 0.5}, source_refs: {currency: {page: 2, excerpt: 'Balance due $957.00'}}};
+  const w = warningPresentation({discrepancy_type: 'potential_extraction_error', deterministic_evidence: {check: 'extraction', uncertain: ['currency'], missing: ['invoice_number']}}, extraction);
+  assert.equal(w.kind, 'extraction_error');
+  assert.equal(w.details.length, 2);
+  assert.match(w.details.find(t => /currency/i.test(t)), /Payable currency.*“Balance due \$957\.00”.*page 2.*0\.5/);
+  assert.match(w.details.find(t => /Invoice number/.test(t)), /not found in the document/);
+  assert.doesNotMatch(JSON.stringify(w), /image quality|poor|blurry/i);
+});
+
+test('supplier and date findings are review requirements', () => {
+  assert.equal(warningPresentation({discrepancy_type: 'supplier_mismatch', deterministic_evidence: {check: 'po_supplier_identity', po_reference: 'PO-1'}}).kind, 'review_requirement');
+  assert.equal(warningPresentation({discrepancy_type: 'potential_extraction_error', observed_value: 'x', deterministic_evidence: {check: 'date_order'}}).kind, 'review_requirement');
+});
+
+test('an approval says it was saved and what is still required', () => {
+  const step = {action: 'correct_field', message: 'The invoice still requires a field correction before this discrepancy can be resolved.'};
+  assert.equal(decisionMessage('approved', step), 'Recommendation approved. Your decision has been saved. The invoice still requires a field correction before this discrepancy can be resolved.');
+  assert.equal(decisionMessage('rejected', {action: 'none', message: ''}), 'Recommendation rejected. Your decision has been saved.');
+  assert.match(decisionMessage('more_info_requested', null), /^Additional investigation requested\. Your decision has been saved\.$/);
+});
+
+test('the same approval is blocked only while the discrepancy has not changed', () => {
+  const last = {approval_status: 'approved', approved_action: 'correct_extraction_error'};
+  assert.equal(alreadyApproved(last, 'correct_extraction_error', 'investigating'), true);
+  assert.equal(alreadyApproved(last, 'correct_extraction_error', 'open'), false);
+  assert.equal(alreadyApproved(last, 'request_corrected_invoice', 'investigating'), false);
+  assert.equal(alreadyApproved(null, 'correct_extraction_error', 'investigating'), false);
+  assert.equal(alreadyApproved({...last, approval_status: 'rejected'}, 'correct_extraction_error', 'investigating'), false);
 });

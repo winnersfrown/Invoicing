@@ -1,0 +1,30 @@
+{
+  "vendor": "Harbor Print Works",
+  "number": "HPW-7781",
+  "subtotal": 5120,
+  "tax": null,
+  "total": 5120,
+  "lines": [
+    {
+      "sku": "",
+      "description": "Trade show banners",
+      "quantity": 4,
+      "unitPrice": 312.5,
+      "amount": 1250
+    },
+    {
+      "sku": "",
+      "description": "Brochures, tri-fold (box of 500)",
+      "quantity": 3,
+      "unitPrice": 1250,
+      "amount": 3750
+    },
+    {
+      "sku": "",
+      "description": "Design proof revisions",
+      "quantity": 2,
+      "unitPrice": 60,
+      "amount": 120
+    }
+  ]
+}

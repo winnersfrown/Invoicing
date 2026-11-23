@@ -6,7 +6,7 @@ const amount = value => readMoney(value)?.value ?? null;
 const aliases = {
  sku: /^(?:sku|code|item\s*(?:code|no\.?|number)|product\s*code)$/i,
  description: /^(?:description|details|product|item(?:\s*description)?|particulars|service)$/i,
- quantity: /^(?:qty\.?|quantity|units)(?:\s*\/\s*value)?$/i,
+ quantity: /^(?:qty\.?|quantity|units|hours|hrs\.?|days)(?:\s*\/\s*value)?$/i,
  unitPrice: /^(?:unit\s*(?:price|cost)|price|rate)$/i,
  tax: /^(?:vat|tax|gst)\s*(?:%|rate)$/i,
  amount: /^(?:amount|line\s*total|extended(?:\s*price)?|total)(?:\s+(?:excl\.?|incl\.?|net|gross))?$/i
@@ -21,9 +21,55 @@ function columns(row){
  let headers=cells.map(c=>Object.keys(aliases).find(k=>aliases[k].test(c.trim())));
  
  const tokens=row.tokens||[];const mapped=[];
- for(let i=0;i<tokens.length;i++){let key;let count=1;for(const n of [3,2,1]){if(i+n>tokens.length)continue;const label=tokens.slice(i,i+n).map(t=>t.text.trim()).join(' ');key=Object.keys(aliases).find(k=>aliases[k].test(label));if(key){count=n;break;}}if(key){mapped.push({key,x:tokens[i].x,right:tokens[i+count-1].x+tokens[i+count-1].width});i+=count-1;}}
- if(mapped.some(c=>c.key==='quantity')&&mapped.some(c=>c.key==='unitPrice'))return {positions:mapped};
- if(headers.includes('quantity')&&headers.includes('unitPrice'))return {headers};
+ for(let i=0;i<tokens.length;i++){let key;let count=1;for(const n of [3,2,1]){if(i+n>tokens.length)continue;const label=tokens.slice(i,i+n).map(t=>t.text.trim()).join(' ');key=Object.keys(aliases).find(k=>aliases[k].test(label));if(key){count=n;break;}}if(key){mapped.push({key,label:tokens.slice(i,i+count).map(t=>t.text.trim()).join(' '),x:tokens[i].x,right:tokens[i+count-1].x+tokens[i+count-1].width});i+=count-1;}}
+ // "Item" beside a separate "Description" column holds the item code.
+ const sku = (list, labels) => {const d=list.flatMap((k,i)=>k==='description'?[i]:[]);if(d.length>1&&!list.includes('sku'))list[d.find(i=>/^item$/i.test(labels[i].trim()))??d[1]]='sku';return list;};
+ const keys=sku(mapped.map(c=>c.key),mapped.map(c=>c.label));mapped.forEach((c,i)=>{c.key=keys[i];});
+ headers=sku(headers,cells);
+ if(mapped.some(c=>c.key==='quantity')&&mapped.some(c=>c.key==='unitPrice'))return {positions:mapped,order:mapped.map(c=>c.key)};
+ if(headers.includes('quantity')&&headers.includes('unitPrice'))return {headers,order:headers.filter(Boolean)};
+ return null;
+}
+
+const numberToken = /^[$€£]?\d[\d,]*(?:\.\d{1,3})?$/;
+// A code has letters and digits; one printed after the description must also contain a hyphen.
+const skuLike = (s, after = false) => /^(?=.*\d)(?=.*[A-Z])[A-Z0-9][A-Z0-9._/-]{1,19}$/i.test(s) && (!after || s.includes('-'));
+const centsOf = s => Math.round((readMoney(s)?.value ?? NaN) * 100);
+/**
+ * Splits a row such as "SMM-001 Social Media Strategy Plan $100.00 1 $100.00" into its columns
+ * without a usable header. Trailing numbers are assigned by arithmetic (quantity × unit price =
+ * amount), so a price printed before the quantity never lands in the description.
+ * Returns null when the numbers cannot be assigned with confidence.
+ */
+export function splitLineRow(text, order = []) {
+ const words = text.trim().split(/\s+/);
+ const numbers = [];
+ while (words.length > 1 && numbers.length < 4 && numberToken.test(words.at(-1))) numbers.unshift(words.pop());
+ if (numbers.length < 2) return null;
+ let sku = '';
+ if (skuLike(words[0])) sku = words.shift();
+ else if (words.length > 1 && skuLike(words.at(-1), true)) sku = words.pop();
+ const description = words.join(' ');
+ if (!description || numberToken.test(description)) return null;
+ // Quantities carry no currency symbol and are not printed with exactly two decimals.
+ const isQuantity = s => !/^[$€£]/.test(s) && !/\.\d{2}$/.test(s) && /^\d+(?:\.\d+)?$/.test(s.replace(/,/g, ''));
+ const make = (q, p, a) => ({sku, description, quantity: readMoney(q, 3)?.value ?? null, unitPrice: amount(p), amount: a == null ? null : amount(a)});
+ if (numbers.length === 2) return isQuantity(numbers[0]) && !isQuantity(numbers[1]) ? make(numbers[0], numbers[1], null) : null;
+ // A fourth number is a converted amount in a second currency column; the line is read in the first.
+ if (numbers.length === 4) {
+  const [q, p, a] = numbers;
+  const line = isQuantity(q) && Math.round(Number(q.replace(/,/g, '')) * centsOf(p)) === centsOf(a) ? make(q, p, a) : null;
+  return line && {...line, convertedAmount: amount(numbers[3])};
+ }
+ const [a, b, c] = numbers;
+ const fits = (q, p) => isQuantity(q) && Math.round(Number(q.replace(/,/g, '')) * centsOf(p)) === centsOf(c);
+ const priceFirst = order.indexOf('unitPrice') !== -1 && order.indexOf('unitPrice') < order.indexOf('quantity');
+ const options = [[a, b], [b, a]].filter(([q, p]) => fits(q, p));
+ if (options.length === 2) return make(...(priceFirst ? [b, a] : [a, b]), c);
+ if (options.length === 1) return make(...options[0], c);
+ // Nothing reconciles: keep the printed amount and let arithmetic review flag the row.
+ if (isQuantity(a) && !isQuantity(b)) return make(a, b, c);
+ if (isQuantity(b) && !isQuantity(a)) return make(b, a, c);
  return null;
 }
 const columnDistance = (token, column) => Math.min(
@@ -130,7 +176,12 @@ export function parseLayoutText(text,kind,layout=[]){
   l=tableLine(values);
   if(values.recoveredPrice) support='uncertain';
  }
- if(!l){const m=t.match(/^([\w-]+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,]+\.\d{2})(?:\s+\$?([\d,]+\.\d{2}))?$/);if(m){l={sku:m[1],description:m[2],quantity:Number(m[3]),unitPrice:amount(m[4]),amount:amount(m[5])};support='uncertain';}}
+ // A money value inside the description means the columns were misread; split the row by arithmetic instead.
+ if(l&&/[$€£]?\d[\d,]*\.\d{2}\s*$/.test(l.description||'')){const split=splitLineRow(t,table?.order);if(split){l=split;support='uncertain';}}
+ if(!l){l=splitLineRow(t,table?.order);if(l)support='uncertain';}
+ // Last resort for garbled rows: keep the line with a blank amount so totals stay uncertain rather
+ // than contradicted. A first word only counts as the SKU when it looks like a code.
+ if(!l){const m=t.match(/^(\S+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,]+\.\d{2})(?:\s+\$?([\d,]+\.\d{2}))?$/);if(m){const code=skuLike(m[1]);l={sku:code?m[1]:'',description:code?m[2]:`${m[1]} ${m[2]}`,quantity:Number(m[3]),unitPrice:amount(m[4]),amount:amount(m[5])};support='uncertain';}}
  if(l){const n=d.lines.length;d.lines.push(l);for(const key of Object.keys(l))set(`lines.${n}.${key}`,l[key],row,l[key]==null||l[key]===''?'uncertain':support);}
  else if(table?.positions&&d.lines.length&&!/\d/.test(t)&&row.tokens?.length&&
    Math.abs(row.tokens[0].x-(table.positions.find(c=>c.key==='description')?.x??Infinity))<=10&&
@@ -141,6 +192,26 @@ export function parseLayoutText(text,kind,layout=[]){
    line.description+=(line.description?' ':'')+t;
    set(key,line.description,{...row,sourceRows:[previous,row]},'uncertain');
  }
+ }
+ // OCR reads a leading I or O as 1 or 0. When the other item codes start with letters, offer both
+ // readings for confirmation instead of keeping or silently changing the code.
+ const letterCodes = d.lines.filter(l=>/^[A-Z]{2,}/i.test(l.sku||'')).length;
+ d.lines.forEach((l,i)=>{
+  const m=(l.sku||'').match(/^([01])([A-Z]{1,5})(?=[-\d])/i);
+  const key=`lines.${i}.sku`;
+  if(!m||!fields[key]||!fields[key].evidence.some(e=>e.method==='ocr')||letterCodes<2)return;
+  const alternative=(m[1]==='1'?'I':'O')+l.sku.slice(1);
+  Object.assign(fields[key],{support:'uncertain',needsConfirmation:true,
+   reason:`"${l.sku}" starts with ${m[1]}, which OCR often reads for ${m[1]==='1'?'I':'O'}; the other item codes start with letters. Confirm the code.`,
+   candidates:[{value:l.sku,label:`${l.sku} (as read)`},{value:alternative,label:alternative}]});
+ });
+ // The same confusion in a PO reference ("P0-2030-077") stops the purchase order from linking.
+ const po=fields.poNumber;
+ if(po&&typeof po.value==='string'&&/^P0(?=[-\s#/]?\d)/i.test(po.value)&&po.evidence.some(e=>e.method==='ocr')){
+  const alternative=po.value.replace(/^(P)0/i,'$1O');
+  Object.assign(po,{support:'uncertain',needsConfirmation:true,
+   reason:`"${po.value}" starts with P0; OCR often reads the letter O as zero in "PO". Confirm the purchase-order reference.`,
+   candidates:[{value:alternative,label:alternative},{value:po.value,label:`${po.value} (as read)`}]});
  }
  const context = inputRows.map(r=>r.text).join(' ');
  const usAddress = /\b(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\s+\d{5}(?:-\d{4})?\b/;
@@ -258,7 +329,10 @@ export function parseLayoutText(text,kind,layout=[]){
  d.arithmetic=[...d.arithmeticReview.contradictions,...d.arithmeticReview.conversions.filter(c=>c.status==='contradiction')];
  for(const c of d.arithmetic)if(fields[c.path]){fields[c.path].support='inconsistent';fields[c.path].reason=c.message;}
  // Likely OCR misreads must be confirmed or corrected by the reviewer before the invoice can be classed as erroneous.
- for(const c of d.arithmeticReview.uncertain)for(const s of c.suspects||[])if(fields[s.path])Object.assign(fields[s.path],{support:'uncertain',reason:`OCR may have misread this amount: ${(s.readCents/100).toFixed(2)} as read; ${(s.candidateCents/100).toFixed(2)} would make “${c.label}” reconcile.`,needsConfirmation:true,suspectedBy:c.code,
+ for(const c of d.arithmeticReview.uncertain)for(const s of c.suspects||[])if(fields[s.path]&&s.quantity)Object.assign(fields[s.path],{support:'uncertain',needsConfirmation:true,
+  reason:`OCR may have dropped a decimal point in this quantity: ${s.quantity.read} as read; ${s.quantity.candidate} reconciles with the unit price and the printed amount. Confirm against the original.`,
+  candidates:[{value:s.quantity.candidate,label:`${s.quantity.candidate} would reconcile`},{value:s.quantity.read,label:`${s.quantity.read} as read by OCR`}]});
+ for(const c of d.arithmeticReview.uncertain)for(const s of c.suspects||[])if(fields[s.path]&&!s.quantity)Object.assign(fields[s.path],{support:'uncertain',reason:`OCR may have misread this amount: ${(s.readCents/100).toFixed(2)} as read; ${(s.candidateCents/100).toFixed(2)} would make “${c.label}” reconcile.`,needsConfirmation:true,suspectedBy:c.code,
   candidates:[{value:s.readCents/100,label:`${(s.readCents/100).toFixed(2)} as read by OCR`},{value:s.candidateCents/100,label:`${(s.candidateCents/100).toFixed(2)} would reconcile`}]});
  return d;
 }
