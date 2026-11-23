@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .background { fill: #0b2520; }
+    .tile {
+      fill: none;
+      stroke: #badf95;
+      stroke-width: 1.9px;
+      transform: skewX(-16deg) rotate(-26deg);
+    }
+  </style>
+  <rect class="background" width="32" height="32" rx="6"/>
+  <g transform="translate(13 12)">
+    <rect class="tile" transform="skewX(-16) rotate(-26)" x="-9" y="-5.5" width="18" height="11" rx="2"/>
+  </g>
+  <g transform="translate(19 20)">
+    <rect class="tile" transform="skewX(-16) rotate(-26)" x="-9" y="-5.5" width="18" height="11" rx="2"/>
+  </g>
+</svg>

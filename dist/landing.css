@@ -40,10 +40,6 @@ a:focus-visible { outline: 3px solid #659c7b; outline-offset: 5px; }
 }
 .masthead { min-height: 86px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d7ead329; }
 .wordmark { display: inline-flex; align-items: center; gap: 11px; font-weight: 800; font-size: 1.45rem; letter-spacing: -.055em; text-decoration: none; }
-.brand-mark { position: relative; width: 23px; height: 23px; color: #badf95; }
-.brand-mark::before, .brand-mark::after { position: absolute; content: ""; width: 15px; height: 10px; border: 2px solid currentColor; transform: skew(-16deg) rotate(-26deg); border-radius: 3px; }
-.brand-mark::before { top: 3px; left: 0; }
-.brand-mark::after { top: 11px; left: 6px; }
 nav { display: flex; align-items: center; gap: 30px; }
 nav > a:not(.button) { text-decoration: none; color: #deebe2; }
 nav > a:hover:not(.button) { text-decoration: underline; text-underline-offset: .3rem; }
