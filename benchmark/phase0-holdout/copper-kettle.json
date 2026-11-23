@@ -1,0 +1,30 @@
+{
+  "vendor": "Copper Kettle Catering",
+  "number": "CKC-0917",
+  "subtotal": 608.5,
+  "tax": 60.85,
+  "total": 669.35,
+  "lines": [
+    {
+      "sku": "",
+      "description": "Lunch boxes, vegetarian",
+      "quantity": 25,
+      "unitPrice": 14.5,
+      "amount": 362.5
+    },
+    {
+      "sku": "",
+      "description": "Coffee service (per guest)",
+      "quantity": 40,
+      "unitPrice": 3.75,
+      "amount": 150
+    },
+    {
+      "sku": "",
+      "description": "Pastry platter",
+      "quantity": 2,
+      "unitPrice": 48,
+      "amount": 96
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "vendor": "Morgan Maxwell",
+  "number": "MM-2041",
+  "currency": "USD",
+  "subtotal": 900,
+  "tax": 90,
+  "total": 990,
+  "lines": [
+    {
+      "sku": "SMM-001",
+      "description": "Social Media Strategy Plan",
+      "quantity": 1,
+      "unitPrice": 100,
+      "amount": 100
+    },
+    {
+      "sku": "CNT-002",
+      "description": "Content Creation (5 posts)",
+      "quantity": 5,
+      "unitPrice": 100,
+      "amount": 500
+    },
+    {
+      "sku": "RPT-003",
+      "description": "Scheduling & Reporting",
+      "quantity": 1,
+      "unitPrice": 100,
+      "amount": 100
+    },
+    {
+      "sku": "IGS-004",
+      "description": "Instagram Story Design (3 slides)",
+      "quantity": 3,
+      "unitPrice": 50,
+      "amount": 150
+    },
+    {
+      "sku": "HTG-005",
+      "description": "Hashtag Research",
+      "quantity": 1,
+      "unitPrice": 50,
+      "amount": 50
+    }
+  ]
+}

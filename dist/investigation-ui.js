@@ -19,6 +19,13 @@ const STATES = {
   insufficient_evidence: ['Insufficient evidence', 'The AI could not confirm a cause from the available evidence. See what is missing below.'],
   failed: ['Failed', 'The investigation did not finish.'],
 };
+const SUPPLIER_ACTIONS = ['request_corrected_invoice', 'request_supplier_clarification', 'verify_po_amendment'];
+const DECISION_TEXT = {approved: 'Recommendation approved.', rejected: 'Recommendation rejected.', more_info_requested: 'Additional investigation requested.'};
+/** Saving a decision is not resolving the discrepancy: say it was saved, then what the server says is still required. */
+export const decisionMessage = (decision, step) => [DECISION_TEXT[decision] ?? 'Decision recorded.', 'Your decision has been saved.', step?.message].filter(Boolean).join(' ');
+/** Mirrors the server's status after an approval; the same approval on an unmoved discrepancy is a no-op. */
+export const alreadyApproved = (last, action, status) => Boolean(action && last?.approval_status === 'approved' && last.approved_action === action
+  && status === (SUPPLIER_ACTIONS.includes(action) ? 'awaiting_supplier' : 'investigating'));
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : '';
 
 /** Decimal string to display text without converting through floating point. */

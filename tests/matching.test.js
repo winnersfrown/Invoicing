@@ -14,7 +14,9 @@ test('exact SKUs take precedence and only an explicit decision pairs different S
  const pending = compareDocuments(invoice, po);
  assert.equal(pending.lines[0].matchBasis, 'exact_sku');
  assert.equal(pending.lines[0].differenceCents, 6000);
- assert.deepEqual(pending.pendingLineMatches, [{invoiceLine: 2, poLine: 2, description: 'same', sameQuantity: true}]);
+ assert.equal(pending.pendingLineMatches.length, 1);
+ assert.deepEqual({...pending.pendingLineMatches[0], reasons: undefined}, {invoiceLine: 2, poLine: 2, description: 'same', sameQuantity: true, reasons: undefined});
+ assert.ok(pending.pendingLineMatches[0].reasons.includes('Same quantity (4)'));
  assert.throws(() => reviewedExport(invoice, po, pending, true), /product and amount review/);
  const result = compareDocuments(invoice, po, {lineDecisions: [{invoiceLine: 2, poLine: 2, decision: 'confirm'}]});
  assert.equal(result.lines[1].matchBasis, 'reviewer_confirmed');
@@ -35,4 +37,34 @@ test('a rejected pair remains unmatched and different printed dimensions rule ou
  const rejected = compareDocuments(invoice, po, {lineDecisions: [{invoiceLine: 2, poLine: 2, decision: 'reject'}]});
  assert.equal(rejected.pendingLineMatches.length, 0);
  assert.equal(rejected.lines.filter(line => line.matchBasis === 'unmatched').length, 2);
+});
+
+test('different SKU codes with the same product are suggested with reasons, never matched silently', () => {
+ const [invoice, po] = pair();
+ invoice.lines = [{sku: 'LGO-001', description: 'Logo', quantity: 1, unitPrice: 200}, {sku: 'BAN-002', description: 'Banner (2x6m)', quantity: 2, unitPrice: 45}, {sku: 'PST-003', description: 'Poster (1x2m)', quantity: 4, unitPrice: 10}];
+ po.lines = [{sku: 'LG-001', description: 'Logo (Design)', quantity: 1, unitPrice: 200}, {sku: 'BN-002', description: 'Banner (2x6m)', quantity: 2, unitPrice: 40}, {sku: 'PS-003', description: 'Poster (1x2m)', quantity: 4, unitPrice: 10}];
+ invoice.total = 690; po.total = 680; invoice.tax = po.tax = 0;
+ const pending = compareDocuments(invoice, po);
+ assert.equal(pending.pendingLineMatches.length, 3);
+ assert.equal(pending.lines.filter(line => line.matchBasis === 'unmatched').length, 0);
+ assert.deepEqual(pending.pendingLineMatches.map(m => [m.invoiceLine, m.poLine]), [[1, 1], [2, 2], [3, 3]]);
+ assert.ok(pending.pendingLineMatches[0].reasons.some(r => /share the number 001/.test(r)));
+ assert.ok(pending.pendingLineMatches.every(m => m.reasons.length >= 2));
+ const decisions = [[1, 1], [2, 2], [3, 3]].map(([invoiceLine, poLine]) => ({invoiceLine, poLine, decision: 'confirm'}));
+ const result = compareDocuments(invoice, po, {lineDecisions: decisions});
+ assert.deepEqual(result.lines.filter(line => line.changed).map(line => line.invoiceLine), [2]);
+ assert.equal(result.lines[1].invoice.unitPrice - result.lines[1].po.unitPrice, 5);
+ assert.equal(result.lines[1].differenceCents, 1000);
+});
+
+test('a SKU number alone is not enough and one PO line never pairs with two invoice lines in a confirmation', () => {
+ const [invoice, po] = pair();
+ invoice.lines = [{sku: 'ABC-001', description: 'Gadget', quantity: 1, unitPrice: 5}];
+ po.lines = [{sku: 'XYZ-001', description: 'Widget', quantity: 1, unitPrice: 5}];
+ assert.equal(compareDocuments(invoice, po).pendingLineMatches.length, 0);
+ invoice.lines = [{sku: 'A-1', description: 'Logo', quantity: 1, unitPrice: 5}, {sku: 'A-2', description: 'Logo', quantity: 1, unitPrice: 5}];
+ po.lines = [{sku: 'B-1', description: 'Logo', quantity: 1, unitPrice: 5}];
+ const result = compareDocuments(invoice, po, {lineDecisions: [{invoiceLine: 1, poLine: 1, decision: 'confirm'}, {invoiceLine: 2, poLine: 1, decision: 'confirm'}]});
+ assert.equal(result.lines.filter(line => line.poLine === 1).length, 1);
+ assert.equal(result.lines.filter(line => line.matchBasis === 'reviewer_confirmed').length, 1);
 });

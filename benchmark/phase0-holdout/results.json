@@ -1,0 +1,125 @@
+{
+  "run": "2026-11-23T06:45:23.434Z",
+  "root": "fix/phase0-final",
+  "extraction": [
+    {
+      "document": "bright-arc",
+      "vendor": false,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": true,
+      "pairs": "5/5",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    },
+    {
+      "document": "cedar-lane",
+      "vendor": true,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": true,
+      "pairs": "3/3",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    },
+    {
+      "document": "copper-kettle",
+      "vendor": true,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": true,
+      "pairs": "3/3",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    },
+    {
+      "document": "harbor-print",
+      "vendor": true,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": true,
+      "pairs": "3/3",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    },
+    {
+      "document": "northwind-rentals",
+      "vendor": false,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": true,
+      "pairs": "3/4",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    },
+    {
+      "document": "quill-ledger",
+      "vendor": true,
+      "number": true,
+      "subtotal": true,
+      "tax": true,
+      "total": true,
+      "lineCount": false,
+      "pairs": "0/4",
+      "amountsInDescriptions": 0,
+      "contradictions": 0
+    }
+  ],
+  "matching": [
+    {
+      "case": "prefix codes, one price change",
+      "expectedPairs": 2,
+      "suggestedCorrect": 2,
+      "suggestedWrong": 0,
+      "differenceCents": 4000,
+      "expectedDifferenceCents": 4000,
+      "differenceRight": true
+    },
+    {
+      "case": "unrelated item sharing one word",
+      "expectedPairs": 0,
+      "suggestedCorrect": 0,
+      "suggestedWrong": 0,
+      "differenceCents": null,
+      "expectedDifferenceCents": null,
+      "differenceRight": true
+    },
+    {
+      "case": "quantity change under different codes",
+      "expectedPairs": 1,
+      "suggestedCorrect": 1,
+      "suggestedWrong": 0,
+      "differenceCents": 5200,
+      "expectedDifferenceCents": 5200,
+      "differenceRight": true
+    },
+    {
+      "case": "exact SKUs stay exact",
+      "expectedPairs": 2,
+      "suggestedCorrect": 2,
+      "suggestedWrong": 0,
+      "differenceCents": 0,
+      "expectedDifferenceCents": 0,
+      "differenceRight": true
+    },
+    {
+      "case": "different dimensions are not paired",
+      "expectedPairs": 0,
+      "suggestedCorrect": 0,
+      "suggestedWrong": 0,
+      "differenceCents": null,
+      "expectedDifferenceCents": null,
+      "differenceRight": true
+    }
+  ]
+}

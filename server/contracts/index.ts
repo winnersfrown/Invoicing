@@ -252,6 +252,14 @@ export const ResolutionActionDto = z.object({
   approved_action: RecommendedAction.nullable(), reviewer_id: Id, approval_status: ApprovalStatus,
   reviewer_notes: z.string(), created_at: z.string(),
 });
+// What the reviewer still has to do after recording a decision. A decision never authorizes payment.
+export const NextStep = z.object({
+  action: z.enum(['correct_field', 'review_extraction', 'upload_po', 'await_supplier', 'none']),
+  message: z.string(),
+});
+export const ResolveResponse = z.object({
+  resolution: ResolutionActionDto, discrepancy: DiscrepancyDto, invoice_status: InvoiceStatus, next_step: NextStep,
+});
 export const AuditEventDto = z.object({
   id: z.string(), actor_type: ActorType, actor_id: z.string().nullable(), event_type: z.string(),
   target_type: z.string(), target_id: z.string(), previous_state: z.unknown(), new_state: z.unknown(), timestamp: z.string(),

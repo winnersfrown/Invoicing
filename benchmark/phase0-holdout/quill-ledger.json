@@ -1,0 +1,37 @@
+{
+  "vendor": "Quill & Ledger Bookkeeping",
+  "number": "QL-30418",
+  "subtotal": 785,
+  "tax": null,
+  "total": 785,
+  "lines": [
+    {
+      "sku": "",
+      "description": "Monthly bookkeeping (October)",
+      "quantity": 1,
+      "unitPrice": 450,
+      "amount": 450
+    },
+    {
+      "sku": "",
+      "description": "Payroll run",
+      "quantity": 2,
+      "unitPrice": 85,
+      "amount": 170
+    },
+    {
+      "sku": "",
+      "description": "Sales tax filing",
+      "quantity": 1,
+      "unitPrice": 120,
+      "amount": 120
+    },
+    {
+      "sku": "",
+      "description": "Receipt scanning (per 100)",
+      "quantity": 3,
+      "unitPrice": 15,
+      "amount": 45
+    }
+  ]
+}

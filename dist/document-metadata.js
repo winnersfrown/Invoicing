@@ -159,8 +159,12 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         else if (i < 3 && /^[\p{L}][\p{L} .&'’()-]+$/u.test(value) && value.split(/\s+/).length >= 2 &&
             !/\b(?:invoice|purchase order|statement|receipt|draft|bill|ship|customer|page|credit note|tax|bank|phone|email)\b/i.test(value)) {
           const nearby = rows.slice(i+1,i+6);
-          if (nearby.some(r=>r.page===row.page&&/(?:@|\b(?:tel|phone|vat reg|vat no|tax id|email)\b)/i.test(r.text)) &&
-              rows.slice(0,4).some(r=>r.page===row.page&&/\binvoice\b/i.test(r.text))) letterheads.push({value,source:row});
+          const contact = nearby.some(r=>r.page===row.page&&/(?:@|\b(?:tel|phone|vat reg|vat no|tax id|email)\b)/i.test(r.text));
+          // OCR often reads a right-hand "INVOICE" title after the left letterhead block, so the
+          // first row followed closely by a street address also counts, still marked uncertain.
+          const address = i === 0 && rows.slice(i+1,i+4).some(r=>r.page===row.page&&/^\d+\s+[\p{L}]/u.test(r.text.trim())&&/,/.test(r.text));
+          if ((contact && rows.slice(0,4).some(r=>r.page===row.page&&/\binvoice\b/i.test(r.text))) ||
+              (address && rows.slice(0,12).some(r=>r.page===row.page&&/^invoice$/i.test(r.text.trim())))) letterheads.push({value,source:row});
         }
       }
     }

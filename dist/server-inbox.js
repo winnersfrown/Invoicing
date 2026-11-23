@@ -5,7 +5,7 @@ import {extractFile, parseExtractedText} from './extraction.js';
 import {extractAndReview, reviewExisting} from './extraction-review.js';
 import {validateDocument} from './matching-engine.js';
 import {renderLineMatchReview} from './line-match-review.js';
-import {ACTION_TEXT, evidenceText, fill, formatMoney, h, investigationView, renderInvestigation} from './investigation-ui.js';
+import {ACTION_TEXT, alreadyApproved, decisionMessage, evidenceText, fill, formatMoney, h, investigationView, renderInvestigation} from './investigation-ui.js';
 
 export const UPLOAD_MAX_BYTES = 3 * 1024 * 1024; // server/contracts UPLOAD_MAX_BYTES
 const MIME = {pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', json: 'application/json', txt: 'text/plain'};
@@ -117,45 +117,59 @@ const INVOICE_STATUS = {uploaded: ['Uploaded', ''], needs_extraction_review: ['N
 const AI_STATUS = {queued: 'AI queued', in_progress: 'AI in progress', completed: 'AI completed', insufficient_evidence: 'AI: insufficient evidence', failed: 'AI failed'};
 const DISC_STATUS = {open: 'Open', investigating: 'Investigating', awaiting_supplier: 'Awaiting supplier', resolved: 'Resolved', dismissed: 'Dismissed'};
 const CLOSED = ['resolved', 'dismissed'];
+const KIND_LABEL = {extraction_error: 'EXTRACTION ERROR', missing_document: 'MISSING DOCUMENT', review_requirement: 'REVIEW REQUIRED'};
 const words = s => (s ? s[0].toUpperCase() + s.slice(1).replaceAll('_', ' ') : '');
 const when = s => (s ? new Date(s).toLocaleString() : '');
 const safeUrl = u => { try { const x = new URL(u); return ['https:', 'http:'].includes(x.protocol) ? x.href : null; } catch { return null; } };
 const REVIEW_LABELS = {supplier_name: 'Supplier name', currency: 'Payable currency', po_reference: 'Purchase-order reference'};
-export function warningPresentation(warning) {
+/** One line per flagged field: why it is flagged and the document text it was read from. */
+function fieldDetails(flagged, e, extraction) {
+  return flagged.map(f => {
+    const label = REVIEW_LABELS[f] ?? FIELD_LABELS[f] ?? words(f);
+    const ref = extraction?.source_refs?.[f], confidence = extraction?.field_confidence?.[f];
+    if (e.missing?.includes(f)) return `${label}: not found in the document.`;
+    const read = ref?.excerpt ? `read from “${ref.excerpt}”${ref.page ? ` (page ${ref.page})` : ''}` : 'no source text was captured for it';
+    return `${label}: ${read}${confidence != null ? `, confidence ${confidence}` : ''}.`;
+  });
+}
+const FIELD_LABELS = {invoice_number: 'Invoice number', invoice_date: 'Invoice date', due_date: 'Due date', total_amount: 'Total', subtotal: 'Subtotal', tax_amount: 'Tax', lines: 'Line items'};
+export function warningPresentation(warning, extraction = null) {
   const e = warning.deterministic_evidence ?? {};
   if (e.check === 'po_manually_unlinked') return {
-    group: 'Review required', title: 'Purchase order unlinked',
+    kind: 'review_requirement', group: 'Review required', title: 'Purchase order unlinked',
     message: `A reviewer unlinked ${e.po_reference}. This invoice will stay unlinked from that order.`,
     fields: ['po_reference'], manualReview: true,
   };
   if (e.check === 'po_supplier_identity') return {
-    group: 'Review required', title: e.review ? 'Confirm supplier identity' : 'Supplier mismatch',
+    kind: 'review_requirement', group: 'Review required', title: e.review ? 'Confirm supplier identity' : 'Supplier mismatch',
     message: `Invoice supplier: ${warning.observed_value}. Purchase order ${e.po_reference} supplier: ${warning.expected_value}. Verify the supplier and PO reference before matching.`,
     fields: ['supplier_name', 'po_reference'], manualReview: true,
   };
-  if (e.check === 'line_match_review') return {group: 'Review required', title: 'Review suggested product matches'};
+  if (e.check === 'line_match_review') return {kind: 'review_requirement', group: 'Review required', title: 'Review suggested product matches'};
   if (warning.discrepancy_type === 'missing_purchase_order' || e.suspected_type === 'missing_purchase_order') {
     const reference = e.po_reference ?? warning.observed_value;
     return reference
-      ? {group: 'Missing documents', title: 'Purchase order needed', message: `Purchase-order reference found: ${reference}. Upload the corresponding purchase order to enable matching.`, upload: true}
-      : {group: 'Review required', title: 'Purchase-order reference missing', message: 'Check the original invoice for a purchase-order reference. Enter it here if listed.', fields: ['po_reference']};
+      ? {kind: 'missing_document', group: 'Missing documents', title: 'Purchase order needed', message: `${reference} is referenced on the invoice. Upload the purchase order ${reference} to compare this invoice.`, upload: true}
+      : {kind: 'review_requirement', group: 'Review required', title: 'Purchase-order reference missing', message: 'Check the original invoice for a purchase-order reference. Enter it here if listed.', fields: ['po_reference']};
   }
   if (warning.discrepancy_type === 'potential_extraction_error') {
     const flagged = [...new Set([...(e.missing ?? []), ...(e.uncertain ?? []), ...(e.unsure_fields ?? [])])];
     const fields = flagged.filter(f => Object.hasOwn(REVIEW_LABELS, f));
+    const details = e.check === 'extraction' || !e.check ? fieldDetails(flagged, e, extraction) : undefined;
     if (flagged.length === 1 && fields[0] === 'currency') return {
-      group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields,
+      kind: 'review_requirement', group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields, details,
     };
     if (flagged.length === 1 && flagged[0] === 'tax_amount' && e.missing?.includes('tax_amount')) return {
-      group: 'Review required', title: 'Invoice tax amount missing', message: 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
+      kind: 'extraction_error', group: 'Review required', title: 'Invoice tax amount missing', message: 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
     };
     const title = e.check === 'date_order' ? 'Review invoice dates'
       : ['currency_conversion', 'mixed_currency_po'].includes(e.check) ? 'Review currency details' : 'Review extracted fields';
     const message = e.check === 'extraction'
       ? `Check these fields against the original invoice: ${flagged.map(f => REVIEW_LABELS[f] ?? words(f)).join(', ')}.` : warning.observed_value;
-    return {group: 'Review required', title, message, fields, needsSourceReview: !flagged.length || fields.length !== flagged.length};
+    const kind = ['extraction', 'financial_inputs'].includes(e.check) || !e.check ? 'extraction_error' : 'review_requirement';
+    return {kind, group: 'Review required', title, message, fields, details, needsSourceReview: !flagged.length || fields.length !== flagged.length};
   }
-  return {group: 'Discrepancies', title: words(warning.discrepancy_type)};
+  return {kind: 'discrepancy', group: 'Discrepancies', title: words(warning.discrepancy_type)};
 }
 function download(content, name) { const url = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); const a = h('a', {href: url, download: name}); a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
 
@@ -411,8 +425,9 @@ export function createServerInbox({api, root}) {
     }));
     if (d.closed) return;
     d.ctrl.abort(); // stop pollers from the previous render of this dialog
-    Object.assign(d, {ctrl: new AbortController(), inv, po: pos.find(p => p.id === inv.purchase_order_id) ?? null});
+    Object.assign(d, {lastDecision: new Map(discrepancies.map((x, i) => [x.id, histories[i]?.resolutions.at(-1) ?? null])), ctrl: new AbortController(), inv, po: pos.find(p => p.id === inv.purchase_order_id) ?? null});
     renderDetail(d, discrepancies, investigations, management);
+    d.notice = null; // shown once, on the card it was recorded for
   }
 
   function renderDetail(d, discrepancies, investigations, management) {
@@ -507,7 +522,7 @@ export function createServerInbox({api, root}) {
 
     const groups = new Map();
     for (const [i, x] of discrepancies.entries()) {
-      const view = warningPresentation(x);
+      const view = warningPresentation(x, inv.extraction);
       const closed = CLOSED.includes(x.status);
       const group = closed ? 'Validation history' : view.group;
       const actions = editable && !closed ? (view.fields ?? []).map(correct) : [];
@@ -567,9 +582,24 @@ export function createServerInbox({api, root}) {
     const approveB = decide('approved', 'Approve recommendation'), rejectB = decide('rejected', 'Reject recommendation'), moreB = decide('more_info_requested', 'Request additional investigation');
     const investigateB = h('button', {type: 'button', class: 'button primary', onclick: ev => busy(ev.currentTarget, investigate)}, '✦ Investigate with AI');
     const draftHost = h('div'), historyHost = h('div');
+    const pending = d.notice?.id === x.id ? d.notice : null; // set by resolve(); the card is rebuilt from server state after a decision
+    const notice = pending && h('div', {class: 'decision-saved', role: 'status'}, h('p', {}, pending.message),
+      h('div', {class: 'actions'}, ...stepButtons(pending.step)));
+    function stepButtons(step) {
+      const first = d.inv.extraction?.missing?.find(f => REVIEW_LABELS[f]) ?? d.inv.extraction?.uncertain?.find(f => REVIEW_LABELS[f]) ?? 'currency';
+      const b = (label, fn) => h('button', {type: 'button', class: 'button secondary', onclick: fn}, label);
+      const doc = safeUrl(d.inv.document_url);
+      return {
+        correct_field: [b('Correct field', () => reviewField(d, first))],
+        review_extraction: [doc && b('Review extraction', () => window.open(doc, '_blank', 'noopener,noreferrer')), b('Correct field', () => reviewField(d, first))],
+        upload_po: [b('Upload purchase order', ev => pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', f => busy(ev.currentTarget, () => uploadPo(f, d))))],
+      }[step?.action] ?? [];
+    }
     const card = h('article', {class: 'discrepancy-card', 'data-ev': `discrepancy:${x.id}`, tabindex: '-1'},
       h('div', {class: 'source-heading'}, h('strong', {}, view.title), h('span', {class: `status ${open ? 'review' : 'approved'}`}, view.group === 'Discrepancies' ? `${DISC_STATUS[x.status] ?? words(x.status)} · ${x.severity} severity` : DISC_STATUS[x.status])),
+      view.kind && view.kind !== 'discrepancy' && h('small', {class: 'eyebrow warning-kind'}, KIND_LABEL[view.kind]),
       view.message && h('p', {}, view.message),
+      view.details && h('ul', {class: 'warning-details'}, view.details.map(t => h('li', {}, t))),
       x.deterministic_evidence?.match_basis === 'reviewer_confirmed' && h('p', {},
         `${x.deterministic_evidence.line.description} · ${x.deterministic_evidence.line.invoice.sku} ↔ ${x.deterministic_evidence.line.po.sku} · Confirmed by reviewer`),
       actions.length > 0 && h('div', {class: 'actions'}, actions),
@@ -579,7 +609,7 @@ export function createServerInbox({api, root}) {
         h('div', {}, h('dt', {}, 'DIFFERENCE'), h('dd', {}, x.difference_amount ? formatMoney(x.difference_amount, x.deterministic_evidence?.currency ?? cur) : '—'))),
       actionable && view.group !== 'Missing documents' && investigateB, panelHost,
       actionable && view.group !== 'Missing documents' && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
-      status,
+      status, notice,
       h('div', {class: 'actions'},
         actionable && d.po && view.group === 'Discrepancies' && h('button', {type: 'button', class: 'text-button', onclick: ev => busy(ev.currentTarget, draft)}, 'Draft supplier correction request'),
         h('button', {type: 'button', class: 'text-button', 'aria-expanded': 'false', onclick: ev => busy(ev.currentTarget, () => history(ev.currentTarget))}, 'View resolution history')),
@@ -589,9 +619,11 @@ export function createServerInbox({api, root}) {
       const v = investigationView(inv);
       fill(panelHost, (!view.manualReview || inv) && renderInvestigation(v, {canAct: actionable, onRetry: ev => busy(ev.currentTarget, investigate), onEvidence: showEvidence}));
       investigateB.hidden = v.state !== 'none';
-      approveB.disabled = !v.result;
+      const done = Boolean(v.result) && alreadyApproved(d.lastDecision?.get(x.id), v.result.action.code, x.status);
+      approveB.disabled = !v.result || done;
+      approveB.textContent = done ? 'Already approved' : 'Approve recommendation';
       rejectB.disabled = !v.result;
-      approveB.title = v.result ? `Approves: ${ACTION_TEXT[v.result.action.code] ?? v.result.action.code}` : 'Needs a completed investigation';
+      approveB.title = done ? 'This recommendation is already approved and nothing has changed since.' : v.result ? `Approves: ${ACTION_TEXT[v.result.action.code] ?? v.result.action.code}` : 'Needs a completed investigation';
       return v;
     }
     async function watch() {
@@ -615,7 +647,9 @@ export function createServerInbox({api, root}) {
       const body = {decision, notes: notes.value.trim(), ...(inv?.id ? {investigation_id: inv.id} : {}), ...(decision === 'approved' ? {approved_action: inv?.result?.recommended_action} : {})};
       try {
         const r = await api.send('POST', `/api/discrepancies/${x.id}/resolve`, body);
-        say(`Decision recorded. Discrepancy is now ${DISC_STATUS[r.discrepancy.status] ?? r.discrepancy.status}; invoice is ${(INVOICE_STATUS[r.invoice_status] ?? [r.invoice_status])[0]}.`);
+        const message = decisionMessage(decision, r.next_step);
+        d.notice = {id: x.id, message, step: r.next_step};
+        say(`${message} Discrepancy is now ${DISC_STATUS[r.discrepancy.status] ?? r.discrepancy.status}; invoice is ${(INVOICE_STATUS[r.invoice_status] ?? [r.invoice_status])[0]}.`);
         await reload();
       } catch (e) { await failed(e); }
     }

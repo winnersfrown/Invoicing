@@ -1,0 +1,31 @@
+{
+  "vendor": "Lumen Field Studio",
+  "number": "LFS-5520",
+  "currency": "USD",
+  "subtotal": 1170,
+  "tax": 93.6,
+  "total": 1263.6,
+  "lines": [
+    {
+      "sku": "BW-110",
+      "description": "Brand Workshop (half day)",
+      "quantity": 1,
+      "unitPrice": 640,
+      "amount": 640
+    },
+    {
+      "sku": "WC-220",
+      "description": "Website Copy Edit (home and about pages)",
+      "quantity": 2,
+      "unitPrice": 175,
+      "amount": 350
+    },
+    {
+      "sku": "PR-330",
+      "description": "Photo Retouching",
+      "quantity": 12,
+      "unitPrice": 15,
+      "amount": 180
+    }
+  ]
+}

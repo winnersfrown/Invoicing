@@ -24,6 +24,26 @@ function nextStatus(r: z.infer<typeof ResolveRequest>): string {
   return r.decision === 'rejected' ? 'open' : 'investigating';
 }
 
+const CORRECTABLE = ['supplier_name', 'currency', 'po_reference'];
+
+/** What the reviewer still has to do after a decision, derived from the discrepancy's own evidence. */
+export function nextStep(d: any, status: string, action: Action | null | undefined) {
+  const e = d.deterministic_evidence ?? {};
+  const step = (a: string, message: string) => ({ action: a, message });
+  if (status === 'resolved') return step('none', 'Nothing more is required for this discrepancy.');
+  if (d.discrepancy_type === 'missing_purchase_order' && (e.po_reference ?? d.observed_value))
+    return step('upload_po', `Upload the purchase order ${e.po_reference ?? d.observed_value} to compare this invoice.`);
+  if (d.discrepancy_type === 'potential_extraction_error') {
+    const flagged = [...new Set([...(e.missing ?? []), ...(e.uncertain ?? []), ...(e.unsure_fields ?? [])])] as string[];
+    return flagged.length && flagged.every((f) => CORRECTABLE.includes(f))
+      ? step('correct_field', 'The invoice still requires a field correction before this discrepancy can be resolved.')
+      : step('review_extraction', 'The extracted values still need review against the original invoice before this discrepancy can be resolved.');
+  }
+  if (action === 'correct_extraction_error') return step('review_extraction', 'Review the extracted values against the original invoice before this discrepancy can be resolved.');
+  if (status === 'awaiting_supplier') return step('await_supplier', 'Waiting for the supplier to respond. Upload the corrected invoice when it arrives.');
+  return step('none', 'No further action is required from this decision. Record another decision when you have more information.');
+}
+
 export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string, req: z.infer<typeof ResolveRequest>) {
   const actor: Actor = { type: 'user', id: ctx.userId };
   const { invoice_id } = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
@@ -34,6 +54,12 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
   if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
   if (REVIEW_ON_INVOICE.includes(d.deterministic_evidence?.check)) fail('conflict', 'Verify the supplier and PO reference on the invoice.');
   if (CLOSED.includes(d.status)) fail('conflict', `This discrepancy is already ${d.status}.`);
+  // The same decision on a discrepancy that has not moved since is a no-op; a re-detected or changed one may be decided again.
+  const status = nextStatus(req);
+  const [last] = await db.query<{ approval_status: string; approved_action: string | null }>(
+    'select approval_status, approved_action from resolution_actions where discrepancy_id = $1 and organization_id = $2 order by created_at desc, id desc limit 1', [d.id, ctx.orgId]);
+  if (last && status === d.status && last.approval_status === req.decision && last.approved_action === (req.decision === 'approved' ? req.approved_action : null))
+    fail('conflict', `This decision is already ${req.decision === 'approved' ? 'approved' : 'recorded'} for this discrepancy. Nothing has changed since.`);
   let proposed: Action | null = null;
   if (req.investigation_id) {
     const [inv] = await db.query<{ recommended_action: Action | null }>(
@@ -48,7 +74,6 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
   await audit(db, { orgId: ctx.orgId, actor, event: 'resolution.recorded', targetType: 'resolution_action', targetId: row.id,
     next: { discrepancy_id: d.id, approval_status: req.decision, approved_action: row.approved_action, investigation_id: row.investigation_id } });
 
-  const status = nextStatus(req);
   if (status !== d.status) {
     const [updated] = await db.query('update discrepancies set status = $1 where id = $2 and organization_id = $3 and status = $4 returning id', [status, d.id, ctx.orgId, d.status]);
     if (!updated) fail('conflict', 'This discrepancy changed while you were deciding. Reload and try again.');
@@ -61,7 +86,8 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
     invoiceStatus = await deriveInvoiceStatus(db, d.invoice_id);
     await setInvoiceStatus(db, ctx.orgId, actor, d.invoice_id, inv.status, invoiceStatus, { resolution_action_id: row.id });
   }
-  return { resolution: resolutionDto(row), discrepancy: discrepancyDto({ ...d, status }), invoice_status: invoiceStatus };
+  return { resolution: resolutionDto(row), discrepancy: discrepancyDto({ ...d, status }), invoice_status: invoiceStatus,
+    next_step: nextStep(d, status, req.decision === 'approved' ? req.approved_action : null) };
 }
 
 /**

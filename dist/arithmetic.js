@@ -81,7 +81,10 @@ export function arithmeticReview(d) {
   const currency = d.pricingCurrency || d.currency || '';
   const settled = path => d.extractionReviewed || fields[path]?.confirmed;
   const ocr = path => !settled(path) && Boolean(fields[path]?.evidence?.some(e => e.method === 'ocr'));
+  // Quantities that reconcile only with a restored decimal point; later checks built on them stay uncertain too.
+  const quantitySuspects = new Set();
   const doubt = path => {
+    if (quantitySuspects.has(path)) return 'OCR may have dropped a decimal point in this quantity';
     const f = fields[path];
     if (!f || settled(path)) return '';
     if (f.needsConfirmation) return f.reason || 'Needs reviewer confirmation.';
@@ -89,7 +92,7 @@ export function arithmeticReview(d) {
   };
 
   // inputs: numeric operands (may be OCR misreads); refs: other source fields, for evidence and doubt only.
-  function check({code, path, label, displayed, expected, inputs = [], refs = [], tolerance = 0, list = null, cur = currency, note}) {
+  function check({code, path, label, displayed, expected, inputs = [], refs = [], tolerance = 0, list = null, cur = currency, note, quantity = null}) {
     const paths = [path, ...inputs.map(i => i.path), ...refs];
     const numbers = {displayed: displayed == null ? null : money(displayed, cur), calculated: expected == null ? null : money(expected, cur),
       inputs: Object.fromEntries(inputs.map(i => [i.path, i.cents == null ? 'unknown' : money(i.cents, cur)]))};
@@ -107,11 +110,16 @@ export function arithmeticReview(d) {
     if (ocr(path) && oneDigitApart(displayed, expected)) suspects.push({path, readCents: displayed, candidateCents: expected});
     for (const i of inputs) if (ocr(i.path) && oneDigitApart(i.cents, i.cents + differenceCents))
       suspects.push({path: i.path, readCents: i.cents, candidateCents: i.cents + differenceCents});
+    // OCR also drops the decimal point in a quantity ("2.5" read as "25").
+    if (quantity && ocr(quantity.path)) for (const scale of [10, 100]) {
+      const candidate = quantity.value / scale;
+      if (Math.round(candidate * quantity.priceCents) === displayed) { suspects.push({path: quantity.path, quantity: {read: quantity.value, candidate}}); quantitySuspects.add(quantity.path); break; }
+    }
     const doubts = [...new Set(paths)].map(p => doubt(p) && `${p}: ${doubt(p)}`).filter(Boolean);
     const plain = `${label}: displayed ${money(displayed, cur)}; calculated ${money(expected, cur)}`;
     if (suspects.length || doubts.length) {
       (list || out.uncertain).push({...base, status: 'uncertain', differenceCents, suspects, message:
-        `${plain} (difference ${money(differenceCents, cur)}). Not classed as an error yet: ${[...suspects.map(s => `${s.path} may be an OCR misread (${money(s.readCents, cur)} would reconcile as ${money(s.candidateCents, cur)})`), ...doubts].join('; ')}. Confirm against the original.`});
+        `${plain} (difference ${money(differenceCents, cur)}). Not classed as an error yet: ${[...suspects.map(s => s.quantity ? `${s.path} may be an OCR misread (quantity ${s.quantity.read} would reconcile as ${s.quantity.candidate})` : `${s.path} may be an OCR misread (${money(s.readCents, cur)} would reconcile as ${money(s.candidateCents, cur)})`), ...doubts].join('; ')}. Confirm against the original.`});
     } else (list || out.contradictions).push({...base, status: 'contradiction', differenceCents, message: `${plain}.`});
   }
 
@@ -123,7 +131,8 @@ export function arithmeticReview(d) {
     const cents = rate ? percentageCents(toCents(line.quantity), line.ratePercent)
       : present(line.unitPrice) ? Math.round(line.quantity * toCents(line.unitPrice)) : null;
     if (present(line.amount) && cents != null) check({code: 'line_amount', path: `lines.${i}.amount`, displayed: toCents(line.amount), expected: cents,
-      label: `Line ${i + 1} ${rate ? 'basis × percentage' : 'quantity × unit price'}`, refs: [`lines.${i}.quantity`, `lines.${i}.${rate ? 'ratePercent' : 'unitPrice'}`]});
+      label: `Line ${i + 1} ${rate ? 'basis × percentage' : 'quantity × unit price'}`, refs: [`lines.${i}.quantity`, `lines.${i}.${rate ? 'ratePercent' : 'unitPrice'}`],
+      quantity: rate ? null : {path: `lines.${i}.quantity`, value: line.quantity, priceCents: toCents(line.unitPrice)}});
     return cents;
   });
 
@@ -137,9 +146,11 @@ export function arithmeticReview(d) {
   const preTotal = adjustments.filter(a => (a.appliesTo || 'total') === 'total');
   const net = sum => netLineCents(sum, subtotal, tax, d.taxInclusive);
   const lineRefs = lines.map((_, i) => `lines.${i}.amount`);
+  // Checks built from quantity × price also rest on each quantity.
+  const calculationRefs = [...lineRefs, ...lines.map((_, i) => `lines.${i}.quantity`)];
 
   if (lines.length && computed.every(Number.isSafeInteger) && subtotal != null) check({code: 'subtotal', path: 'subtotal',
-    label: 'Subtotal from line calculations', displayed: subtotal, expected: net(computed.reduce((s, c) => s + c, 0)), refs: lineRefs});
+    label: 'Subtotal from line calculations', displayed: subtotal, expected: net(computed.reduce((s, c) => s + c, 0)), refs: calculationRefs});
   if (lines.length && lines.every(line => present(line.amount)) && subtotal != null) {
     const amounts = lines.map((line, i) => ({path: `lines.${i}.amount`, cents: toCents(line.amount)}));
     check({code: 'printed_line_sum', path: 'subtotal', label: 'Subtotal from printed line amounts', displayed: subtotal, expected: net(sumOf(amounts)), inputs: amounts});
@@ -166,7 +177,7 @@ export function arithmeticReview(d) {
   if (lines.length && computed.every(Number.isSafeInteger) && subtotal != null && tax != null && billed != null) {
     const expected = net(computed.reduce((s, c) => s + c, 0)) + tax + (adjustmentCents(d) ?? NaN);
     if (Number.isSafeInteger(expected) && expected !== billed && sumOf(totalInputs) === billed)
-      check({code: 'calculated_total', path: totalPath, label: 'Total from line calculations, tax and adjustments', displayed: billed, expected, refs: lineRefs});
+      check({code: 'calculated_total', path: totalPath, label: 'Total from line calculations, tax and adjustments', displayed: billed, expected, refs: calculationRefs});
   }
 
   // Balance due after credits, deposits or payments printed below the total.

@@ -22,7 +22,8 @@ export function renderLineMatchReview({candidates, invoiceLines, poLines, onRevi
    const selected = matches[select.selectedIndex];
    fill(details,
     matches.length === 1 && h('p', {}, 'Purchase order · ', label(po.get(selected.poLine))),
-    h('p', {class: 'hint'}, `${selected.description === 'same' ? 'Same description' : 'Similar descriptions'} · ${selected.sameQuantity ? 'same quantity' : 'different quantities'}`));
+    h('p', {class: 'hint'}, `${selected.description === 'same' ? 'Same description' : 'Similar descriptions'} · ${selected.sameQuantity ? 'same quantity' : 'different quantities'}`),
+    selected.reasons?.length && h('ul', {class: 'hint'}, ...selected.reasons.map(reason => h('li', {}, reason))));
   };
   select.addEventListener('change', render);
   const act = (decision, title, style) => h('button', {
