@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const SCHEMA_VERSION = 1;
-export const PROMPT_VERSION = 'investigate-v1';
+export const PROMPT_VERSION = 'investigate-v2';
 
 // ---------- enums ----------
 export const Role = z.enum(['admin', 'reviewer', 'viewer']);
@@ -97,10 +97,17 @@ export const ExtractedInvoice = z.object({
     field_confidence: z.record(z.string(), z.number().min(0).max(1)).default({}),
     missing: z.array(z.string()).default([]),
     uncertain: z.array(z.string()).default([]),
+    reviewed_fields: z.array(z.enum(['supplier_name', 'invoice_number', 'po_reference', 'currency', 'tax_amount', 'total_amount', 'lines'])).max(7).optional(),
     source_refs: z.record(z.string(), z.object({ page: z.number().int().positive().optional(), excerpt: z.string().max(500).optional() })).default({}),
   }),
 });
 export type ExtractedInvoice = z.infer<typeof ExtractedInvoice>;
+
+export const ReviewInvoiceFieldsRequest = z.strictObject({
+  updated_at: z.iso.datetime(),
+  values: ExtractedInvoice.pick({ supplier_name: true, currency: true, po_reference: true }).partial().strict()
+    .refine(values => Object.keys(values).length > 0, 'Provide a field to review'),
+});
 
 export const CreateInvoiceRequest = z.object({
   file: z.object({
@@ -264,6 +271,7 @@ export const ROUTES = {
   'GET /api/invoices': 'viewer',
   'GET /api/invoices/:id': 'viewer',
   'POST /api/invoices/:id/process': 'reviewer',
+  'POST /api/invoices/:id/review-fields': 'reviewer',
   'GET /api/invoices/:id/discrepancies': 'viewer',
   'GET /api/invoices/:id/duplicate-candidates': 'viewer',
   'POST /api/purchase-orders': 'reviewer',

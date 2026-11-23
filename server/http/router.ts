@@ -2,12 +2,12 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { ZodError, type z } from 'zod';
 import {
-  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ROUTES, type Role,
+  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ROUTES, type Role,
 } from '../contracts/index.ts';
 import { asUser, type Db } from '../db/index.ts';
 import { authenticate, verifyBearer, type Caller, type TokenVerifier } from '../services/auth.ts';
 import { findDuplicateCandidates } from '../services/duplicates.ts';
-import { createInvoice, createPurchaseOrder } from '../services/invoices.ts';
+import { createInvoice, createPurchaseOrder, reviewInvoiceFields } from '../services/invoices.ts';
 import { enqueue, runJobs } from '../services/jobs.ts';
 import { draftSupplierMessage } from '../services/matching.ts';
 import { discrepancyHistory, getDiscrepancies, getInvoiceDto, listInvoices, listPurchaseOrders } from '../services/records.ts';
@@ -51,6 +51,10 @@ const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/r
   }),
   'POST /api/invoices/:id/process': async (c) => {
     await processInvoice(c.tx, c.caller.orgId, c.id, { type: 'user', id: c.caller.userId });
+    return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
+  },
+  'POST /api/invoices/:id/review-fields': async (c) => {
+    await reviewInvoiceFields(c.tx, user(c), c.id, ReviewInvoiceFieldsRequest.parse(c.body));
     return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
   },
   'GET /api/invoices/:id/discrepancies': async (c) => ({ data: (await getDiscrepancies(c.tx, c.caller.orgId, c.id)).data }),
@@ -161,7 +165,7 @@ export function createRouter(deps: Deps) {
             if (n >= (deps.rateLimitPerMinute ?? 60)) fail('rate_limited', 'Too many requests. Try again in a minute.');
           }
           const out = await asUser(tx, c.userId, () => HANDLERS[key as keyof typeof HANDLERS]({ tx, caller: c, id, body: req.body, deps }));
-          kick = (out.jobs ?? []).some((j) => j.kind === 'investigate');
+          kick = !!out.jobs?.length;
           for (const j of out.jobs ?? []) await enqueue(tx, { organizationId: c.orgId, kind: j.kind, payload: j.payload, idempotencyKey: j.idempotencyKey, now: now() });
           const response = { status: out.status ?? 200, body: { data: out.data } };
           if (idemKey?.success) {

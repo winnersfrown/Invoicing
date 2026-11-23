@@ -53,20 +53,20 @@ const FIELDS = {
 
 /**
  * ExtractedInvoice from what the extractor read (`read`) and what the reviewer confirmed (`final`).
- * Empty fields stay null and are listed in `missing`. A field the reviewer entered or changed is listed in `uncertain`
- * with no confidence: the extractor did not read it. Dates and subtotal are sent only when the document states them.
+ * Keep extraction confidence separate from the choices saved in the source review.
  */
 export function extractedInvoice({method, read, final, sourceText = null}) {
-  const out = {}, missing = [], uncertain = [], field_confidence = {};
+  const out = {}, missing = [], uncertain = [], field_confidence = {}, reviewed_fields = [];
   for (const [field, get] of Object.entries(FIELDS)) {
     const value = get(final);
     out[field] = value;
     if (value == null) missing.push(field);
     else if (JSON.stringify(safe(get, read)) === JSON.stringify(value) && !hasExtractionRisk(read, field)) field_confidence[field] = 1;
-    else uncertain.push(field);
+    else if (!final?.extractionReviewed) uncertain.push(field);
+    if (value != null && final?.extractionReviewed) reviewed_fields.push(field);
   }
   const present = Object.keys(FIELDS).length - missing.length;
-  const supportLabels = {...read?.extraction?.fields};
+  const supportLabels = {...read?.extraction?.fields, ...final?.extraction?.fields};
   const customer = text(final?.customer)?.slice(0, 250);
   if (customer) supportLabels.customer = {...supportLabels.customer, reviewedValue: customer};
   for(const field of ['shipping','discount']) {
@@ -84,12 +84,20 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
     supplier_name: out.supplier_name, invoice_number: out.invoice_number, invoice_date: isoDate(final?.date ?? final?.issued), due_date: isoDate(final?.due),
     po_reference: out.po_reference, currency: out.currency, subtotal: toMoneyString(final?.subtotal), tax_amount: out.tax_amount, total_amount: out.total_amount,
     lines: out.lines ?? [], source_text: sourceText == null ? null : String(sourceText).slice(0, 200000),
-    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, source_refs: sourceReferences(read), support_labels: supportLabels, confidence_meaning: 'Heuristic field agreement, not a calibrated probability.'},
+    extraction: {method, confidence: present ? Math.round(Object.keys(field_confidence).length / present * 100) / 100 : null, field_confidence, missing, uncertain, reviewed_fields, source_refs: sourceReferences(read), support_labels: supportLabels, confidence_meaning: 'Heuristic field agreement, not a calibrated probability.'},
   };
 }
 const FIELD_KEYS={supplier_name:'vendor',invoice_number:'number',po_reference:'poNumber',currency:'currency',tax_amount:'tax',total_amount:'total'};
 function hasExtractionRisk(d, field){const entries=Object.entries(d?.extraction?.fields||{}).filter(([k])=>field==='lines'?k.startsWith('lines.'):k===FIELD_KEYS[field]);return entries.some(([,v])=>v.support!=='supported');}
-function sourceReferences(d){return Object.fromEntries(Object.entries(d?.extraction?.fields||{}).flatMap(([key,v])=>{const e=v.evidence?.[0];return e?[[key,{page:e.page,excerpt:e.text.slice(0,500)}]]:[];}));}
+function sourceReferences(d){
+  const refs = Object.entries(d?.extraction?.fields ?? {}).flatMap(([key,v]) => {
+    const e = v.evidence?.[0];
+    return e ? [[key, {page: e.page, excerpt: e.text.slice(0,500)}]] : [];
+  });
+  const byPath = new Map(refs);
+  for (const [field, path] of Object.entries(FIELD_KEYS)) if (byPath.has(path)) byPath.set(field, byPath.get(path));
+  return Object.fromEntries(byPath);
+}
 function safe(get, d) { try { return get(d); } catch { return undefined; } }
 
 /** CreatePurchaseOrderRequest from a verified purchase order document. Every field is required. */
@@ -111,6 +119,29 @@ const CLOSED = ['resolved', 'dismissed'];
 const words = s => (s ? s[0].toUpperCase() + s.slice(1).replaceAll('_', ' ') : '');
 const when = s => (s ? new Date(s).toLocaleString() : '');
 const safeUrl = u => { try { const x = new URL(u); return ['https:', 'http:'].includes(x.protocol) ? x.href : null; } catch { return null; } };
+const REVIEW_LABELS = {supplier_name: 'Supplier name', currency: 'Payable currency', po_reference: 'Purchase-order reference'};
+export function warningPresentation(warning) {
+  const e = warning.deterministic_evidence ?? {};
+  if (warning.discrepancy_type === 'missing_purchase_order' || e.suspected_type === 'missing_purchase_order') {
+    const reference = e.po_reference ?? warning.observed_value;
+    return reference
+      ? {group: 'Missing documents', title: 'Purchase order needed', message: `Purchase-order reference found: ${reference}. Upload the corresponding purchase order to enable matching.`, upload: true}
+      : {group: 'Review required', title: 'Purchase-order reference missing', message: 'Check the original invoice for a purchase-order reference. Enter it here if listed.', fields: ['po_reference']};
+  }
+  if (warning.discrepancy_type === 'potential_extraction_error') {
+    const flagged = [...new Set([...(e.missing ?? []), ...(e.uncertain ?? []), ...(e.unsure_fields ?? [])])];
+    const fields = flagged.filter(f => Object.hasOwn(REVIEW_LABELS, f));
+    if (flagged.length === 1 && fields[0] === 'currency') return {
+      group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields,
+    };
+    const title = e.check === 'date_order' ? 'Review invoice dates'
+      : ['currency_conversion', 'mixed_currency_po'].includes(e.check) ? 'Review currency details' : 'Review extracted fields';
+    const message = e.check === 'extraction'
+      ? `Check these fields against the original invoice: ${flagged.map(f => REVIEW_LABELS[f] ?? words(f)).join(', ')}.` : warning.observed_value;
+    return {group: 'Review required', title, message, fields, needsSourceReview: !flagged.length || fields.length !== flagged.length};
+  }
+  return {group: 'Discrepancies', title: words(warning.discrepancy_type)};
+}
 function download(content, name) { const url = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); const a = h('a', {href: url, download: name}); a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
 
 /** Runs fn with the button disabled; a second click while in flight is ignored. */
@@ -163,7 +194,7 @@ export function createServerInbox({api, root, user}) {
         h('div', {}, h('h2', {}, 'Workspace invoice inbox'), h('p', {}, 'Open an invoice to review its purchase order and resolve discrepancies.')),
         h('div', {class: 'actions'}, canAct && uploadInvoiceButton, canAct && uploadPoButton, refreshButton)),
       canAct && h('p', {class: 'match-note'}, 'Uploads: PDF, image, JSON or labeled TXT up to 3 MB. Fields are extracted in this browser and you review them before upload; the server re-validates everything.'),
-      h('div', {class: 'table-scroll'}, h('table', {}, h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'PROCESSING', 'OPEN DISCREPANCIES', 'AI INVESTIGATION', ''].map(t => h('th', {}, t)))), rows))),
+      h('div', {class: 'table-scroll'}, h('table', {}, h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'PROCESSING', 'OPEN FINDINGS', 'AI INVESTIGATION', ''].map(t => h('th', {}, t)))), rows))),
     live);
   root.prepend(section);
 
@@ -188,7 +219,7 @@ export function createServerInbox({api, root, user}) {
     try {
       const inv = await api.send('POST', '/api/invoices', body);
       lastUpload = null;
-      say(`Uploaded ${inv.invoice_number ?? inv.id}: ${(INVOICE_STATUS[inv.status] ?? [inv.status])[0]}, ${inv.open_discrepancy_count} open discrepanc${inv.open_discrepancy_count === 1 ? 'y' : 'ies'}.`);
+      say(`Uploaded ${inv.invoice_number ?? inv.id}: ${inv.open_discrepancy_count} open finding${inv.open_discrepancy_count === 1 ? '' : 's'}.`);
       await refresh();
       await openDetail(inv.id);
     } catch (e) {
@@ -208,7 +239,7 @@ export function createServerInbox({api, root, user}) {
       await sendInvoice(body);
     } catch (e) { fail(e); }
   }
-  async function uploadPo(file) {
+  async function uploadPo(file, detailView = null) {
     try {
       let d;
       if (/\.json$/i.test(file.name)) {
@@ -218,12 +249,67 @@ export function createServerInbox({api, root, user}) {
       } else d = await extractAndReview(file, 'purchase_order', say);
       if (!d) { say('Purchase order upload cancelled.'); return; }
       const po = await api.send('POST', '/api/purchase-orders', purchaseOrderRequest(d));
-      say(`Purchase order ${po?.purchase_order_number ?? ''} saved. Invoices that reference it are being re-validated; refresh in a moment.`);
+      if (detailView && !detailView.closed) {
+        if (po.purchase_order_number.toLowerCase() === detailView.inv.po_reference?.toLowerCase()) {
+          await api.send('POST', `/api/invoices/${detailView.id}/process`);
+        }
+        await loadDetail(detailView);
+      }
+      say(`Purchase order ${po?.purchase_order_number ?? ''} saved.`);
       await refresh();
     } catch (e) { fail(e); }
   }
 
   // ---------- detail dialog ----------
+  function reviewField(d, field) {
+    const inv = d.inv;
+    const choice = h('select', {'aria-label': 'Field to review'},
+      Object.entries(REVIEW_LABELS).map(([value, label]) => h('option', {value, selected: value === field}, label)));
+    const value = h('input', {'aria-label': 'Reviewed value'});
+    const error = h('p', {role: 'alert'});
+    const sync = () => {
+      value.value = inv[choice.value] ?? '';
+      value.maxLength = choice.value === 'currency' ? 3 : 150;
+      value.pattern = choice.value === 'currency' ? '[A-Za-z]{3}' : '';
+      if (!value.pattern) value.removeAttribute('pattern');
+      value.placeholder = choice.value === 'currency' ? 'USD, CAD, EUR…' : REVIEW_LABELS[choice.value];
+      value.required = choice.value !== 'po_reference';
+    };
+    choice.addEventListener('change', sync);
+    const dialog = h('dialog', {class: 'ocr-dialog', 'aria-labelledby': 'field-review-title'});
+    const save = h('button', {type: 'submit', class: 'button primary'}, 'Save field review');
+    const source = safeUrl(inv.document_url);
+    dialog.append(h('form', {class: 'source-card', onsubmit: ev => {
+      ev.preventDefault();
+      busy(save, async () => {
+        try {
+          await api.send('POST', `/api/invoices/${inv.id}/review-fields`, {
+            updated_at: inv.updated_at, values: {[choice.value]: value.value.trim() || null},
+          });
+          dialog.close();
+          await loadDetail(d);
+          await refresh();
+          say('Field review saved. Invoice rechecked.');
+        } catch (e) {
+          error.textContent = e.message;
+          if (e.code === 'conflict') {
+            dialog.close();
+            await loadDetail(d);
+            say(e.message);
+          }
+        }
+      });
+    }}, h('h2', {id: 'field-review-title'}, 'Review invoice field'),
+    source && h('a', {href: source, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗'),
+    h('label', {class: 'draft-label'}, 'Field', choice), h('label', {class: 'draft-label'}, 'Value from the document or supplier records', value),
+    error, h('div', {class: 'actions'}, save, h('button', {type: 'button', class: 'button secondary', onclick: () => dialog.close()}, 'Cancel'))));
+    d.dialog.append(dialog);
+    dialog.addEventListener('close', () => dialog.remove());
+    sync();
+    dialog.showModal();
+    value.focus();
+  }
+
   let detail = null;
   async function openDetail(id) {
     detail?.close();
@@ -262,6 +348,16 @@ export function createServerInbox({api, root, user}) {
     const customer = inv.extraction?.support_labels?.customer?.reviewedValue;
     const evidenceBox = h('div', {class: 'evidence-viewer', tabindex: '-1', hidden: true});
     const docUrl = safeUrl(inv.document_url);
+    const editable = canAct && !['rejected', 'superseded'].includes(inv.status);
+    const correct = field => h('button', {type: 'button', class: 'button secondary', onclick: () => reviewField(d, field)}, field === 'currency' ? 'Confirm currency' : field === 'po_reference' ? 'Correct PO reference' : 'Correct field');
+    const correctedUpload = () => h('button', {type: 'button', class: 'button secondary', onclick: ev => {
+      const b = ev.currentTarget;
+      pickFile('.json,.txt,.pdf,.png,.jpg,.jpeg,.webp', f => busy(b, () => uploadInvoice(f, inv.id)));
+    }}, 'Upload corrected invoice');
+    const uploadOrder = () => h('button', {type: 'button', class: 'button secondary', onclick: ev => {
+      const b = ev.currentTarget;
+      pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', f => busy(b, () => uploadPo(f, d)));
+    }}, 'Upload purchase order');
     const original = invoices.find(x => x.id === inv.supersedes_invoice_id), replacement = invoices.find(x => x.supersedes_invoice_id === inv.id);
     const link = (other, prefix) => h('p', {class: 'check'}, prefix, ' ', h('button', {type: 'button', class: 'text-button', onclick: () => openDetail(other.id)}, `${other.invoice_number ?? 'invoice'} (${(INVOICE_STATUS[other.status] ?? [other.status])[0]}) ↗`));
     const field = (name, label, value) => h('tr', {'data-ev': `document:${inv.id}#${name}`}, h('td', {}, label), h('td', {}, h('strong', {}, value ?? 'Not extracted')));
@@ -286,15 +382,15 @@ export function createServerInbox({api, root, user}) {
         pricingCur !== cur && field('pricingTotal', 'Pricing total', inv.extraction?.support_labels?.pricingTotal?.reviewedValue && formatMoney(inv.extraction.support_labels.pricingTotal.reviewedValue, pricingCur)),
         field('total_amount', 'Total', inv.total_amount && formatMoney(inv.total_amount, cur)))),
       lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`, pricingCur),
-      h('p', {class: 'hint'}, `Extraction: ${inv.extraction?.method ?? 'unknown'}${inv.extraction?.missing?.length ? ` · missing ${inv.extraction.missing.join(', ')}` : ''}${inv.extraction?.uncertain?.length ? ` · entered by reviewer: ${inv.extraction.uncertain.join(', ')}` : ''}`),
+      h('p', {class: 'hint'}, inv.extraction?.reviewed_fields?.includes('currency') ? `Currency confirmed by reviewer · ${inv.currency}` : `Extraction: ${inv.extraction?.method ?? 'unknown'}`),
       docUrl ? h('a', {href: docUrl, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗') : h('p', {class: 'hint'}, 'Original document link unavailable.'),
-      canAct && inv.status !== 'superseded' && h('button', {type: 'button', class: 'button secondary', onclick: ev => { const b = ev.currentTarget; pickFile('.json,.txt,.pdf,.png,.jpg,.jpeg,.webp', f => busy(b, () => uploadInvoice(f, inv.id))); }}, '↑ Upload corrected invoice'));
+      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload()));
     const poCard = po ? h('article', {class: 'source-card', 'data-ev': `po:${po.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
       lineTable('po_line', po.lines, null, po.currency),
       h('div', {class: 'source-totals'}, h('span', {}, `Tax ${formatMoney(po.tax_amount, po.currency)}`), h('strong', {}, `Total ${formatMoney(po.total_amount, po.currency)}`)))
-      : h('article', {class: 'source-card'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('p', {}, inv.po_reference ? `No purchase order ${inv.po_reference} is on file yet.` : 'The invoice has no PO reference.'));
+      : h('article', {class: 'source-card'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('p', {}, inv.po_reference ? `Reference on invoice: ${inv.po_reference}` : 'No PO reference saved.'));
 
     function showEvidence(item) {
       d.dialog.querySelectorAll('.evidence-highlight').forEach(el => el.classList.remove('evidence-highlight'));
@@ -308,19 +404,31 @@ export function createServerInbox({api, root, user}) {
       say(`Evidence: ${evidenceText(item)}${target ? ', highlighted' : ''}.`);
     }
 
-    const cards = discrepancies.map((x, i) => discrepancyCard(d, x, investigations[i], cur, showEvidence));
+    const groups = new Map();
+    for (const [i, x] of discrepancies.entries()) {
+      const view = warningPresentation(x);
+      const closed = CLOSED.includes(x.status);
+      const group = closed ? 'Validation history' : view.group;
+      const actions = editable && !closed ? (view.fields ?? []).map(correct) : [];
+      if (editable && !closed && view.upload) actions.push(uploadOrder());
+      if (editable && !closed && view.needsSourceReview) actions.push(correctedUpload());
+      const card = discrepancyCard(d, x, investigations[i], cur, showEvidence, view, actions);
+      groups.set(group, [...(groups.get(group) ?? []), card]);
+    }
+    const sections = ['Review required', 'Missing documents', 'Discrepancies'].flatMap(group => groups.has(group)
+      ? [h('h3', {}, group), ...groups.get(group)] : []);
     fill(d.dialog, 
       h('div', {class: 'dialog-top'}, h('div', {}, h('span', {class: 'eyebrow'}, 'SHARED WORKSPACE · INVOICE'), h('h2', {id: 'server-detail-title'}, `${inv.invoice_number ?? 'Invoice'} · ${inv.supplier_name ?? 'Unknown supplier'}`)),
         h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close invoice', onclick: () => d.dialog.close()}, '×')),
       h('div', {class: 'server-detail-body'},
         h('div', {class: 'pair-documents'}, invoiceCard, poCard), evidenceBox,
-        h('h3', {}, `Discrepancies (${discrepancies.length})`),
-        cards.length ? cards : h('p', {class: 'check ok'}, 'No discrepancies. The deterministic checks passed.')),
+        sections.length ? sections : h('p', {class: 'check ok'}, 'No open findings.'),
+        groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history'))),
       d.live);
   }
 
-  function discrepancyCard(d, x, investigation, cur, showEvidence) {
-    let inv = investigation;
+  function discrepancyCard(d, x, investigation, cur, showEvidence, view, actions) {
+    let inv = view.group === 'Review required' && investigation?.prompt_version === 'investigate-v1' ? null : investigation;
     const open = !CLOSED.includes(x.status);
     const panelHost = h('div');
     const status = h('p', {class: 'disc-status', role: 'status'});
@@ -330,16 +438,18 @@ export function createServerInbox({api, root, user}) {
     const investigateB = h('button', {type: 'button', class: 'button primary', onclick: ev => busy(ev.currentTarget, investigate)}, '✦ Investigate with AI');
     const draftHost = h('div'), historyHost = h('div');
     const card = h('article', {class: 'discrepancy-card', 'data-ev': `discrepancy:${x.id}`, tabindex: '-1'},
-      h('div', {class: 'source-heading'}, h('strong', {}, words(x.discrepancy_type)), h('span', {class: `status ${open ? 'review' : 'approved'}`}, `${DISC_STATUS[x.status] ?? words(x.status)} · ${x.severity} severity`)),
-      h('dl', {class: 'disc-values'},
+      h('div', {class: 'source-heading'}, h('strong', {}, view.title), h('span', {class: `status ${open ? 'review' : 'approved'}`}, view.group === 'Discrepancies' ? `${DISC_STATUS[x.status] ?? words(x.status)} · ${x.severity} severity` : DISC_STATUS[x.status])),
+      view.message && h('p', {}, view.message),
+      actions.length > 0 && h('div', {class: 'actions'}, actions),
+      view.group === 'Discrepancies' && h('dl', {class: 'disc-values'},
         h('div', {}, h('dt', {}, 'EXPECTED'), h('dd', {}, x.expected_value ?? '—')),
         h('div', {}, h('dt', {}, 'OBSERVED'), h('dd', {}, x.observed_value ?? '—')),
         h('div', {}, h('dt', {}, 'DIFFERENCE'), h('dd', {}, x.difference_amount ? formatMoney(x.difference_amount, x.deterministic_evidence?.currency ?? cur) : '—'))),
-      canAct && open && investigateB, panelHost,
-      canAct && open && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
+      canAct && open && view.group !== 'Missing documents' && investigateB, panelHost,
+      canAct && open && view.group !== 'Missing documents' && h('div', {class: 'resolve-controls'}, h('label', {class: 'draft-label'}, 'Decision notes', notes), h('div', {class: 'actions'}, approveB, rejectB, moreB)),
       status,
       h('div', {class: 'actions'},
-        canAct && h('button', {type: 'button', class: 'text-button', onclick: ev => busy(ev.currentTarget, draft)}, 'Draft supplier correction request'),
+        canAct && d.po && open && view.group === 'Discrepancies' && h('button', {type: 'button', class: 'text-button', onclick: ev => busy(ev.currentTarget, draft)}, 'Draft supplier correction request'),
         h('button', {type: 'button', class: 'text-button', 'aria-expanded': 'false', onclick: ev => busy(ev.currentTarget, () => history(ev.currentTarget))}, 'View resolution history')),
       draftHost, historyHost);
 

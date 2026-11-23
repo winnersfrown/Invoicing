@@ -138,7 +138,8 @@ function decide(messages: Message[]): Step {
     calls = want([['find_duplicate_candidates', { invoice_id: inv.id }]]);
   } else {
     const ev = d.deterministic_evidence ?? {};
-    const unsure = [...(ev.missing ?? []), ...(ev.uncertain ?? []), ...(ev.unsure_fields ?? [])].filter((f: string) => DOCUMENT_FIELDS.includes(f));
+    const applicable = { date_order: ['invoice_date', 'due_date'], currency_conversion: ['currency', 'total_amount'], mixed_currency_po: ['currency'] }[ev.check as string];
+    const unsure = [...(ev.missing ?? []), ...(ev.uncertain ?? []), ...(ev.unsure_fields ?? []), ...(applicable ?? [])].filter((f: string) => DOCUMENT_FIELDS.includes(f));
     const fields = [...new Set(unsure.length ? unsure : FIELDS_FOR[d.discrepancy_type] ?? ['total_amount'])];
     calls = want([['get_document_evidence', { document_id: inv.id, requested_fields: fields }]]);
   }
@@ -201,8 +202,10 @@ function compose(d: any, inv: any, results: Map<string, any>, evidence: Map<stri
   }
 
   if (type === 'missing_purchase_order') {
-    return insufficient('No purchase order on file matches this invoice, so the invoiced lines cannot be verified against an order.',
-      ['The purchase order this invoice relates to, or the correct purchase order reference.'], ['The supplier may have quoted a wrong or outdated reference.']);
+    if (inv.purchase_order_id) return insufficient('A purchase order is now linked. Review the latest validation results.', []);
+    return inv.po_reference
+      ? insufficient(`The invoice references ${inv.po_reference}. Upload the corresponding purchase order to enable matching.`, ['The purchase order with the reference shown on the invoice.'])
+      : insufficient('The invoice has no saved purchase-order reference. Enter it if the invoice lists one.', ['A purchase-order reference from the original document or supplier.']);
   }
 
   const docs = [...evidence.keys()].filter((id) => id.startsWith('document:'));
@@ -220,12 +223,19 @@ function compose(d: any, inv: any, results: Map<string, any>, evidence: Map<stri
 
   if (type === 'potential_extraction_error') {
     if (!docs.length) return insufficient('The document evidence for the uncertain fields could not be retrieved.', ['The extracted fields and their source excerpts.']);
-    const fields = docs.map((id) => id.split('#')[1]).join(', ');
+    const describe = (fields: string[]) => fields.map(f => f.replaceAll('_', ' ')).join(', ');
+    const missing = describe(ev.missing ?? []);
+    const uncertain = describe(ev.uncertain ?? ev.unsure_fields ?? []);
+    const reason = [missing && `Missing or unreadable fields: ${missing}.`, uncertain && `Fields to confirm: ${uncertain}.`].filter(Boolean).join(' ');
+    const claim = typeof d.observed_value === 'string' && ['date_order', 'currency_conversion', 'mixed_currency_po'].includes(ev.check)
+      ? d.observed_value : reason || 'The validation check needs a reviewer to verify the cited fields against the original document.';
+    const confirmCurrency = !missing && (ev.uncertain?.length === 1 && ev.uncertain[0] === 'currency');
     return {
-      status: 'completed', summary: 'The extractor did not read every required field with confidence, so the deterministic checks on those fields may rest on misread values.',
-      findings: [{ claim: `The extractor flagged these fields as missing or uncertain: ${fields}.`, evidence_ids: [dId, ...docs] }],
-      hypotheses: ['The document scan may be of low quality.', 'The document layout may not match the extractor\'s patterns.'],
-      missing_information: ['A human reading of the flagged fields against the original document.'], recommended_action: 'correct_extraction_error', confidence: 'medium',
+      status: 'completed', summary: confirmCurrency ? 'Confirm the payable currency shown or intended for this invoice.' : claim,
+      findings: [{ claim, evidence_ids: [dId, ...docs] }],
+      hypotheses: [],
+      missing_information: [confirmCurrency ? 'The payable currency confirmed by the reviewer.' : 'Verification of the flagged fields against the original document.'],
+      recommended_action: 'correct_extraction_error', confidence: 'medium',
     };
   }
 

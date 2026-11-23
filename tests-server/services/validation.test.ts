@@ -171,6 +171,44 @@ describe('deterministic checks', () => {
     expect(jobs).toEqual([{ kind: 'process_invoice', payload: { invoice_id: inv.id } }]);
   });
 
+  it('separates a missing PO record from extraction even for an unregistered supplier', async () => {
+    const org = await env.newOrg();
+    const inv = await upload(org, { ...clean, supplier_name: 'Juliana Silva', po_reference: 'PO-2025-042', extraction: {
+      method: 'ocr', confidence: 0.5, field_confidence: { currency: 0.5 }, uncertain: ['currency'], reviewed_fields: ['currency'],
+    } });
+    const findings = await discrepancies(org, inv.id);
+    expect(findings.map(d => d.discrepancy_type)).toEqual(['missing_purchase_order']);
+    expect(findings[0].deterministic_evidence).toMatchObject({check: 'po_lookup', po_reference: 'PO-2025-042'});
+  });
+
+  it('corrects a legacy supplier and confirms currency without a re-upload or a repeated warning', async () => {
+    const org = await env.newOrg();
+    const inv = await upload(org, { ...clean, supplier_name: '(on file):', po_reference: 'PO-2025-042', extraction: {
+      method: 'ocr', confidence: 0.5, field_confidence: {currency: 0.5}, uncertain: ['currency'],
+    } });
+    const path = `/api/invoices/${inv.id}`;
+    const body = {updated_at: inv.updated_at, values: {supplier_name: 'Juliana Silva', currency: 'usd'}};
+    const saved = await env.call('POST', `${path}/review-fields`, {user: org.reviewer, body});
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.body.data).toMatchObject({id: inv.id, supplier_name: 'Juliana Silva', currency: 'USD', status: 'exception', open_discrepancy_count: 1});
+    expect(saved.body.data.extraction.reviewed_fields).toEqual(expect.arrayContaining(['supplier_name', 'currency']));
+    expect((await env.call('POST', `${path}/process`, {user: org.reviewer})).status).toBe(200);
+    expect((await discrepancies(org, inv.id)).map(d => [d.discrepancy_type, d.status]).sort()).toEqual([
+      ['missing_purchase_order', 'open'], ['potential_extraction_error', 'dismissed'],
+    ]);
+    expect((await env.call('POST', `${path}/review-fields`, {user: org.reviewer, body})).status).toBe(409);
+  });
+
+  it('shows a missing reference once even when the extractor also reports it missing', async () => {
+    const org = await env.newOrg();
+    const inv = await upload(org, { ...clean, po_reference: null, tax_amount: null, extraction: {
+      method: 'ocr', confidence: 0.8, missing: ['po_reference', 'tax_amount'],
+    } });
+    const findings = await discrepancies(org, inv.id);
+    expect(findings.map(d => d.discrepancy_type)).toEqual(['missing_purchase_order']);
+    expect(findings[0].deterministic_evidence).toMatchObject({check: 'po_reference', po_reference: null});
+  });
+
   it('currency mismatch is flagged instead of the engine throwing', async () => {
     const org = await orgWithPo();
     const inv = await upload(org, { ...clean, currency: 'EUR' });

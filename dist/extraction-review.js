@@ -62,7 +62,7 @@ export function reviewExisting(data,text,file=null){
   const support=path=>{
    const f=fields[path];
    if(!f)return [];
-   return [el('small',{className:`field-risk ${f.support==='supported'?'supported':'uncertain'}`,text:`${f.support} · ${f.reason}`}),
+   return [el('small',{className:`field-risk ${f.confirmed||f.support==='supported'?'supported':'uncertain'}`,dataset:{supportPath:path},text:f.confirmed?'Confirmed by reviewer':`${f.support} · ${f.reason}`}),
     f.evidence?.length?el('button',{type:'button',className:'text-button',dataset:{evidence:path},text:'Show source evidence'}):null];
   };
   const input=(name,label,value,number=false)=>el('label',{},label,
@@ -175,7 +175,7 @@ export function reviewExisting(data,text,file=null){
      el('legend',{text:f.label||p.path}),el('p',{text:p.reason}),
      f.sourceText?el('p',{},el('small',{text:'Source: '}),el('mark',{text:f.sourceText})):null,
      p.evidence.map(v=>el('p',{},el('small',{text:`Page ${v.page}, text row ${v.row} (${v.method}): `}),el('mark',{text:v.text}))),
-     p.candidates.map(c=>el('button',{type:'button',className:'text-button',text:`Use ${c.label??c.value}`,onclick:()=>choose(c.value)})),
+     p.candidates.map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),
      el('label',{},'Or enter the correct value: ',other,el('button',{type:'button',className:'text-button',text:'Use this value',onclick:()=>{if(other.value!=='')choose(numeric?Number(other.value):other.value.trim());}})),
      p.value!=null&&p.value!==''?el('button',{type:'button',className:'text-button',text:`Confirm the value as read (${p.value})`,onclick:()=>choose(null)})
       :el('button',{type:'button',className:'text-button',text:'Confirm it is unreadable (stays unknown, not zero)',onclick:()=>choose(null)})));
@@ -183,6 +183,13 @@ export function reviewExisting(data,text,file=null){
   }
   function renderChecks(){
    const current=read();
+   for (const badge of form.querySelectorAll('[data-support-path]')) {
+    const field = current.extraction?.fields?.[badge.dataset.supportPath];
+    if (!field) continue;
+    const accepted = field.confirmed && field.reviewedValue != null && field.reviewedValue !== '';
+    badge.className = `field-risk ${accepted || field.support === 'supported' ? 'supported' : 'uncertain'}`;
+    badge.textContent = accepted ? 'Confirmed by reviewer' : `${field.support} · ${field.reason}`;
+   }
    const dateIssue=kind==='invoice'?invoiceDateIssue(current.date,current.due):'';
    dateReview.classList.toggle('check',Boolean(dateIssue));dateReview.textContent=dateIssue;dateReview.hidden=!dateIssue;
    const status=reviewStatus(current);

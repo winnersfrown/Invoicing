@@ -6,7 +6,7 @@ import {readInvoiceDate, findDate, scanDates, dateOrder, resolveDate} from './in
 const reference = String.raw`(?:number|num\.?|no\.?|ref(?:erence)?\.?|id|#)`;
 const po = String.raw`(?:purchase\s+order|p\.?\s*o\.?)`;
 const patterns = {
-  vendor: String.raw`(?:vendor|supplier|seller)(?:\s+(?:name|company))?|issued\s+by|billed\s+by|bill\s+from|sold\s+by|from`,
+  vendor: String.raw`(?:vendor|supplier|seller)(?:\s+(?:name|company))?(?:\s*\(\s*on\s+file\s*\))?|issued\s+by|billed\s+by|bill\s+from|sold\s+by|from`,
   number: String.raw`(?:invoice|inv\.?|document|doc\.?)\s*${reference}|invoice(?=\s*[:#]|\s+[\w/-]*\d)`,
   poNumber: String.raw`${po}\s*${reference}|${po}(?=\s*[:#]|\s+[\w/-]*\d|\s*$)`,
   currency: String.raw`(?:invoice\s+)?currency(?:\s+code)?`,
@@ -46,6 +46,7 @@ function validValue(key, value) {
     return (id.test(candidate) || /^(?:PO|INV)[ -]\d[\w./-]*$/i.test(candidate)) && !/^(?:number|no\.?|ref|date|total|information)$/i.test(candidate) ? candidate : '';
   }
   if (key === 'currency') return isCurrency(value.toUpperCase()) ? value.toUpperCase() : '';
+  if (key === 'vendor' && /^\(\s*on\s+file\s*\)\s*[:#=–-]?$/i.test(value)) return '';
   return /\p{L}/u.test(value) && !/^[\d+]|@/.test(value) ? value : '';
 }
 function alignedValue(part, below) {
@@ -122,8 +123,10 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           const adjacent = cells[j+1];
           const below = rows[i+1]?.page === row.page && alignedValue(cell, columns[i+1]);
           const next = key !== 'customer' && adjacent && !findLabels(adjacent.text).length ? adjacent : below;
-          if (!next || findLabels(next.text).length) continue;
-          value = next.text.trim();
+          if (!next) continue;
+          const nextLabel = findLabels(next.text)[0];
+          if (nextLabel && (key !== 'vendor' || nextLabel.index === 0)) continue;
+          value = next.text.slice(0, nextLabel?.index).trim();
           if (next === below) source = {...row, sourceRows:[row,rows[i+1]]};
         } else if (key === 'vendor' && !/^[:#=–-]/.test(remainder)
             && !/name|issued by|sold by|billed by/i.test(match[0]) && match.index !== 0) continue;

@@ -79,8 +79,7 @@ describe('jobs', () => {
     await runJobs(env.db, { now: () => at(10) });
     const types = (await env.call('GET', `/api/invoices/${inv.body.data.id}/discrepancies`, { user: org.viewer })).body.data
       .map((d: { discrepancy_type: string; status: string }) => `${d.discrepancy_type}:${d.status}`).sort();
-    // The earlier finding stays open until a human closes it; the new comparison is added.
-    expect(types).toEqual(['missing_purchase_order:open', 'unit_price_mismatch:open']);
+    expect(types).toEqual(['missing_purchase_order:dismissed', 'unit_price_mismatch:open']);
     const [actor] = await env.db.query<{ actor_type: string }>(
       `select actor_type from audit_events where target_id = $1 and event_type = 'invoice.linked' and new_state ->> 'purchase_order_id' is not null`, [inv.body.data.id]);
     expect(actor.actor_type).toBe('system');

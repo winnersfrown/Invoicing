@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {extractedInvoice, fileUpload, purchaseOrderRequest, toMoneyString} from '../dist/server-inbox.js';
+import {extractedInvoice, fileUpload, purchaseOrderRequest, toMoneyString, warningPresentation} from '../dist/server-inbox.js';
+import {applyConfirmations} from '../dist/extraction-review.js';
 import {investigationView, formatMoney} from '../dist/investigation-ui.js';
 import {parseExtractedText} from '../dist/extraction.js';
 
@@ -73,6 +74,39 @@ test('invalid values are rejected rather than guessed', () => {
   assert.throws(() => extractedInvoice({method: 'json', read: sample, final: {...sample, lines: [{sku: 'A', description: 'x', quantity: 0, unitPrice: 1}]}}), /quantity/i);
   const badDate = extractedInvoice({method: 'json', read: {...sample, due: 'next week'}, final: {...sample, due: 'next week'}});
   assert.equal(badDate.due_date, null);
+});
+
+test('a supplier qualifier is a heading and its next row can share an invoice metadata column', () => {
+  const doc = parseExtractedText('Supplier (on file): Invoice No. 12345\nJuliana Silva Invoice Date: 10 July 2025\nPO Reference: PO-2025-042\nTotal: $957', 'invoice');
+  assert.equal(doc.vendor, 'Juliana Silva');
+  assert.equal(doc.number, '12345');
+  assert.equal(doc.date, '2025-07-10');
+  assert.equal(doc.poNumber, 'PO-2025-042');
+  assert.match(doc.extraction.fields.vendor.evidence[0].text, /Juliana Silva/);
+  assert.equal(parseExtractedText('Supplier (on file): Juliana Silva\nInvoice: INV-9', 'invoice').vendor, 'Juliana Silva');
+  assert.equal(parseExtractedText('Supplier (on file):\nInvoice No. 12345', 'invoice').vendor, '');
+});
+
+test('currency confirmation survives upload without inventing OCR confidence', () => {
+  const read = parseExtractedText('Supplier: Juliana Silva\nInvoice: 12345\nTotal: $957', 'invoice');
+  assert.equal(read.extraction.fields.currency.needsConfirmation, true);
+  const final = {...applyConfirmations(read, {currency: 'USD'}), extractionReviewed: true};
+  const {currency, extraction} = extractedInvoice({method: 'ocr', read, final});
+  assert.equal(currency, 'USD');
+  assert.ok(extraction.reviewed_fields.includes('currency'));
+  assert.ok(!extraction.uncertain.includes('currency'));
+  assert.equal(extraction.field_confidence.currency, undefined);
+  assert.equal(extraction.support_labels.currency.confirmed, true);
+  assert.match(extraction.source_refs.currency.excerpt, /\$957/);
+  assert.match(extraction.source_refs.supplier_name.excerpt, /Juliana Silva/);
+});
+
+test('warning presentation gives different actions to a missing reference, a missing PO and an uncertain currency', () => {
+  const po = deterministic_evidence => warningPresentation({discrepancy_type: 'missing_purchase_order', deterministic_evidence});
+  assert.deepEqual(po({check: 'po_reference', po_reference: null}).fields, ['po_reference']);
+  assert.match(po({check: 'po_lookup', po_reference: 'PO-2025-042'}).message, /PO-2025-042.*Upload/);
+  assert.equal(po({check: 'po_lookup', po_reference: 'PO-2025-042'}).group, 'Missing documents');
+  assert.deepEqual(warningPresentation({discrepancy_type: 'potential_extraction_error', deterministic_evidence: {uncertain: ['currency']}}).fields, ['currency']);
 });
 
 test('fileUpload hashes, encodes and enforces the 3 MB limit', async () => {
