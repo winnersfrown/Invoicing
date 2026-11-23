@@ -1,0 +1,4 @@
+.brand-mark { position: relative; flex: none; width: 23px; height: 23px; color: #badf95; }
+.brand-mark::before, .brand-mark::after { position: absolute; content: ""; width: 15px; height: 10px; border: 2px solid currentColor; transform: skew(-16deg) rotate(-26deg); border-radius: 3px; }
+.brand-mark::before { top: 3px; left: 0; }
+.brand-mark::after { top: 11px; left: 6px; }
