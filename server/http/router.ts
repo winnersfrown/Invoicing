@@ -2,7 +2,7 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { ZodError, type z } from 'zod';
 import {
-  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ROUTES, type Role,
+  CreateInvoiceRequest, CreatePurchaseOrderRequest, DraftMessageRequest, IdempotencyKey, ResolveRequest, ReviewInvoiceFieldsRequest, ReviewLineMatchRequest, ROUTES, type Role,
 } from '../contracts/index.ts';
 import { asUser, type Db } from '../db/index.ts';
 import { authenticate, verifyBearer, type Caller, type TokenVerifier } from '../services/auth.ts';
@@ -14,7 +14,7 @@ import { discrepancyHistory, getDiscrepancies, getInvoiceDto, listInvoices, list
 import { getInvestigation, requestInvestigation, resolveDiscrepancy } from '../services/resolution.ts';
 import type { Storage } from '../services/storage.ts';
 import { ApiError, canonical, fail, notFound, sha256, STATUS } from '../services/util.ts';
-import { processInvoice } from '../services/validation.ts';
+import { processInvoice, reviewLineMatch } from '../services/validation.ts';
 import { ensureWorkspace } from '../services/workspace.ts';
 
 export type Deps = {
@@ -55,6 +55,10 @@ const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/r
   },
   'POST /api/invoices/:id/review-fields': async (c) => {
     await reviewInvoiceFields(c.tx, user(c), c.id, ReviewInvoiceFieldsRequest.parse(c.body));
+    return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
+  },
+  'POST /api/invoices/:id/review-line-match': async (c) => {
+    await reviewLineMatch(c.tx, c.caller.orgId, c.id, { type: 'user', id: c.caller.userId }, ReviewLineMatchRequest.parse(c.body));
     return { data: await getInvoiceDto(c.tx, c.caller.orgId, c.id) };
   },
   'GET /api/invoices/:id/discrepancies': async (c) => ({ data: (await getDiscrepancies(c.tx, c.caller.orgId, c.id)).data }),

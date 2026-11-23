@@ -1,7 +1,8 @@
 // The one adapter from database rows to the engine's document shape, plus the comparison wrapper.
 import { compareDocuments, correctionDraft } from '../../dist/matching-engine.js';
 import { supplierEvidence } from '../../dist/supplier.js';
-import type { EvidenceItem } from '../contracts/index.ts';
+import type { EvidenceItem, ReviewLineMatchRequest } from '../contracts/index.ts';
+import type { z } from 'zod';
 import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type Line, type PurchaseOrder } from '../db/index.ts';
 import { audit, type Actor } from './audit.ts';
 import { fail, notFound } from './util.ts';
@@ -27,6 +28,7 @@ export const poDoc = (po: PurchaseOrder) => engineDoc('purchase_order', { number
   poNumber: po.purchase_order_number, currency: po.currency, lines: po.lines, tax: po.tax_amount, total: po.total_amount });
 
 export type Comparison = ReturnType<typeof compareDocuments>;
+type LineDecision = z.infer<typeof ReviewLineMatchRequest>;
 export type SupplierCheck = { ok: true; evidence: string } | { ok: false; review: boolean; error: string };
 
 /**
@@ -42,7 +44,13 @@ export function compareWithPo(inv: Invoice, po: PurchaseOrder): { supplier: Supp
   }
   if (!supplier.ok && !supplier.review) return { supplier, comparison: null, error: null };
   try {
-    return { supplier, comparison: compareDocuments(supplier.ok ? i : { ...i, vendor: p.vendor }, p, { allowMissingInvoiceAmounts: true }), error: null };
+    const decisions: LineDecision[] = inv.extraction?.po_line_decisions ?? [];
+    const lineDecisions = decisions.filter(d => d.purchase_order_id === po.id).map(d => ({
+      invoiceLine: inv.lines.findIndex(line => line.id === d.invoice_line_id) + 1,
+      poLine: po.lines.findIndex(line => line.id === d.po_line_id) + 1,
+      decision: d.decision,
+    }));
+    return { supplier, comparison: compareDocuments(supplier.ok ? i : { ...i, vendor: p.vendor }, p, { allowMissingInvoiceAmounts: true, lineDecisions }), error: null };
   } catch (e: any) {
     return { supplier, comparison: null, error: String(e?.message) };
   }

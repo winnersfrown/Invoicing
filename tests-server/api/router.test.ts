@@ -31,6 +31,7 @@ const validBody = (route: string): unknown => ({
   'POST /api/invoices': invoiceBody({ invoice_number: `X-${randomUUID()}` }),
   'POST /api/purchase-orders': poBody({ purchase_order_number: `PO-${randomUUID()}` }),
   'POST /api/invoices/:id/review-fields': { updated_at: '2026-01-01T00:00:00.000Z', values: { currency: 'USD' } },
+  'POST /api/invoices/:id/review-line-match': { purchase_order_id: randomUUID(), invoice_line_id: randomUUID(), po_line_id: randomUUID(), decision: 'confirm' },
   'POST /api/discrepancies/:id/resolve': { decision: 'more_info_requested', notes: 'x' },
   'POST /api/discrepancies/:id/draft-message': {},
 }[route] ?? {});

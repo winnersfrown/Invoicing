@@ -1,6 +1,7 @@
 import {arithmeticChecks} from './arithmetic.js';
 import {supplierEvidence} from './supplier.js';
 import {cents,money} from './engine.js';
+import {matchLines} from './line-matching.js';
 const norm=s=>s.trim().toLowerCase();
 export function validateDocument(d,kind,{allowMissingInvoiceAmounts = false} = {}){
  if(d?.type==='credit_note')throw Error('Credit notes are unsupported in this demo. Keep this credit separate; it must not be processed as a payable invoice.');
@@ -21,22 +22,27 @@ export function compareDocuments(invoice,po,options = {}){
   throw Error('Documents with separate pricing and payable currencies need currency review before PO comparison.');
  const vendorEvidence=supplierEvidence(invoice,po);
  if(norm(invoice.poNumber)!==norm(po.number))throw Error('Purchase order reference mismatch. Select the PO referenced on the invoice.');
- const skus=[...new Set([...po.lines,...invoice.lines].map(l=>norm(l.sku)))];
- const lines=skus.map(sku=>{const i=invoice.lines.find(l=>norm(l.sku)===sku),p=po.lines.find(l=>norm(l.sku)===sku);const invoiced=i?i.quantity*cents(i.unitPrice):0,expected=p?p.quantity*cents(p.unitPrice):0;return {sku:i?.sku||p.sku,description:i?.description||p.description,invoice:i||null,po:p||null,invoicedCents:invoiced,expectedCents:expected,differenceCents:invoiced-expected,changed:!i||!p||i.quantity!==p.quantity||cents(i.unitPrice)!==cents(p.unitPrice),invoiceLine:i?invoice.lines.indexOf(i)+1:null,poLine:p?po.lines.indexOf(p)+1:null};});
+ const {pairs,pendingLineMatches}=matchLines(invoice.lines,po.lines,options.lineDecisions ?? []);
+ const lines=pairs.map(({invoiceLine,poLine,matchBasis})=>{
+  const i=invoiceLine==null?null:invoice.lines[invoiceLine-1], p=poLine==null?null:po.lines[poLine-1];
+  const invoiced=i?i.quantity*cents(i.unitPrice):0, expected=p?p.quantity*cents(p.unitPrice):0;
+  return {sku:i?.sku||p.sku,description:i?.description||p.description,invoice:i,po:p,invoicedCents:invoiced,expectedCents:expected,
+   differenceCents:invoiced-expected,changed:!i||!p||i.quantity!==p.quantity||cents(i.unitPrice)!==cents(p.unitPrice),invoiceLine,poLine,matchBasis};
+ });
  const arithmetic=[...arithmeticChecks(invoice).map(c=>({...c,document:'invoice'})),...arithmeticChecks(po).map(c=>({...c,document:'purchase_order'}))];
  const taxDifferenceCents=invoice.tax==null?null:cents(invoice.tax)-cents(po.tax);
- const differenceCents=invoice.total==null?null:cents(invoice.total)-cents(po.total);
- return {vendorEvidence,arithmetic,lines,taxDifferenceCents,differenceCents,hasDiscrepancy:lines.some(l=>l.changed)||Boolean(taxDifferenceCents)||Boolean(differenceCents)||arithmetic.length>0,invoiceTotal:invoice.total,poTotal:po.total};
+ const differenceCents=invoice.total==null||invoice.tax==null||pendingLineMatches.length?null:cents(invoice.total)-cents(po.total);
+ return {vendorEvidence,arithmetic,lines,pendingLineMatches,lineDecisions:options.lineDecisions ?? [],taxDifferenceCents,differenceCents,hasDiscrepancy:lines.some(l=>l.changed)||Boolean(taxDifferenceCents)||Boolean(differenceCents)||arithmetic.length>0,invoiceTotal:invoice.total,poTotal:po.total};
 }
 export function correctionDraft(invoice,po,result){
  const format = amount => money(amount, invoice.currency);
  const totals = result.differenceCents == null
-  ? `The invoice total needs confirmation. The purchase order total is ${format(po.total)}.`
+  ? 'The net document difference is pending review.'
   : `The invoice total is ${format(invoice.total)} and the purchase order total is ${format(po.total)}, a net difference of ${format(result.differenceCents/100)}.`;
- const evidence=result.lines.filter(l=>l.changed).map(l=>`${l.sku} (${l.description}): invoice line ${l.invoiceLine??'missing'} shows ${l.invoice?`${l.invoice.quantity} × ${format(l.invoice.unitPrice)}`:'no item'}; PO line ${l.poLine??'missing'} shows ${l.po?`${l.po.quantity} × ${format(l.po.unitPrice)}`:'no item'}. Line difference: ${format(l.differenceCents/100)}.`);
+ const evidence=result.lines.filter(l=>l.changed).map(l=>`${l.matchBasis==='reviewer_confirmed'?`${l.invoice.sku} ↔ ${l.po.sku}`:l.sku} (${l.description}): invoice line ${l.invoiceLine??'missing'} shows ${l.invoice?`${l.invoice.quantity} × ${format(l.invoice.unitPrice)}`:'no item'}; PO line ${l.poLine??'missing'} shows ${l.po?`${l.po.quantity} × ${format(l.po.unitPrice)}`:'no item'}. Line difference: ${format(l.differenceCents/100)}.`);
  for(const check of result.arithmetic||[])evidence.push(`${check.document==='invoice'?'Invoice':'PO'} arithmetic: ${check.message}`);
  if(result.taxDifferenceCents)evidence.push(`Tax: invoice ${format(invoice.tax)}; PO ${format(po.tax)}.`);
  return `Subject: Please review invoice ${invoice.number} against ${po.number}\n\nHello ${invoice.vendor},\n\nWhile reviewing invoice ${invoice.number}, we found differences from purchase order ${po.number}:\n\n${evidence.join('\n')}\n\n${totals} Please confirm the differences and provide a corrected invoice, or the documentation authorizing any changes.\n\nThis invoice remains on hold pending review.\n\nThank you,\nOak & Elm Creative\n\n[Draft only — review before sending]`;
 }
-export function reviewedExport(invoice,po,result,reviewed){if(!reviewed)throw Error('Confirm your evidence review before exporting.');return {schemaVersion:2,arithmetic:result.arithmetic||[],supplierEvidence:result.vendorEvidence,supplierReview:invoice.supplierReview||null,invoiceNumber:invoice.number,purchaseOrderNumber:po.number,vendor:invoice.vendor,currency:invoice.currency.toUpperCase(),invoiceTotal:invoice.total,purchaseOrderTotal:po.total,netDifference:result.differenceCents==null?null:result.differenceCents/100,reviewStatus:'evidence_reviewed',resolutionStatus:result.hasDiscrepancy?'awaiting_vendor_correction':'matched_pending_user_approval',paymentStatus:result.hasDiscrepancy?'ON_HOLD':'NOT_APPROVED',paymentApproved:false,lines:result.lines.map(l=>({sku:l.sku,invoiceLine:l.invoiceLine,poLine:l.poLine,invoiceQuantity:l.invoice?.quantity??null,poQuantity:l.po?.quantity??null,invoiceUnitPrice:l.invoice?.unitPrice??null,poUnitPrice:l.po?.unitPrice??null,difference:l.differenceCents/100,changed:l.changed})),reviewedAt:new Date().toISOString()};}
+export function reviewedExport(invoice,po,result,reviewed){if(!reviewed)throw Error('Confirm your evidence review before exporting.');if(result.pendingLineMatches?.length||result.differenceCents===null)throw Error('Complete product and amount review before exporting.');return {schemaVersion:2,arithmetic:result.arithmetic||[],supplierEvidence:result.vendorEvidence,supplierReview:invoice.supplierReview||null,invoiceNumber:invoice.number,purchaseOrderNumber:po.number,vendor:invoice.vendor,currency:invoice.currency.toUpperCase(),invoiceTotal:invoice.total,purchaseOrderTotal:po.total,netDifference:result.differenceCents==null?null:result.differenceCents/100,reviewStatus:'evidence_reviewed',resolutionStatus:result.hasDiscrepancy?'awaiting_vendor_correction':'matched_pending_user_approval',paymentStatus:result.hasDiscrepancy?'ON_HOLD':'NOT_APPROVED',paymentApproved:false,lines:result.lines.map(l=>({sku:l.sku,invoiceSku:l.invoice?.sku??null,purchaseOrderSku:l.po?.sku??null,matchBasis:l.matchBasis,invoiceLine:l.invoiceLine,poLine:l.poLine,invoiceQuantity:l.invoice?.quantity??null,poQuantity:l.po?.quantity??null,invoiceUnitPrice:l.invoice?.unitPrice??null,poUnitPrice:l.po?.unitPrice??null,difference:l.differenceCents/100,changed:l.changed})),reviewedAt:new Date().toISOString()};}
 export function reviewCsv(data){const cell=v=>'"'+String(v??'').replace(/^[\s]*[=+@\-]/,"'$&").replaceAll('"','""')+'"';const keys=['invoiceNumber','purchaseOrderNumber','vendor','currency','invoiceTotal','purchaseOrderTotal','netDifference','reviewStatus','resolutionStatus','paymentStatus','paymentApproved'];return keys.join(',')+'\r\n'+keys.map(k=>cell(data[k])).join(',');}

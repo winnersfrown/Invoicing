@@ -29,6 +29,7 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
   // Match validation's lock order so a correction and a resolution can safely run together.
   const [inv] = await db.query<{ status: any }>('select status from invoices where id = $1 and organization_id = $2 for update', [invoice_id, ctx.orgId]);
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId, true);
+  if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
   if (CLOSED.includes(d.status)) fail('conflict', `This discrepancy is already ${d.status}.`);
   let proposed: Action | null = null;
   if (req.investigation_id) {
@@ -66,6 +67,7 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
  */
 export async function requestInvestigation(db: Db, ctx: Ctx, discrepancyId: string, model: string) {
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
+  if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
   const [created] = await db.query(
     `insert into ai_investigations (organization_id, discrepancy_id, model_identifier, prompt_version, investigation_status, evidence_hash, evidence_references, requested_by)
      values ($1, $2, $3, $4, 'queued', $5, '[]'::jsonb, $6) on conflict do nothing returning *`,
