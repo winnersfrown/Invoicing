@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
 import { validateDocument } from '../../dist/matching-engine.js';
 import { normalizeVendor } from '../../dist/supplier.js';
-import { moneyToCents, UPLOAD_MAX_BYTES, type CreateInvoiceRequest, type CreatePurchaseOrderRequest } from '../contracts/index.ts';
-import { milliToString, toMilli, toMoney, type Db } from '../db/index.ts';
+import { moneyToCents, UPLOAD_MAX_BYTES, type CreateInvoiceRequest, type CreatePurchaseOrderRequest, type ReviewInvoiceFieldsRequest } from '../contracts/index.ts';
+import { loadInvoice, milliToString, toMilli, toMoney, type Db } from '../db/index.ts';
 import { audit, type Actor } from './audit.ts';
 import { engineDoc } from './matching.ts';
 import type { Storage } from './storage.ts';
@@ -71,6 +71,43 @@ export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof Create
   await storage.put(path, bytes, req.file.mime_type); // inside the transaction: a storage failure rolls the invoice back
   await processInvoice(db, ctx.orgId, id, actor);
   return id;
+}
+
+/** Review an existing extraction against its original document, with the prior values in the audit trail. */
+export async function reviewInvoiceFields(db: Db, ctx: Ctx, id: string, req: z.infer<typeof ReviewInvoiceFieldsRequest>) {
+  const inv = await loadInvoice(db, ctx.orgId, id, true) ?? notFound();
+  if (inv.updated_at !== req.updated_at) fail('conflict', 'This invoice changed. Reload it before saving your review.');
+  if (['rejected', 'superseded'].includes(inv.status)) fail('conflict', 'This invoice is closed to field review.');
+  const previous = { supplier_name: inv.supplier_name_raw, currency: inv.currency, po_reference: inv.po_reference };
+  const values = { ...previous, ...req.values };
+  const fields = Object.keys(req.values) as (keyof typeof previous)[];
+  const extraction = { ...inv.extraction };
+  const confirmed = new Set<string>(extraction.reviewed_fields ?? []);
+  const missing = new Set<string>(extraction.missing ?? []);
+  extraction.field_confidence = { ...extraction.field_confidence };
+  extraction.support_labels = { ...extraction.support_labels };
+  for (const field of fields) {
+    const value = values[field];
+    if (value == null) {
+      confirmed.delete(field);
+      missing.add(field);
+    } else {
+      confirmed.add(field);
+      missing.delete(field);
+    }
+    if (value !== previous[field]) delete extraction.field_confidence[field];
+    const path = { supplier_name: 'vendor', currency: 'currency', po_reference: 'poNumber' }[field];
+    extraction.support_labels[path] = { ...extraction.support_labels[path], reviewedValue: value, confirmed: value != null, needsConfirmation: value == null };
+  }
+  extraction.reviewed_fields = [...confirmed];
+  extraction.missing = [...missing];
+  extraction.uncertain = (extraction.uncertain ?? []).filter((field: string) => !fields.some(f => field === f));
+  const actor = userActor(ctx);
+  await db.query('update invoices set supplier_name_raw = $1, currency = $2, po_reference = $3, extraction = $4::jsonb where id = $5 and organization_id = $6',
+    [values.supplier_name, values.currency, values.po_reference, JSON.stringify(extraction), id, ctx.orgId]);
+  await audit(db, { orgId: ctx.orgId, actor, event: 'invoice.fields_reviewed', targetType: 'invoice', targetId: id,
+    previous: { values: previous }, next: { values, reviewed_fields: fields } });
+  await processInvoice(db, ctx.orgId, id, actor);
 }
 
 /** Creates a PO the engine accepts (currency code, whole quantities, lines + tax = total) and its supplier if new. Returns invoices waiting on it. */

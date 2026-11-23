@@ -2,7 +2,7 @@ import { adjustmentCents, convertCents, netLineCents } from '../../dist/arithmet
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
 import { invoiceDateIssue } from '../../dist/invoice-dates.js';
-import { normalizeVendor, similarSupplier } from '../../dist/supplier.js';
+import { normalizeVendor } from '../../dist/supplier.js';
 import type { DiscrepancyType, InvoiceStatus, Severity } from '../contracts/index.ts';
 import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type PurchaseOrder } from '../db/index.ts';
 import type { z } from 'zod';
@@ -20,7 +20,7 @@ export type Finding = {
 
 const LOW_CONFIDENCE = 0.7;
 export const OPEN_STATUSES_SQL = `('open', 'investigating', 'awaiting_supplier')`;
-const PROCESSABLE: Status[] = ['uploaded', 'needs_extraction_review', 'validated', 'exception'];
+const PROCESSABLE: Status[] = ['uploaded', 'needs_extraction_review', 'validated', 'exception', 'resolved'];
 const SEVERITY: Record<DType, Finding['severity']> = {
   duplicate_candidate: 'high', incorrect_total: 'high', line_arithmetic: 'medium', tax_mismatch: 'medium', unit_price_mismatch: 'high',
   quantity_mismatch: 'medium', unmatched_line: 'medium', supplier_mismatch: 'high', missing_purchase_order: 'medium', currency_mismatch: 'high',
@@ -39,21 +39,23 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 export type CheckInput = {
   inv: Invoice; po: PurchaseOrder | null; poMatches: { id: string; purchase_order_number: string }[];
-  supplierOnFile: boolean; similarSupplierName: string | null;
   duplicates: Awaited<ReturnType<typeof duplicateCandidates>>;
 };
 
 /** Pure: every discrepancy the deterministic checks find for this invoice. */
-export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarSupplierName, duplicates }: CheckInput): Finding[] {
+export function findDiscrepancies({ inv, po, poMatches, duplicates }: CheckInput): Finding[] {
   const out: Finding[] = [];
   const poId = po?.id ?? null;
   const ex = inv.extraction ?? {};
 
   // Extraction: required fields that are missing, and fields the extractor was unsure about.
   const required: Record<string, unknown> = { supplier_name: inv.supplier_name_raw, invoice_number: inv.invoice_number, currency: inv.currency, total_amount: inv.total_amount, lines: inv.lines.length || null };
-  const missing = [...new Set([...Object.keys(required).filter((k) => required[k] == null), ...(ex.missing ?? [])])].sort();
+  const reviewed = new Set<string>(ex.reviewed_fields ?? []);
+  const pendingReview = (field: string) => !reviewed.has(field.split(/[.\[]/, 1)[0]);
+  const missing = [...new Set([...Object.keys(required).filter((k) => required[k] == null),
+    ...(ex.missing ?? []).filter((k: string) => k !== 'po_reference' && k !== 'tax_amount' && pendingReview(k))])].sort();
   const lowConfidence = Object.entries((ex.field_confidence ?? {}) as Record<string, number>).filter(([, c]) => c < LOW_CONFIDENCE).map(([k]) => k);
-  const uncertain = [...new Set([...(ex.uncertain ?? []), ...lowConfidence])].filter((f) => !missing.includes(f)).sort();
+  const uncertain = [...new Set<string>([...(ex.uncertain ?? []), ...lowConfidence])].filter((f) => !missing.includes(f) && pendingReview(f)).sort();
   const unsure = [...missing, ...uncertain];
   if (unsure.length) {
     out.push({ type: 'potential_extraction_error', fields: [], expected: 'All required fields read with confidence',
@@ -150,15 +152,10 @@ export function findDiscrepancies({ inv, po, poMatches, supplierOnFile, similarS
   }
 
   if (!inv.po_reference) {
-    out.push({ type: 'missing_purchase_order', fields: ['po_reference'], expected: 'A purchase order reference', observed: null, difference: null, evidence: { check: 'po_reference', po_reference: null } });
+    out.push({ type: 'missing_purchase_order', fields: [], expected: 'A purchase order reference', observed: null, difference: null, evidence: { check: 'po_reference', po_reference: null } });
   } else if (poMatches.length !== 1) {
-    out.push({ type: poMatches.length ? 'ambiguous_reference' : 'missing_purchase_order', fields: ['po_reference'], expected: 'Exactly one purchase order on file',
+    out.push({ type: poMatches.length ? 'ambiguous_reference' : 'missing_purchase_order', fields: [], expected: 'Exactly one purchase order on file',
       observed: inv.po_reference, difference: null, evidence: { check: 'po_lookup', po_reference: inv.po_reference, matches: poMatches } });
-  }
-
-  if (!po && inv.supplier_name_raw && !supplierOnFile) {
-    out.push({ type: 'supplier_mismatch', severity: similarSupplierName ? 'medium' : 'low', fields: ['supplier_name'], expected: similarSupplierName ?? 'A supplier on file',
-      observed: inv.supplier_name_raw, difference: null, evidence: { check: 'supplier_on_file', engine: 'similarSupplier', similar_to: similarSupplierName } });
   }
 
   if (po) {
@@ -220,8 +217,7 @@ export async function deriveInvoiceStatus(db: Db, invoiceId: string): Promise<St
 }
 
 /**
- * Runs every check and upserts discrepancies keyed by (invoice, type, evidence hash): unchanged data adds nothing.
- * Existing discrepancies are never closed here; only a human resolution closes one.
+ * Runs every check. Review reminders and PO availability track the current evidence; past findings and decisions stay in history.
  */
 export async function processInvoice(db: Db, orgId: string, invoiceId: string, actor: Actor) {
   return db.transaction(async (tx) => {
@@ -232,7 +228,6 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
       'select id, supplier_name, normalized_name from suppliers where organization_id = $1 order by supplier_name', [orgId]);
     const norm = normalizeVendor(inv.supplier_name_raw);
     const onFile = norm ? suppliers.find((s) => s.normalized_name === norm) : undefined;
-    const similar = !onFile && inv.supplier_name_raw ? suppliers.find((s) => similarSupplier(inv.supplier_name_raw, s.supplier_name)) : undefined;
     const poMatches = inv.po_reference ? await tx.query<{ id: string; purchase_order_number: string }>(
       `select id, purchase_order_number from purchase_orders where organization_id = $1 and lower(trim(purchase_order_number)) = lower(trim($2))
        order by purchase_order_number`, [orgId, inv.po_reference]) : [];
@@ -245,8 +240,29 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
         previous: { supplier_id: inv.supplier_id, purchase_order_id: inv.purchase_order_id }, next: links });
     }
 
-    const findings = findDiscrepancies({ inv: { ...inv, ...links }, po, poMatches, supplierOnFile: !!onFile, similarSupplierName: similar?.supplier_name ?? null,
+    const findings = findDiscrepancies({ inv: { ...inv, ...links }, po, poMatches,
       duplicates: await duplicateCandidates(tx, orgId, inv) });
+    const active = new Set(findings.map(evidenceHash));
+    const reminders = await tx.query<{ id: string; status: string; evidence_hash: string; automatic: boolean }>(
+      `select d.id, d.status, d.evidence_hash, coalesce((
+         select a.new_state ->> 'reason' = 'no_longer_detected' from audit_events a
+          where a.organization_id = d.organization_id and a.target_type = 'discrepancy' and a.target_id = d.id::text
+            and a.event_type = 'discrepancy.status_changed' order by a.id desc limit 1
+       ), false) as automatic
+       from discrepancies d where d.invoice_id = $1 and d.organization_id = $2
+         and (d.deterministic_evidence ->> 'check' in ('extraction', 'po_reference', 'po_lookup', 'supplier_on_file', 'currency')
+           or (d.discrepancy_type = 'potential_extraction_error' and d.deterministic_evidence ? 'unsure_fields'))`,
+      [inv.id, orgId]);
+    for (const reminder of reminders) {
+      const detected = active.has(reminder.evidence_hash);
+      const open = ['open', 'investigating', 'awaiting_supplier'].includes(reminder.status);
+      const status = !detected && open ? 'dismissed'
+        : detected && reminder.status === 'dismissed' && reminder.automatic ? 'open' : null;
+      if (!status) continue;
+      await tx.query('update discrepancies set status = $1 where id = $2 and organization_id = $3', [status, reminder.id, orgId]);
+      await audit(tx, { orgId, actor, event: 'discrepancy.status_changed', targetType: 'discrepancy', targetId: reminder.id,
+        previous: { status: reminder.status }, next: { status, reason: detected ? 'detected_again' : 'no_longer_detected' } });
+    }
     let created = 0;
     for (const f of findings) {
       const [row] = await tx.query<{ id: string }>(

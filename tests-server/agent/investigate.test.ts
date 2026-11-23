@@ -34,7 +34,7 @@ describe('spec scenario: unit price above the PO, end to end with the scripted m
 
   it('produces a verified, human-gated recommendation', async () => {
     expect(InvestigationDto.parse(dto)).toBeTruthy();
-    expect(dto).toMatchObject({ investigation_status: 'completed', model_identifier: 'scripted-investigator', prompt_version: 'investigate-v1', error: null, retry_available: false });
+    expect(dto).toMatchObject({ investigation_status: 'completed', model_identifier: 'scripted-investigator', prompt_version: 'investigate-v2', error: null, retry_available: false });
     const r = dto.result;
     expect(`${r.summary} ${r.findings.map((f: any) => f.claim).join(' ')}`).toMatch(/invoice unit price.*exceeds.*purchase order/i);
     expect(r.verified_financial_impact).toEqual({ currency: 'USD', amount: '60.00', source: 'deterministic_engine' });
@@ -137,6 +137,8 @@ describe('discrepancy types with the scripted model', () => {
     const dto = await env.investigate(org.reviewer, s.discrepancies[0].id);
     expect(dto.result).toMatchObject({ status: 'insufficient_evidence', recommended_action: 'insufficient_evidence' });
     expect(dto.result.missing_information.join(' ')).toMatch(/purchase order/i);
+    expect(dto.result.summary).toMatch(/PO-404.*Upload/);
+    expect(dto.result.possible_causes).toEqual([]);
   });
 
   it('contradictory evidence (documents no longer show the recorded difference) is insufficient_evidence', async () => {
@@ -165,6 +167,8 @@ describe('discrepancy types with the scripted model', () => {
     expect(s.discrepancies.map((d) => d.discrepancy_type)).toEqual(['potential_extraction_error']);
     const dto = await env.investigate(org.reviewer, s.discrepancies[0].id);
     expect(dto.result).toMatchObject({ status: 'completed', recommended_action: 'correct_extraction_error' });
+    expect(dto.result.summary).toContain('total amount');
+    expect(dto.result.possible_causes).toEqual([]);
     expect(dto.result.evidence.map((e: any) => e.id)).toContain(`document:${s.invoiceId}#total_amount`);
   });
 

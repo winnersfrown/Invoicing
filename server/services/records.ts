@@ -130,10 +130,12 @@ export async function getDocumentEvidence(db: Db, orgId: string, documentId: str
   const fields: Record<string, unknown> = {}, unavailable: string[] = [], evidence: EvidenceItem[] = [];
   for (const f of [...new Set(requestedFields)]) {
     if (!(DOCUMENT_FIELDS as readonly string[]).includes(f)) { unavailable.push(f); continue; }
-    const ref = ex.source_refs?.[f] ?? {}, confidence = ex.field_confidence?.[f] ?? null;
-    fields[f] = { value: values[f], confidence, page: ref.page ?? null, excerpt: ref.excerpt ?? null };
-    evidence.push({ id: `document:${inv.id}#${f}`, label: `Extracted ${f}`, ...(ref.page ? { page: ref.page } : {}),
-      value: clip(`${values[f] ?? 'not extracted'}${confidence != null ? ` (confidence ${confidence})` : ''}${ref.excerpt ? `; source excerpt: ${JSON.stringify(ref.excerpt)}` : ''}`) });
+    const path = ({ supplier_name: 'vendor', invoice_number: 'number', po_reference: 'poNumber', tax_amount: 'tax', total_amount: 'total' } as Record<string, string>)[f] ?? f;
+    const ref = ex.source_refs?.[f] ?? ex.source_refs?.[path] ?? {}, confidence = ex.field_confidence?.[f] ?? null;
+    const reviewed = !!ex.reviewed_fields?.includes(f);
+    fields[f] = { value: values[f], confidence, reviewed, page: ref.page ?? null, excerpt: ref.excerpt ?? null };
+    evidence.push({ id: `document:${inv.id}#${f}`, label: `${reviewed ? 'Reviewed' : 'Extracted'} ${f}`, ...(ref.page ? { page: ref.page } : {}),
+      value: clip(`${values[f] ?? 'not extracted'}${reviewed ? ' (confirmed by reviewer)' : confidence != null ? ` (confidence ${confidence})` : ''}${ref.excerpt ? `; source excerpt: ${JSON.stringify(ref.excerpt)}` : ''}`) });
   }
   return { data: { document_id: inv.id, method: ex.method ?? null, missing: ex.missing ?? [], uncertain: ex.uncertain ?? [], fields, unavailable }, evidence };
 }

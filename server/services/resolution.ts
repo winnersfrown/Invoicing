@@ -25,7 +25,10 @@ function nextStatus(r: z.infer<typeof ResolveRequest>): string {
 
 export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string, req: z.infer<typeof ResolveRequest>) {
   const actor: Actor = { type: 'user', id: ctx.userId };
-  const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId, true); // row lock: a concurrent decision waits, then sees the new status
+  const { invoice_id } = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
+  // Match validation's lock order so a correction and a resolution can safely run together.
+  const [inv] = await db.query<{ status: any }>('select status from invoices where id = $1 and organization_id = $2 for update', [invoice_id, ctx.orgId]);
+  const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId, true);
   if (CLOSED.includes(d.status)) fail('conflict', `This discrepancy is already ${d.status}.`);
   let proposed: Action | null = null;
   if (req.investigation_id) {
@@ -49,7 +52,6 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
       previous: { status: d.status }, next: { status, discrepancy_id: d.id, resolution_action_id: row.id } });
   }
 
-  const [inv] = await db.query<{ status: any }>('select status from invoices where id = $1 and organization_id = $2 for update', [d.invoice_id, ctx.orgId]);
   let invoiceStatus = inv.status;
   if (!['superseded', 'rejected', 'uploaded'].includes(inv.status)) {
     invoiceStatus = await deriveInvoiceStatus(db, d.invoice_id);

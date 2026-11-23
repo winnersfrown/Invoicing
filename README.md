@@ -66,7 +66,7 @@ A revision that still differs stays on hold. A matching revision requires a revi
 Run `npm run benchmark` from the repository root (Node 18+; no network needed).
 The dataset contains exactly 30 synthetic documents: 20 invoices, 6 POs and 4 credit notes, each with JSON and readable TXT representations. `benchmark/ground-truth.json` holds predefined expected results; `benchmark/generate.mjs` regenerates the fixtures deterministically.
 
-The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Version 2 writes `LATEST.md` and `latest.json` under `benchmark/results/v2/`. The original reports stay in their existing paths. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
+The frozen initial results are in [benchmark/results/REPORT.md](benchmark/results/REPORT.md) and `benchmark/results/baseline.json`. Version 3 writes `LATEST.md` and `latest.json` under `benchmark/results/v3/`. The original reports stay in their existing paths. All pair decisions, raw comparison outputs, drafts and SHA-256 input/engine hashes are included. A successful runner exit means measurement completed, not perfect product accuracy.
 
 This benchmark tests structured detection and explanation facts. It does not measure PDF/image OCR or live upload concurrency. Credit notes currently receive an unsupported-type rejection; credit reconciliation is not implemented. TXT files are human-readable evidence, not inbox-import fixtures.
 
@@ -76,13 +76,13 @@ Supported copy/resend suffixes and common O/0 or I/L/1 OCR confusions now trigge
 
 PO matching normalizes company suffixes and punctuation. One-character supplier spelling differences require explicit identity confirmation and a note in the UI before comparison can proceed; the decision is scoped to the supplier names and document references and exported with the evidence. Credit-note JSON receives a clear unsupported message; credit processing is still not implemented.
 
-Run `npm run benchmark:holdout` to rerun the 30 historical holdout fixtures. [Version 2](benchmark/version.json) pins the current engine and writes to `benchmark/holdout/results/v2/`. [The original holdout report](benchmark/holdout/results/LATEST.md) records the first evaluation.
+Run `npm run benchmark:holdout` to rerun the 30 historical holdout fixtures. [Version 3](benchmark/version.json) pins the current engine and writes to `benchmark/holdout/results/v3/`. [The original holdout report](benchmark/holdout/results/LATEST.md) records the first evaluation.
 
 ### Reissued-reference regression
 
 The previously missed `REISSUED-8600` / `8600` pair is now detected for human review. Standalone reissue/resent/copy labels can appear at either reference edge; matching supplier, amount and strong content evidence are still required. Arbitrary reference changes are not universally detected.
 
-Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The version 1 holdout snapshot is preserved. The current holdout command checks the version 2 engine hashes. This rerun is regression testing, not fresh holdout validation.
+Run `npm run benchmark:reissue`. Results on both previously seen datasets are in [benchmark/reissue-regression/REPORT.md](benchmark/reissue-regression/REPORT.md). The version 1 holdout snapshot is preserved. The current holdout command checks the version 3 engine hashes. This rerun is regression testing, not fresh holdout validation.
 
 ## Connected inbox workflow
 

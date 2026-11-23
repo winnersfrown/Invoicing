@@ -30,6 +30,7 @@ const urlFor = (route: string) => {
 const validBody = (route: string): unknown => ({
   'POST /api/invoices': invoiceBody({ invoice_number: `X-${randomUUID()}` }),
   'POST /api/purchase-orders': poBody({ purchase_order_number: `PO-${randomUUID()}` }),
+  'POST /api/invoices/:id/review-fields': { updated_at: '2026-01-01T00:00:00.000Z', values: { currency: 'USD' } },
   'POST /api/discrepancies/:id/resolve': { decision: 'more_info_requested', notes: 'x' },
   'POST /api/discrepancies/:id/draft-message': {},
 }[route] ?? {});
@@ -191,7 +192,7 @@ describe('investigation, drafts and the worker endpoint', () => {
     expect(again.status).toBe(202);
     expect(again.body.data.id).toBe(ids.investigation);
     const dto = InvestigationDto.parse(again.body.data);
-    expect(dto).toMatchObject({ investigation_status: 'queued', model_identifier: 'test-model', prompt_version: 'investigate-v1', result: null });
+    expect(dto).toMatchObject({ investigation_status: 'queued', model_identifier: 'test-model', prompt_version: 'investigate-v2', result: null });
     const jobs = await env.db.query<{ payload: any }>(`select payload from jobs where kind = 'investigate' and organization_id = $1`, [a.id]);
     expect(jobs).toEqual([{ payload: { investigation_id: ids.investigation, discrepancy_id: ids.discrepancy } }]);
     const got = await env.call('GET', `/api/investigations/${ids.investigation}`, { user: a.viewer });
