@@ -24,6 +24,7 @@ function invoiceDto(inv: Invoice, extras: { open_discrepancy_count: number; inve
     subtotal: toMoney(inv.subtotal), tax_amount: toMoney(inv.tax_amount), total_amount: toMoney(inv.total_amount), status: inv.status,
     extraction_confidence: inv.extraction_confidence, extraction: inv.extraction, supersedes_invoice_id: inv.supersedes_invoice_id,
     created_at: inv.created_at, updated_at: inv.updated_at, open_discrepancy_count: extras.open_discrepancy_count, investigation_status: extras.investigation_status,
+    archived_at: inv.archived_at, archived_by: inv.archived_by,
     ...(more.lines ? { lines: inv.lines.map(lineDto) } : {}), ...(more.document_url ? { document_url: more.document_url } : {}),
   };
 }
@@ -44,10 +45,19 @@ export const DISCREPANCY_COLUMNS = `id, invoice_id, purchase_order_id, discrepan
   difference_amount::text as difference_amount, status, deterministic_evidence, evidence_hash, created_at`;
 
 // ---------- invoices ----------
-export async function listInvoices(db: Db, orgId: string) {
+export async function listInvoices(db: Db, orgId: string, archived = false) {
   // ponytail: newest 200, no pagination yet.
-  const rows = await db.query(`select ${INVOICE_COLUMNS}, ${EXTRAS} from invoices i where i.organization_id = $1 order by i.created_at desc, i.id limit 200`, [orgId]);
+  const rows = await db.query(`select ${INVOICE_COLUMNS}, ${EXTRAS} from invoices i where i.organization_id = $1
+    and i.archived_at is ${archived ? 'not null' : 'null'} order by coalesce(i.archived_at, i.created_at) desc, i.id limit 200`, [orgId]);
   return rows.map((r) => invoiceDto(invoiceFromRow(r), r as never));
+}
+
+export async function invoiceManagementHistory(db: Db, orgId: string, id: string) {
+  const [invoice] = await db.query('select id from invoices where id = $1 and organization_id = $2', [id, orgId]);
+  if (!invoice) notFound();
+  const events = await db.query(`select * from audit_events where organization_id = $1 and target_type = 'invoice' and target_id = $2
+    and event_type in ('invoice.archived', 'invoice.restored', 'invoice.purchase_order_unlinked') order by id desc`, [orgId, id]);
+  return events.map(auditDto);
 }
 
 export async function getInvoiceDto(db: Db, orgId: string, id: string, documentUrl?: (path: string) => Promise<string>) {

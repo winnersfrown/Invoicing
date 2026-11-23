@@ -31,18 +31,25 @@ export type Comparison = ReturnType<typeof compareDocuments>;
 type LineDecision = z.infer<typeof ReviewLineMatchRequest>;
 export type SupplierCheck = { ok: true; evidence: string } | { ok: false; review: boolean; error: string };
 
-/**
- * Supplier identity is checked on its own so a spelling variant (SUPPLIER_REVIEW) still gets a line comparison.
- * A hard supplier mismatch skips the comparison. Engine errors are returned, never thrown.
- */
-export function compareWithPo(inv: Invoice, po: PurchaseOrder): { supplier: SupplierCheck; comparison: Comparison | null; error: string | null } {
-  const i = invoiceDoc(inv), p = poDoc(po);
-  let supplier: SupplierCheck;
-  if (!inv.supplier_name_raw) supplier = { ok: false, review: false, error: 'Invoice supplier name is missing.' };
-  else {
-    try { supplier = { ok: true, evidence: supplierEvidence(i, p) }; } catch (e: any) { supplier = { ok: false, review: e?.code === 'SUPPLIER_REVIEW', error: String(e?.message) }; }
+/** Require established supplier identity before a PO can be linked or compared. */
+export function checkPoSupplier(inv: Invoice, po: PurchaseOrder): SupplierCheck {
+  if (!inv.supplier_name_raw) return { ok: false, review: true, error: 'Enter the invoice supplier before matching this purchase order.' };
+  try {
+    const evidence = supplierEvidence({ vendor: inv.supplier_name_raw }, { vendor: po.supplier_name });
+    const uncertain = inv.extraction?.uncertain?.includes('supplier_name') || inv.extraction?.missing?.includes('supplier_name')
+      || (inv.extraction?.field_confidence?.supplier_name ?? 1) < 0.7;
+    if (uncertain && !inv.extraction?.reviewed_fields?.includes('supplier_name')) {
+      return { ok: false, review: true, error: 'Confirm the extracted supplier before matching this purchase order.' };
+    }
+    return { ok: true, evidence };
+  } catch (e: any) {
+    return { ok: false, review: e?.code === 'SUPPLIER_REVIEW', error: String(e?.message) };
   }
-  if (!supplier.ok && !supplier.review) return { supplier, comparison: null, error: null };
+}
+
+export function compareWithPo(inv: Invoice, po: PurchaseOrder): { supplier: SupplierCheck; comparison: Comparison | null; error: string | null } {
+  const supplier = checkPoSupplier(inv, po);
+  if (!supplier.ok) return { supplier, comparison: null, error: null };
   try {
     const decisions: LineDecision[] = inv.extraction?.po_line_decisions ?? [];
     const lineDecisions = decisions.filter(d => d.purchase_order_id === po.id).map(d => ({
@@ -50,7 +57,7 @@ export function compareWithPo(inv: Invoice, po: PurchaseOrder): { supplier: Supp
       poLine: po.lines.findIndex(line => line.id === d.po_line_id) + 1,
       decision: d.decision,
     }));
-    return { supplier, comparison: compareDocuments(supplier.ok ? i : { ...i, vendor: p.vendor }, p, { allowMissingInvoiceAmounts: true, lineDecisions }), error: null };
+    return { supplier, comparison: compareDocuments(invoiceDoc(inv), poDoc(po), { allowMissingInvoiceAmounts: true, lineDecisions }), error: null };
   } catch (e: any) {
     return { supplier, comparison: null, error: String(e?.message) };
   }
@@ -75,7 +82,9 @@ export const poEvidence = (po: PurchaseOrder): EvidenceItem[] => [
 export async function compareInvoiceToPo(db: Db, orgId: string, invoiceId: string, purchaseOrderId: string) {
   const inv = (await loadInvoice(db, orgId, invoiceId)) ?? notFound();
   const po = (await loadPurchaseOrder(db, orgId, purchaseOrderId)) ?? notFound();
-  const result = compareWithPo(inv, po);
+  const result = inv.archived_at || inv.purchase_order_id !== po.id
+    ? { supplier: checkPoSupplier(inv, po), comparison: null, error: 'A line comparison requires an active invoice linked to this purchase order.' }
+    : compareWithPo(inv, po);
   return { data: { invoice_id: inv.id, purchase_order_id: po.id, ...result }, evidence: [...invoiceEvidence(inv), ...poEvidence(po)] };
 }
 
@@ -84,8 +93,10 @@ export async function draftSupplierMessage(db: Db, orgId: string, discrepancyId:
   const [d] = await db.query<{ id: string; invoice_id: string; purchase_order_id: string | null }>(
     'select id, invoice_id, purchase_order_id from discrepancies where id = $1 and organization_id = $2', [discrepancyId, orgId]);
   if (!d) notFound();
-  const inv = (await loadInvoice(db, orgId, d.invoice_id))!;
-  const poId = d.purchase_order_id ?? inv.purchase_order_id;
+  const inv = (await loadInvoice(db, orgId, d.invoice_id, true)) ?? notFound();
+  if (inv.archived_at) fail('conflict', 'Restore this invoice before drafting a correction.');
+  const poId = inv.purchase_order_id;
+  if (d.purchase_order_id && d.purchase_order_id !== poId) fail('conflict', 'This finding refers to a purchase order that is no longer linked.');
   const po = poId ? await loadPurchaseOrder(db, orgId, poId) : null;
   if (!po) fail('conflict', 'This discrepancy has no purchase order to compare against, so there is nothing to draft.');
   const { comparison } = compareWithPo(inv, po!);

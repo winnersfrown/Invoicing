@@ -8,7 +8,7 @@ import { loadInvoice, loadPurchaseOrder, toMoney, type Db, type Invoice, type Pu
 import type { z } from 'zod';
 import { audit, type Actor } from './audit.ts';
 import { duplicateCandidates } from './duplicates.ts';
-import { compareWithPo, invoicePricingCurrency, lineText, qtyText } from './matching.ts';
+import { checkPoSupplier, compareWithPo, invoicePricingCurrency, lineText, qtyText } from './matching.ts';
 import { canonical, fail, notFound, sha256 } from './util.ts';
 
 type DType = z.infer<typeof DiscrepancyType>;
@@ -39,11 +39,12 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 export type CheckInput = {
   inv: Invoice; po: PurchaseOrder | null; poMatches: { id: string; purchase_order_number: string }[];
+  candidate?: PurchaseOrder | null; blocked?: boolean;
   duplicates: Awaited<ReturnType<typeof duplicateCandidates>>;
 };
 
 /** Pure: every discrepancy the deterministic checks find for this invoice. */
-export function findDiscrepancies({ inv, po, poMatches, duplicates }: CheckInput): Finding[] {
+export function findDiscrepancies({ inv, po, poMatches, duplicates, candidate, blocked }: CheckInput): Finding[] {
   const out: Finding[] = [];
   const poId = po?.id ?? null;
   const ex = inv.extraction ?? {};
@@ -158,12 +159,18 @@ export function findDiscrepancies({ inv, po, poMatches, duplicates }: CheckInput
       observed: inv.po_reference, difference: null, evidence: { check: 'po_lookup', po_reference: inv.po_reference, matches: poMatches } });
   }
 
+  if (candidate && !po) {
+    if (blocked) out.push({ type: 'ambiguous_reference', fields: [], expected: 'A verified purchase order',
+      observed: candidate.purchase_order_number, difference: null, poId: candidate.id,
+      evidence: { check: 'po_manually_unlinked', po_reference: candidate.purchase_order_number } });
+    const identity = checkPoSupplier(inv, candidate);
+    if (!identity.ok && inv.supplier_name_raw) out.push({ type: 'supplier_mismatch', severity: identity.review ? 'medium' : 'high', fields: [],
+      expected: candidate.supplier_name, observed: inv.supplier_name_raw, difference: null, poId: candidate.id,
+      evidence: { check: 'po_supplier_identity', po_reference: candidate.purchase_order_number, review: identity.review, reason: identity.error } });
+  }
+
   if (po) {
     const c = compareWithPo(inv, po);
-    if (!c.supplier.ok && inv.supplier_name_raw) {
-      out.push({ type: 'supplier_mismatch', severity: c.supplier.review ? 'medium' : 'high', fields: ['supplier_name'], expected: po.supplier_name, observed: inv.supplier_name_raw,
-        difference: null, poId, evidence: { engine: 'supplierEvidence', error: c.supplier.error, code: c.supplier.review ? 'SUPPLIER_REVIEW' : null } });
-    }
     if (c.comparison) {
       const supplierEvidenceText = c.supplier.ok ? c.supplier.evidence : null;
       if (c.comparison.pendingLineMatches.length) {
@@ -232,7 +239,7 @@ export async function deriveInvoiceStatus(db: Db, invoiceId: string): Promise<St
 /** Record a decision only on a current candidate for the linked PO, then refresh findings in the same transaction. */
 export async function reviewLineMatch(db: Db, orgId: string, invoiceId: string, actor: Actor, req: z.infer<typeof ReviewLineMatchRequest>) {
   const inv = await loadInvoice(db, orgId, invoiceId, true) ?? notFound();
-  if (!PROCESSABLE.includes(inv.status) || inv.purchase_order_id !== req.purchase_order_id) {
+  if (inv.archived_at || !PROCESSABLE.includes(inv.status) || inv.purchase_order_id !== req.purchase_order_id) {
     fail('conflict', 'The invoice or its linked purchase order changed. Reload before reviewing the match.');
   }
   const po = await loadPurchaseOrder(db, orgId, req.purchase_order_id) ?? notFound();
@@ -253,6 +260,10 @@ export async function reviewLineMatch(db: Db, orgId: string, invoiceId: string, 
 export async function processInvoice(db: Db, orgId: string, invoiceId: string, actor: Actor) {
   return db.transaction(async (tx) => {
     const inv = (await loadInvoice(tx, orgId, invoiceId, true)) ?? notFound();
+    if (inv.archived_at) {
+      if (actor.type !== 'system') fail('conflict', 'Restore this invoice before processing it.');
+      return { invoice_id: inv.id, status: inv.status, created: 0 };
+    }
     if (!PROCESSABLE.includes(inv.status)) fail('conflict', `Invoice is ${inv.status} and cannot be revalidated.`);
 
     const suppliers = await tx.query<{ id: string; supplier_name: string; normalized_name: string }>(
@@ -262,7 +273,11 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
     const poMatches = inv.po_reference ? await tx.query<{ id: string; purchase_order_number: string }>(
       `select id, purchase_order_number from purchase_orders where organization_id = $1 and lower(trim(purchase_order_number)) = lower(trim($2))
        order by purchase_order_number`, [orgId, inv.po_reference]) : [];
-    const po = poMatches.length === 1 ? await loadPurchaseOrder(tx, orgId, poMatches[0].id) : null;
+    const candidate = poMatches.length === 1 ? await loadPurchaseOrder(tx, orgId, poMatches[0].id) : null;
+    const blocked = !!candidate && (await tx.query(
+      'select 1 from invoice_po_unlinks where organization_id = $1 and invoice_id = $2 and purchase_order_id = $3',
+      [orgId, inv.id, candidate.id])).length > 0;
+    const po = candidate && !blocked && checkPoSupplier(inv, candidate).ok ? candidate : null;
 
     const links = { supplier_id: onFile?.id ?? null, purchase_order_id: po?.id ?? null };
     if (links.supplier_id !== inv.supplier_id || links.purchase_order_id !== inv.purchase_order_id) {
@@ -271,7 +286,7 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
         previous: { supplier_id: inv.supplier_id, purchase_order_id: inv.purchase_order_id }, next: links });
     }
 
-    const findings = findDiscrepancies({ inv: { ...inv, ...links }, po, poMatches,
+    const findings = findDiscrepancies({ inv: { ...inv, ...links }, po, poMatches, candidate, blocked,
       duplicates: await duplicateCandidates(tx, orgId, inv) });
     const active = new Set(findings.map(evidenceHash));
     const reminders = await tx.query<{ id: string; status: string; evidence_hash: string; automatic: boolean }>(
@@ -281,7 +296,8 @@ export async function processInvoice(db: Db, orgId: string, invoiceId: string, a
             and a.event_type = 'discrepancy.status_changed' order by a.id desc limit 1
        ), false) as automatic
        from discrepancies d where d.invoice_id = $1 and d.organization_id = $2
-         and (d.deterministic_evidence ->> 'check' in ('extraction', 'po_reference', 'po_lookup', 'supplier_on_file', 'currency', 'line_match_review')
+         and (d.deterministic_evidence ->> 'check' in ('extraction', 'po_reference', 'po_lookup', 'supplier_on_file', 'currency', 'line_match_review', 'po_supplier_identity', 'po_manually_unlinked', 'mixed_currency_po')
+           or d.deterministic_evidence ->> 'engine' in ('supplierEvidence', 'comparePair')
            or (d.deterministic_evidence ->> 'engine' = 'compareDocuments' and d.discrepancy_type in ('unmatched_line', 'unit_price_mismatch', 'quantity_mismatch', 'tax_mismatch'))
            or (d.discrepancy_type = 'potential_extraction_error' and d.deterministic_evidence ? 'unsure_fields'))`,
       [inv.id, orgId]);

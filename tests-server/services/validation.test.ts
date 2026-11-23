@@ -131,9 +131,10 @@ describe('deterministic checks', () => {
     expect(ds[0]).toMatchObject({ severity: 'high', expected_value: 'Northwind Supplies LLC', observed_value: 'Southwind Traders' });
   });
 
-  it('a near-identical supplier name needs identity review but lines are still compared', async () => {
+  it('a near-identical supplier name needs identity review before lines are compared', async () => {
     const org = await orgWithPo();
-    const inv = await upload(org, { ...clean, supplier_name: 'Northwind Suplies LLC' });
+    const inv = await upload(org, { supplier_name: 'Northwind Suplies LLC' });
+    expect(inv.purchase_order_id).toBeNull();
     const ds = await discrepancies(org, inv.id);
     expect(ds.map((d) => d.discrepancy_type)).toEqual(['supplier_mismatch']);
     expect(ds[0].severity).toBe('medium');

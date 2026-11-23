@@ -11,6 +11,7 @@ type Ctx = { orgId: string; userId: string };
 type Action = z.infer<typeof RecommendedAction>;
 
 const CLOSED = ['resolved', 'dismissed'];
+const REVIEW_ON_INVOICE = ['line_match_review', 'po_manually_unlinked', 'po_supplier_identity'];
 const AWAITING_SUPPLIER: Action[] = ['request_corrected_invoice', 'request_supplier_clarification', 'verify_po_amendment'];
 
 /**
@@ -27,9 +28,11 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
   const actor: Actor = { type: 'user', id: ctx.userId };
   const { invoice_id } = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
   // Match validation's lock order so a correction and a resolution can safely run together.
-  const [inv] = await db.query<{ status: any }>('select status from invoices where id = $1 and organization_id = $2 for update', [invoice_id, ctx.orgId]);
+  const [inv] = await db.query<{ status: any; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [invoice_id, ctx.orgId]);
+  if (inv.archived_at) fail('conflict', 'Restore this invoice before resolving findings.');
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId, true);
   if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
+  if (REVIEW_ON_INVOICE.includes(d.deterministic_evidence?.check)) fail('conflict', 'Verify the supplier and PO reference on the invoice.');
   if (CLOSED.includes(d.status)) fail('conflict', `This discrepancy is already ${d.status}.`);
   let proposed: Action | null = null;
   if (req.investigation_id) {
@@ -68,6 +71,9 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
 export async function requestInvestigation(db: Db, ctx: Ctx, discrepancyId: string, model: string) {
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
   if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
+  if (REVIEW_ON_INVOICE.includes(d.deterministic_evidence?.check)) fail('conflict', 'Verify the supplier and PO reference on the invoice.');
+  const [inv] = await db.query<{ archived_at: Date | null }>('select archived_at from invoices where id = $1 and organization_id = $2 for update', [d.invoice_id, ctx.orgId]);
+  if (inv.archived_at) fail('conflict', 'Restore this invoice before starting an investigation.');
   const [created] = await db.query(
     `insert into ai_investigations (organization_id, discrepancy_id, model_identifier, prompt_version, investigation_status, evidence_hash, evidence_references, requested_by)
      values ($1, $2, $3, $4, 'queued', $5, '[]'::jsonb, $6) on conflict do nothing returning *`,

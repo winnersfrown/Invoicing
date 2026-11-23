@@ -47,8 +47,9 @@ export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof Create
   const bytes = checkUpload(req.file);
   const actor = userActor(ctx), id = randomUUID(), x = req.extracted;
   if (req.supersedes_invoice_id) {
-    const [orig] = await db.query<{ status: any }>('select status from invoices where id = $1 and organization_id = $2 for update', [req.supersedes_invoice_id, ctx.orgId]);
+    const [orig] = await db.query<{ status: any; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [req.supersedes_invoice_id, ctx.orgId]);
     if (!orig) notFound();
+    if (orig.archived_at) fail('conflict', 'Restore this invoice before uploading a correction.');
     if (orig.status === 'superseded') fail('conflict', 'That invoice has already been superseded.');
     await setInvoiceStatus(db, ctx.orgId, actor, req.supersedes_invoice_id, orig.status, 'superseded', { superseded_by: id });
   }
@@ -76,6 +77,7 @@ export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof Create
 /** Review an existing extraction against its original document, with the prior values in the audit trail. */
 export async function reviewInvoiceFields(db: Db, ctx: Ctx, id: string, req: z.infer<typeof ReviewInvoiceFieldsRequest>) {
   const inv = await loadInvoice(db, ctx.orgId, id, true) ?? notFound();
+  if (inv.archived_at) fail('conflict', 'Restore this invoice before editing its fields.');
   if (inv.updated_at !== req.updated_at) fail('conflict', 'This invoice changed. Reload it before saving your review.');
   if (['rejected', 'superseded'].includes(inv.status)) fail('conflict', 'This invoice is closed to field review.');
   const previous = { supplier_name: inv.supplier_name_raw, currency: inv.currency, po_reference: inv.po_reference };
@@ -110,6 +112,34 @@ export async function reviewInvoiceFields(db: Db, ctx: Ctx, id: string, req: z.i
   await processInvoice(db, ctx.orgId, id, actor);
 }
 
+/** Keep the extracted PO reference and retain a durable exclusion for this pair. */
+export async function unlinkPurchaseOrder(db: Db, ctx: Ctx, id: string, purchaseOrderId: string) {
+  const inv = await loadInvoice(db, ctx.orgId, id, true) ?? notFound();
+  if (inv.archived_at || inv.purchase_order_id !== purchaseOrderId || ['rejected', 'superseded'].includes(inv.status)) {
+    fail('conflict', 'The invoice or its linked purchase order changed. Reopen the invoice to review it.');
+  }
+  await db.query('select sorikano_private.unlink_invoice_purchase_order($1, $2, $3)', [ctx.orgId, id, purchaseOrderId]);
+  await processInvoice(db, ctx.orgId, id, userActor(ctx));
+}
+
+/** Archive state is audited by the database. Restoring an active workflow rechecks current findings. */
+export async function setInvoiceArchived(db: Db, ctx: Ctx, id: string, archived: boolean) {
+  const inv = await loadInvoice(db, ctx.orgId, id, true) ?? notFound();
+  if (Boolean(inv.archived_at) === archived) return [];
+  await db.query('update invoices set archived_at = case when $3 then now() else null end where id = $1 and organization_id = $2', [id, ctx.orgId, archived]);
+  if (!archived) {
+    if (!['rejected', 'superseded'].includes(inv.status)) await processInvoice(db, ctx.orgId, id, userActor(ctx));
+    return [];
+  }
+  // Recheck other active invoices whose open duplicate finding referenced this invoice.
+  const affected = await db.query<{ id: string }>(
+    `select distinct i.id from invoices i join discrepancies d on d.invoice_id = i.id and d.organization_id = i.organization_id
+     where i.organization_id = $1 and i.archived_at is null and i.status not in ('rejected', 'superseded')
+       and d.discrepancy_type = 'duplicate_candidate' and d.status in ('open', 'investigating', 'awaiting_supplier')
+       and d.deterministic_evidence ->> 'other_invoice_id' = $2`, [ctx.orgId, id]);
+  return affected.map(row => row.id);
+}
+
 /** Creates a PO the engine accepts (currency code, whole quantities, lines + tax = total) and its supplier if new. Returns invoices waiting on it. */
 export async function createPurchaseOrder(db: Db, ctx: Ctx, req: z.infer<typeof CreatePurchaseOrderRequest>) {
   const lines = req.lines.map((l) => ({ ...l, ...lineRow(l) }));
@@ -142,7 +172,7 @@ export async function createPurchaseOrder(db: Db, ctx: Ctx, req: z.infer<typeof 
   await audit(db, { orgId: ctx.orgId, actor, event: 'purchase_order.created', targetType: 'purchase_order', targetId: po.id,
     next: { purchase_order_number: req.purchase_order_number, total_amount: req.total_amount } });
   const waiting = await db.query<{ id: string }>(
-    `select id from invoices where organization_id = $1 and purchase_order_id is null and lower(trim(po_reference)) = lower(trim($2))
-       and status in ('uploaded', 'needs_extraction_review', 'validated', 'exception')`, [ctx.orgId, req.purchase_order_number]);
+    `select id from invoices where organization_id = $1 and archived_at is null and purchase_order_id is null and lower(trim(po_reference)) = lower(trim($2))
+       and status in ('uploaded', 'needs_extraction_review', 'validated', 'exception', 'resolved')`, [ctx.orgId, req.purchase_order_number]);
   return { purchaseOrderId: po.id, waitingInvoiceIds: waiting.map((w) => w.id) };
 }

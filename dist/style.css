@@ -75,3 +75,5 @@ body:has(#tutorial[open]) { overflow: hidden; }
 .tutorial-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 #tutorial-exit { margin-top: 10px; }
 #tutorial :focus-visible, .tutorial-replay:focus-visible { outline: 3px solid #40a887; outline-offset: 3px; }
+
+.archived-invoices{margin-top:16px}.archived-invoices>summary{padding:18px 24px}.archived-invoices>summary h2{display:inline;margin-left:8px;font:650 17px Manrope,sans-serif}.invoice-management-actions{justify-content:flex-end;align-items:center;margin-bottom:16px}.invoice-management-actions:empty{display:none}.invoice-management-dialog{width:min(455px,calc(100vw - 32px));padding:24px}.invoice-management-dialog h2{margin:0 0 14px}.invoice-management-dialog p{margin:10px 0}.invoice-management-dialog .actions{margin-top:20px;justify-content:flex-end}
