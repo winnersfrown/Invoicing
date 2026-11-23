@@ -26,6 +26,25 @@ function columns(row){
  if(headers.includes('quantity')&&headers.includes('unitPrice'))return {headers};
  return null;
 }
+const columnDistance = (token, column) => Math.min(
+ Math.abs(token.x - column.x), Math.abs(token.x + token.width - column.right)
+);
+
+function separateOcrPrice(token, description, prices, numericStart) {
+ if (!description || token.x < description.x - 8 || token.x >= numericStart || !prices.length) return null;
+ const source = token.text.trim();
+ // Use an explicit currency marker to avoid splitting model numbers or measurements.
+ const tail = source.match(/\s+((?:[A-Z]{0,3}[$€£₹¥₤]|[A-Z]{3}\s)\s*\d(?:[\d., '’]*\d)?)$/u);
+ if (!tail || !readMoney(tail[1])?.marker) return null;
+ const right = token.x + token.width;
+ const start = token.x + token.width * (tail.index + tail[0].indexOf(tail[1])) / source.length;
+ const price = {text:tail[1], x:start, width:right-start};
+ const nearest = prices.reduce((best, column)=>columnDistance(price,column)<columnDistance(price,best)?column:best);
+ // This is an estimated word boundary. Require the price run to reach its printed column.
+ if (right < nearest.x || columnDistance(price, nearest) > Math.max(14, nearest.right-nearest.x)) return null;
+ return {description:source.slice(0,tail.index), price:price.text, column:nearest.key};
+}
+
 function tableValues(row, table) {
  const values = {};
  if (!table.positions || !row.tokens?.length) {
@@ -36,15 +55,22 @@ function tableValues(row, table) {
  const positions = table.positions;
  const numeric = positions.filter(c=>!['description','sku'].includes(c.key));
  const text = positions.filter(c=>['description','sku'].includes(c.key));
+ const description = text.find(c=>c.key==='description');
+ const prices = numeric.filter(c=>['unitPrice','amount'].includes(c.key));
+ const numericStart = numeric[0].x - 14;
+ const append = (key, value) => { values[key] = [values[key],value].filter(Boolean).join(' '); };
  for (const token of row.tokens) {
-  const numericStart = numeric[0].x - 14;
+  const split = row.method==='ocr' && separateOcrPrice(token,description,prices,numericStart);
+  if (split) {
+   append('description',split.description);
+   append(split.column,split.price);
+   values.recoveredPrice = true;
+   continue;
+  }
   const column = token.x < numericStart && text.length
    ? text.findLast(c=>token.x>=c.x-8) ?? text[0]
-   : numeric.reduce((best,c)=>{
-      const distance = anchor => Math.min(Math.abs(token.x-anchor.x), Math.abs(token.x+token.width-anchor.right));
-      return distance(c)<distance(best)?c:best;
-    });
-  values[column.key] = [values[column.key],token.text.trim()].filter(Boolean).join(' ');
+   : numeric.reduce((best,c)=>columnDistance(token,c)<columnDistance(token,best)?c:best);
+  append(column.key,token.text.trim());
  }
  return values;
 }
@@ -54,6 +80,10 @@ function tableLine(values) {
  const quantity = readMoney(values.quantity, rate ? 3 : 2)?.value ?? null;
  const unitPrice = amount(values.unitPrice);
  const printed = amount(values.amount);
+ if (values.recoveredPrice && values.description && (unitPrice != null || printed != null)) {
+  // Keep the recoverable fields even if OCR missed the quantity or another amount.
+  return {sku:values.sku || '', description:values.description, quantity, unitPrice, amount:printed};
+ }
  if (quantity == null || (unitPrice == null && (!rate || printed == null))) return null;
  return {
   sku: values.sku || '', description: values.description || '', quantity, unitPrice, amount: printed,
@@ -95,7 +125,11 @@ export function parseLayoutText(text,kind,layout=[]){
   if(summary){summaries.push({...summary,row});table=null;continue;}
  const head=columns(row);if(head){table=head;continue;}
  let l=null,support='supported';
- if(table) l=tableLine(tableValues(row,table));
+ if(table){
+  const values=tableValues(row,table);
+  l=tableLine(values);
+  if(values.recoveredPrice) support='uncertain';
+ }
  if(!l){const m=t.match(/^([\w-]+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,]+\.\d{2})(?:\s+\$?([\d,]+\.\d{2}))?$/);if(m){l={sku:m[1],description:m[2],quantity:Number(m[3]),unitPrice:amount(m[4]),amount:amount(m[5])};support='uncertain';}}
  if(l){const n=d.lines.length;d.lines.push(l);for(const key of Object.keys(l))set(`lines.${n}.${key}`,l[key],row,l[key]==null||l[key]===''?'uncertain':support);}
  else if(table?.positions&&d.lines.length&&!/\d/.test(t)&&row.tokens?.length&&

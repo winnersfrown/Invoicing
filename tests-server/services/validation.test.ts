@@ -243,7 +243,7 @@ describe('deterministic checks', () => {
       item('LG-001', 'Logo (Design)', 1, 500), item('BN-002', 'Banner (2x6m)', 2, 40), item('PS-003', 'Poster (1x2m)', 3, 55),
     ] }));
     const inv = await upload(org, { subtotal: '755.00', total_amount: '755.00', tax_amount: null, lines: [
-      item('LGO-001', 'Logo', 1, 500), item('BAN-002', 'Banner (2x6m)', 2, 45), item('PST-003', 'Poster (1x2m)', 3, 55),
+      item('LGO-001', 'Logo', 1, 500), item('BAN-002', 'Banner (2 × 6 m)', 2, 45), item('PST-003', 'Poster (1x2m)', 3, 55),
     ] });
     await env.db.query(`insert into discrepancies (organization_id, invoice_id, purchase_order_id, discrepancy_type, severity, status, deterministic_evidence, evidence_hash)
       select $1, $2, $3, 'unmatched_line', 'medium', 'open', '{"engine":"compareDocuments"}'::jsonb, 'legacy-unmatched-' || n

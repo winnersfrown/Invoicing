@@ -1,18 +1,26 @@
 const skuKey = sku => sku.trim().toLowerCase();
-const descriptionTokens = description => new Set(description.normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []);
-const dimensions = description => (description.normalize('NFKC').match(/\d+(?:[.,]\d+)?/g) ?? []).sort().join(' ');
+const descriptionTokens = description => new Set(description.match(/[\p{L}\p{N}]+/gu) ?? []);
+const dimensions = description => (description.match(/\d+(?:[.,]\d+)?/g) ?? []).sort().join(' ');
 const generic = new Set(['item', 'product', 'service', 'misc', 'miscellaneous', 'goods', 'fee']);
 const pairKey = ({invoiceLine, poLine}) => `${invoiceLine}:${poLine}`;
 
+function normalizeDescription(description) {
+ return description.normalize('NFKC').toLowerCase()
+  .replace(/(?<=\d)\s*[x×]\s*(?=\d)/gu,'x')
+  .replace(/(?<=\d)\s+(?=mm\b|cm\b|m\b|in\b|ft\b)/gu,'');
+}
+
 function suggestion(invoice, po) {
- const left = descriptionTokens(invoice.description);
- const right = descriptionTokens(po.description);
+ const invoiceDescription = normalizeDescription(invoice.description);
+ const poDescription = normalizeDescription(po.description);
+ const left = descriptionTokens(invoiceDescription);
+ const right = descriptionTokens(poDescription);
  const common = [...left].filter(word => right.has(word) && !generic.has(word));
  if (!common.length) return null;
 
  // Different printed measurements or model numbers are a reason to leave the lines separate.
- const invoiceNumbers = dimensions(invoice.description);
- const poNumbers = dimensions(po.description);
+ const invoiceNumbers = dimensions(invoiceDescription);
+ const poNumbers = dimensions(poDescription);
  if (invoiceNumbers && poNumbers && invoiceNumbers !== poNumbers) return null;
 
  const exact = left.size === right.size && [...left].every(word => right.has(word));

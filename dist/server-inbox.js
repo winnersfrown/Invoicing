@@ -444,8 +444,7 @@ export function createServerInbox({api, root, user}) {
         say('Line matches rechecked.');
       } catch (e) { fail(e); }
     })}, 'Recheck line matches');
-    const legacyUnmatched = discrepancies.some(x => !CLOSED.includes(x.status) && x.discrepancy_type === 'unmatched_line' &&
-      x.deterministic_evidence?.line && !x.deterministic_evidence?.check);
+    const hasUnmatchedLines = discrepancies.some(x => !CLOSED.includes(x.status) && x.discrepancy_type === 'unmatched_line');
     const correct = field => h('button', {type: 'button', class: 'button secondary', onclick: () => reviewField(d, field)}, field === 'currency' ? 'Confirm currency' : field === 'po_reference' ? 'Correct PO reference' : 'Correct field');
     const correctedUpload = () => h('button', {type: 'button', class: 'button secondary', onclick: ev => {
       const b = ev.currentTarget;
@@ -482,7 +481,7 @@ export function createServerInbox({api, root, user}) {
       lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`, pricingCur),
       h('p', {class: 'hint'}, inv.extraction?.reviewed_fields?.includes('currency') ? `Currency confirmed by reviewer · ${inv.currency}` : `Extraction: ${inv.extraction?.method ?? 'unknown'}`),
       docUrl ? h('a', {href: docUrl, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗') : h('p', {class: 'hint'}, 'Original document link unavailable.'),
-      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload(), po && legacyUnmatched && recheck));
+      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload(), po && hasUnmatchedLines && recheck));
     const poCard = po ? h('article', {class: 'source-card', 'data-ev': `po:${po.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
