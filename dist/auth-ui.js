@@ -79,7 +79,7 @@ async function supabaseUser(session) {
   return {id: session.user.id, label: session.user.email ?? 'Signed in'};
 }
 
-function openAuth(signup = false) {
+function openAuth(signup = false, expired = false) {
   const title = signup ? 'Create your Sorikano account' : 'Sign in';
   const error = h('p', {class: 'ocr-error', role: 'alert'});
   const submit = h('button', {type: 'submit', class: 'button primary'}, signup ? 'Create account' : 'Sign in');
@@ -88,8 +88,21 @@ function openAuth(signup = false) {
     : [h('label', {}, 'Email', h('input', {name: 'email', type: 'email', autocomplete: 'username', required: true})),
       h('label', {}, signup ? 'Password (8 or more characters)' : 'Password',
         h('input', {name: 'password', type: 'password', autocomplete: signup ? 'new-password' : 'current-password', required: true, ...(signup && {minlength: '8'})}))];
+  const resend = h('button', {type:'button', class:'button secondary', hidden:!expired, onclick:async () => {
+    const email=form.elements.namedItem('email');
+    if(!email.reportValidity())return;
+    resend.disabled=true;
+    try {
+      const result=await supabase.auth.resend({type:'signup',email:email.value.trim(),options:{emailRedirectTo:new URL('demo.html',location.href).href}});
+      if(result.error)throw result.error;
+      error.textContent='If the address is eligible, a fresh confirmation link is on its way.';
+    } catch { error.textContent='Could not send a fresh link. Wait a few minutes and try again.'; }
+    finally { resend.disabled=false; }
+  }});
+  resend.textContent='Send a fresh confirmation link';
+  if(expired)error.textContent='This confirmation link has expired. Enter your email to request a fresh link.';
   const form = h('form', {class: 'auth-form'}, signup && h('p', {}, 'Confirm your email to open a private workspace with a sample invoice and purchase order.'),
-    fields, error, h('div', {class: 'actions'}, submit));
+    fields, error, h('div', {class: 'actions'}, submit, resend));
   const dialog = h('dialog', {class: 'auth-dialog', 'aria-labelledby': 'auth-title'},
     h('div', {class: 'dialog-top'}, h('h2', {id: 'auth-title'}, title),
       h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close', onclick: () => dialog.close()}, '×')), form);
@@ -127,6 +140,7 @@ function openAuth(signup = false) {
           return;
         }
         const {data, error: err} = await supabase.auth.signInWithPassword(credentials);
+        if (err?.code==='email_not_confirmed' && config.public_signup)resend.hidden=false;
         if (err) throw Error(err.code === 'email_not_confirmed' ? 'Confirm your email using the link in your inbox first.' : 'Email or password was not accepted.');
         const next = await supabaseUser(data.session).catch(async x => { await supabase.auth.signOut(); throw x; });
         dialog.close();
@@ -139,6 +153,7 @@ function openAuth(signup = false) {
 }
 
 async function start() {
+  const expired=[location.hash.slice(1),location.search].some(part=>new URLSearchParams(part).get('error_code')==='otp_expired');
   const account = new URLSearchParams(location.search).get('account');
   const wantsAccount = account === 'login' || account === 'signup';
   renderArea(wantsAccount ? 'Loading account access…' : '');
@@ -162,6 +177,7 @@ async function start() {
     renderArea(e.message);
     return;
   }
+  if(!user && expired && config.public_signup){openAuth(false,true);return;}
   if (user || !wantsAccount) return;
   if (account === 'signup' && !config.public_signup) {
     renderArea('Sign up is unavailable right now. You can sign in to an existing account.');

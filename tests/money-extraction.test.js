@@ -167,9 +167,9 @@ test('a reviewer correction reruns the checks: correcting clears the warning, co
   const d = parseLayoutText('', 'invoice', ocrRows);
   const corrected = correctField(d, 'total', 3552.25);
   assert.deepEqual([corrected.arithmetic, corrected.arithmeticReview.uncertain, pendingConfirmations(corrected)], [[], [], []]);
-  // Subtotal and fuel surcharge are also one digit from reconciling, so each is flagged until the reviewer settles it.
-  assert.deepEqual(pendingConfirmations(d).map(p => p.path).sort(), ['adjustments.1', 'subtotal', 'total']);
-  assert.equal(correctField(d, 'total', 3557.25).arithmetic.length, 0);
+  // A residual does not identify a subtotal or surcharge extraction error.
+  assert.deepEqual(pendingConfirmations(d).map(p => p.path).sort(), ['total']);
+  assert.equal(correctField(d, 'total', 3557.25).arithmetic[0].status, 'contradiction');
   const confirmedAsRead = applyConfirmations(d, {total: 3557.25, subtotal: 2850, 'adjustments.1': 342});
   assert.equal(confirmedAsRead.arithmetic[0].status, 'contradiction');
   // A genuinely wrong amount in a text PDF is not treated as an OCR misread.

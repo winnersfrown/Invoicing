@@ -1,3 +1,4 @@
+import {hasCreditTitle} from './document-type.js';
 import {parseLayoutText,groupPdfRows} from './layout-extraction.js';
 import {enhanceScan,straightenPhoto} from './ocr-image.js';
 import {alignOcrRows,ocrRows} from './ocr-layout.js';
@@ -9,6 +10,11 @@ export function parseExtractedText(text,kind,layout=[]) {
  for(const row of layout){
   if(!pages.has(row.page))pages.set(row.page,[]);
   pages.get(row.page).push(row);
+ }
+ const source=text||layout.map(row=>row.text).join('\n');
+ if(hasCreditTitle(source)){
+  const d=parseLayoutText(text,'credit_note',layout);
+  return {...d,documentType:'credit_note',unsupportedReason:'Credit notes are not supported. Upload the original invoice for invoice processing.'};
  }
  if (kind!=='invoice'||pages.size<2) return parseLayoutText(text,kind,layout);
  // A new numbered page with its own invoice title starts another invoice.
@@ -77,6 +83,7 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
   await worker.setParameters({tessedit_pageseg_mode:'3'});
   const initial=(await worker.recognize(canvas)).data;
   let best=ocrRows(initial,page);
+  if(hasCreditTitle(initial.text)){layout.push(...best);return initial.text;}
   let bestDocument=parseLayoutText(initial.text,kind,best);
   let quality=invoiceQuality(bestDocument);
   function consider(rows){

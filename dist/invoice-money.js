@@ -113,6 +113,7 @@ export function readSummary(row, inTable) {
     const common = {key, ...(kind ? {kind} : {}), label: label[0], rate: found.rate && !found.partial ? Number(found.rate.replace(',', '.')) : null,
       basis, treatment, included: Boolean(found.included), reference: Boolean(found.reference || trailing), taxable};
     if (!amount) {
+      if (key === 'tax' && found.rate && !rest) return {...common, rateOnly:true, value:null, currency:code, marker:''};
       // A labelled amount that cannot be read stays unknown and is flagged; it is never zero.
       if (rest && looksNumeric(rest)) return {...common, value: null, currency: code, marker: '', unreadable: true, text: rest};
       continue;

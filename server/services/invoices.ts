@@ -1,3 +1,4 @@
+import { hasCreditTitle } from '../../dist/document-type.js';
 import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
 import { validateDocument } from '../../dist/matching-engine.js';
@@ -46,6 +47,9 @@ const lineRow = (l: { quantity: number; unit_price: string; line_total: string |
 export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof CreateInvoiceRequest>, storage: Storage): Promise<string> {
   const bytes = checkUpload(req.file);
   const actor = userActor(ctx), id = randomUUID(), x = req.extracted;
+  const plainText = req.file.mime_type === 'text/plain' ? utf8(bytes) : x.source_text;
+  const jsonCredit = req.file.mime_type === 'application/json' && JSON.parse(utf8(bytes)!)?.type === 'credit_note';
+  if (jsonCredit || hasCreditTitle(plainText)) fail('invalid_request', 'Credit notes are not supported for invoice processing.');
   if (req.supersedes_invoice_id) {
     const [orig] = await db.query<{ status: any; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [req.supersedes_invoice_id, ctx.orgId]);
     if (!orig) notFound();

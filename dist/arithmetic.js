@@ -107,20 +107,21 @@ export function arithmeticReview(d) {
     const differenceCents = displayed - expected;
     if (Math.abs(differenceCents) <= tolerance) return void (list || out.passed).push({...base, status: 'pass', differenceCents});
     const suspects = [];
-    if (ocr(path) && oneDigitApart(displayed, expected)) suspects.push({path, readCents: displayed, candidateCents: expected});
-    for (const i of inputs) if (ocr(i.path) && oneDigitApart(i.cents, i.cents + differenceCents))
-      suspects.push({path: i.path, readCents: i.cents, candidateCents: i.cents + differenceCents});
+    if (['line_amount','displayed_total'].includes(code) && ocr(path) && oneDigitApart(displayed, expected)) suspects.push({path, readCents: displayed, candidateCents: expected});
+    // A subtotal residual alone cannot identify which printed operand is wrong.
+    // Preserve the contradiction and ask for the missing independent evidence.
     // OCR also drops the decimal point in a quantity ("2.5" read as "25").
     if (quantity && ocr(quantity.path)) for (const scale of [10, 100]) {
       const candidate = quantity.value / scale;
       if (Math.round(candidate * quantity.priceCents) === displayed) { suspects.push({path: quantity.path, quantity: {read: quantity.value, candidate}}); quantitySuspects.add(quantity.path); break; }
     }
     const doubts = [...new Set(paths)].map(p => doubt(p) && `${p}: ${doubt(p)}`).filter(Boolean);
+    const context = ['subtotal','printed_line_sum'].includes(code) ? ' Check the original for omitted or repeated rows, misplaced columns, decimals, and any separately printed charges or reductions.' : '';
     const plain = `${label}: displayed ${money(displayed, cur)}; calculated ${money(expected, cur)}`;
     if (suspects.length || doubts.length) {
       (list || out.uncertain).push({...base, status: 'uncertain', differenceCents, suspects, message:
-        `${plain} (difference ${money(differenceCents, cur)}). Not classed as an error yet: ${[...suspects.map(s => s.quantity ? `${s.path} may be an OCR misread (quantity ${s.quantity.read} would reconcile as ${s.quantity.candidate})` : `${s.path} may be an OCR misread (${money(s.readCents, cur)} would reconcile as ${money(s.candidateCents, cur)})`), ...doubts].join('; ')}. Confirm against the original.`});
-    } else (list || out.contradictions).push({...base, status: 'contradiction', differenceCents, message: `${plain}.`});
+        `${plain} (difference ${money(differenceCents, cur)}). Not classed as an error yet: ${[...suspects.map(s => s.quantity ? `${s.path} may be an OCR misread (quantity ${s.quantity.read} would reconcile as ${s.quantity.candidate})` : `${s.path} may be an OCR misread (${money(s.readCents, cur)} would reconcile as ${money(s.candidateCents, cur)})`), ...doubts].join('; ')}. Confirm against the original.${context}`});
+    } else (list || out.contradictions).push({...base, status: 'contradiction', differenceCents, message: `${plain}.${context}`});
   }
 
   // Line arithmetic.

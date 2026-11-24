@@ -7,7 +7,7 @@ export const ACTION_TEXT = {
   request_supplier_clarification: 'Ask the supplier to explain the difference.',
   investigate_duplicate: 'Check whether this invoice duplicates an earlier one before it is paid.',
   verify_po_amendment: 'Check whether the purchase order was amended to the invoiced terms.',
-  correct_extraction_error: 'Correct the misread field against the original document.',
+  correct_extraction_error: 'Verify the cited field against the original, then record the confirmed value.',
   escalate_to_reviewer: 'Escalate to a senior reviewer.',
   insufficient_evidence: 'Gather the missing information before deciding.',
 };

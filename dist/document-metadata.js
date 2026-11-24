@@ -15,10 +15,11 @@ const patterns = {
   // Issue, due and other (order, delivery, period) date labels in en/fr/de/es/nl/it/pt.
   date: String.raw`(?:invoice\s+date|date\s+of\s+invoice|issue\s+date|date\s+issued|issued\s+on|issued(?=\s*[:#]|\s+\d)|billing\s+date|tax\s+point(?:\s+date)?|date\s+(?:de\s+(?:la\s+)?)?factur(?:e|ation)|date\s+d['’]\s*[ée]mission|rechnungsdatum|ausstellungsdatum|belegdatum|fecha\s+(?:de\s+)?(?:factura|emisi[oó]n|expedici[oó]n)|factuurdatum|data\s+(?:della\s+)?fattura|data\s+(?:di\s+)?emissione|data\s+documento|data\s+da\s+fatura|data\s+de\s+emiss[aã]o|(?:date|datum|fecha|data)(?=\s*[:#]|\s+\d))`,
   due: String.raw`(?:payment\s+due\s+date|due\s+date|payment\s+due|pay(?:able)?\s+by|due\s+by|due(?=\s*[:#]|\s+\d)|date\s+d['’]\s*[ée]ch[ée]ance|[ée]ch[ée]ance|date\s+limite\s+de\s+paiement|f[äa]llig(?:keitsdatum|\s+am|\s+bis)?|zahlbar\s+bis|fecha\s+(?:de\s+)?vencimiento|vencimiento|fecha\s+l[ií]mite\s+de\s+pago|vervaldatum|uiterste\s+betaaldatum|te\s+betalen\s+voor|data\s+(?:di\s+)?scadenza|scadenza|data\s+de\s+vencimento|vencimento)`,
+  issuerRef: String.raw`(?:our\s+reference|reference\s+(?:no\.?|number))`,
   otherDate: String.raw`(?:(?:order|po|purchase\s+order|delivery|ship(?:ping|ment)?|dispatch|service|supply)\s+date|date\s+(?:of\s+)?(?:order|delivery|shipment|supply|service)|date\s+shipped|(?:billing|service|invoice)\s+period|period|date\s+de\s+(?:commande|livraison)|p[ée]riode|lieferdatum|leistungsdatum|bestelldatum|auftragsdatum|leistungszeitraum|fecha\s+de\s+(?:pedido|entrega)|periodo|leverdatum|besteldatum|orderdatum|data\s+(?:di\s+)?(?:consegna|ordine)|data\s+(?:de|da)\s+(?:entrega|encomenda))`,
-  other: String.raw`(?:(?:ship(?:ped)?|deliver(?:ed)?)\s+to|(?:supplier|vendor)\s+(?:inv(?:oice)?\.?\s*(?:number|no\.?|#)|id)|account\s+(?:no\.?|number)|payment\s+terms)`
+  other: String.raw`(?:(?:customer|buyer|delivery(?:\s+note)?|sales\s+order|order)\s+(?:reference|ref\.?|number|no\.?)(?:\s+no\.?)?|(?:ship(?:ped)?|deliver(?:ed)?)\s+to|(?:supplier|vendor)\s+(?:inv(?:oice)?\.?\s*(?:number|no\.?|#)|id)|account\s+(?:no\.?|number)|payment\s+terms)`
 };
-const order = ['other', 'otherDate', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
+const order = ['other', 'otherDate', 'issuerRef', 'number', 'poNumber', 'currency', 'date', 'due', 'customer', 'payee', 'vendor'];
 const combined = order.map(key => '(' + patterns[key] + ')').join('|');
 const labels = new RegExp(String.raw`(?:^|\s)(?:${combined})(?=\s|[:#=]|(?<=[.#])\d|$)`, 'gi');
 const id = /^[\p{L}\d][\p{L}\d./_-]*$/u;
@@ -100,7 +101,7 @@ function findLabels(text) {
 }
 export function readDocumentMetadata(rows, kind, fields, set) {
   const columns = rows.map(parts);
-  const payees = [], headings = [], letterheads = [];
+  const issuerRefs=[], payees = [], headings = [], letterheads = [];
   let inBuyerBlock = false;
   const dateHits = [];
   let invoiceNumberPosition, inferredDate;
@@ -136,6 +137,11 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           continue;
         }
         if (key === 'customer' && readInvoiceDate(value, row.method)) continue;
+        if(key==='issuerRef'){
+          const ref=validValue('number',value);
+          if (ref && /\d/.test(ref) && !/^(?:PO|SO|DN)[-/#]?\d/i.test(ref))issuerRefs.push({value:ref,source});
+          continue;
+        }
         value = validValue(key, value);
         if (!value) continue;
         if (key === 'payee') payees.push({value, source});
@@ -144,7 +150,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           if (key === 'number') invoiceNumberPosition = {i, cell, row};
         }
       }
-      const value = cell.text.trim().replace(/\s+(?:tax\s+)?invoice$/i,'');
+      const value = cell.text.trim().replace(/^(?:tax\s+)?invoice\s+(?=[\p{L}])/iu,'').replace(/\s+(?:tax\s+)?invoice$/i,'');
       const nearbyNumber = invoiceNumberPosition?.i === i - 1 && invoiceNumberPosition.row.page === row.page;
       if (kind === 'invoice' && nearbyNumber) {
         const header = invoiceNumberPosition.cell;
@@ -163,7 +169,7 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           // OCR often reads a right-hand "INVOICE" title after the left letterhead block, so the
           // first row followed closely by a street address also counts, still marked uncertain.
           const address = i === 0 && rows.slice(i+1,i+4).some(r=>r.page===row.page&&/^\d+\s+[\p{L}]/u.test(r.text.trim())&&/,/.test(r.text));
-          if ((contact && rows.slice(0,4).some(r=>r.page===row.page&&/\binvoice\b/i.test(r.text))) ||
+          if ((value!==cell.text.trim() && /\binvoice\b/i.test(cell.text)) || (contact && rows.slice(0,4).some(r=>r.page===row.page&&/\binvoice\b/i.test(r.text))) ||
               (address && rows.slice(0,12).some(r=>r.page===row.page&&/^invoice$/i.test(r.text.trim())))) letterheads.push({value,source:row});
         }
       }
@@ -174,6 +180,11 @@ export function readDocumentMetadata(rows, kind, fields, set) {
       set('number', rows[i+1].text.trim(), {...row, sourceRows:[row,rows[i+1]]}, 'uncertain');
     }
 
+  }
+  if(kind==='invoice' && !fields.number && new Set(issuerRefs.map(r=>r.value)).size===1 && rows.slice(0,20).some(r=>/\binvoice\b/i.test(r.text))){
+    const {value,source}=issuerRefs[0];
+    set('number',value,source,'uncertain','Issuer reference on an invoice. Confirm that this identifies the invoice.');
+    fields.number.needsConfirmation=true;
   }
   readDates(rows, dateHits, inferredDate, set, fields);
   const candidates = headings.length ? headings : letterheads;

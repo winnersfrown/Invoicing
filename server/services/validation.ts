@@ -1,3 +1,4 @@
+import { parseExtractedText } from '../../dist/extraction.js';
 import { adjustmentCents, convertCents, netLineCents } from '../../dist/arithmetic.js';
 // Deterministic checks for one invoice. Amounts compared against a PO come from the matching engine;
 // the internal arithmetic the engine does not cover (line totals, subtotal, line tax) is integer cents here.
@@ -123,9 +124,18 @@ export function findDiscrepancies({ inv, po, poMatches, duplicates, candidate, b
     (pricedTotal != null && base != null && adjustments != null && base + adjustments !== pricedTotal)
     || (po && !mixedCurrency && payableCurrency === poCurrency && po.tax_amount !== 0));
   const missingInputs = [taxNeeded && !missing.includes('tax_amount') ? 'tax_amount' : null, adjustments == null ? 'adjustments' : null].filter(Boolean);
-  if (missingInputs.length) out.push({ type: 'potential_extraction_error', fields: [],
-    expected: 'Amounts needed to complete validation', observed: `Missing or unreadable: ${missingInputs.join(', ')}`,
-    difference: null, evidence: { check: 'financial_inputs', missing: missingInputs } });
+  if (missingInputs.length) {
+    // Recompute from the saved source. A reviewer edit or a different pricing
+    // currency invalidates the original calculation.
+    const source = taxNeeded && !mixedCurrency && !taxInclusive && adjustments === 0 && inv.source_text
+      ? parseExtractedText(inv.source_text, 'invoice') : null;
+    const proposal = source?.type === 'invoice' && source.subtotal != null && source.total != null &&
+      Math.round(source.subtotal * 100) === inv.subtotal && Math.round(source.total * 100) === pricedTotal
+      ? source.taxProposal : null;
+    out.push({ type: 'potential_extraction_error', fields: [], expected: proposal?.reason ?? 'Amounts needed to complete validation',
+      observed: `Missing or unreadable: ${missingInputs.join(', ')}`, difference: null,
+      evidence: { check: 'financial_inputs', missing: missingInputs, ...(proposal ? { tax_proposal: proposal } : {}) } });
+  }
 
   if (inv.lines.length && inv.tax_amount != null && inv.lines.every(l => l.tax_amount != null)) {
     const lineTax = sum(inv.lines.map(l => l.tax_amount!));

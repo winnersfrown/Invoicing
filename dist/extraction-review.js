@@ -48,6 +48,7 @@ export function reviewStatus(d) {
 export async function extractAndReview(file,kind,progress){const {text,layout}=await extractFile(file,progress,{detailed:true,kind}),data=parseExtractedText(text,kind,layout);data.baselineExtraction=parseBaselineText(text,kind);return reviewExisting(data,text,file);}
 
 export function reviewExisting(data,text,file=null){
+ if(data.unsupportedReason)throw Error(data.unsupportedReason);
  if(data.additionalInvoices?.length){
   const ranges=[data.firstInvoicePages,...data.additionalInvoices].map(({firstPage,lastPage})=>firstPage===lastPage?String(firstPage):`${firstPage}–${lastPage}`).join(', ');
   throw Error(`This file contains multiple invoices. Split it by page range (${ranges}) and upload each invoice separately.`);
@@ -89,7 +90,7 @@ export function reviewExisting(data,text,file=null){
    const row=el('div',{className:'ocr-line'},
     el('label',{},'Tax label',el('input',{dataset:{key:'label'},value:fmt(t.label||'Tax')})),
     el('label',{},'Rate (%)',el('input',{dataset:{key:'ratePercent'},type:'number',step:'any',min:0,value:fmt(t.ratePercent)})),
-    el('label',{},'Printed tax amount (blank = unknown)',el('input',{name:`taxes.${i}`,dataset:{key:'cents'},type:'number',step:'any',value:t.cents==null?'':String(t.cents/100)}),support(t.path||`taxes.${i}`)));
+    el('label',{},t.cents==null && t.ratePercent!=null?'Reviewer-confirmed tax amount (blank = unknown)':'Printed tax amount (blank = unknown)',el('input',{name:`taxes.${i}`,dataset:{key:'cents'},type:'number',step:'any',value:t.cents==null?'':String(t.cents/100)}),support(t.path||`taxes.${i}`)));
    row.append(removable(row));row._tax=t;taxHost.append(row);
   }
   function addAdjustment(a={kind:'other_fee',taxable:'unknown',appliesTo:'total'}){
@@ -182,9 +183,9 @@ export function reviewExisting(data,text,file=null){
      el('legend',{text:f.label||fieldName(p.path)}),el('p',{text:p.reason}),
      f.sourceText?el('p',{},el('small',{text:'Source: '}),el('mark',{text:f.sourceText})):null,
      p.evidence.map(v=>el('p',{},el('small',{text:`Page ${v.page}, text row ${v.row} (${v.method}): `}),el('mark',{text:v.text}))),
-     p.candidates.map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),
+     p.candidates.filter((c,i,all)=>all.findIndex(v=>String(v.value)===String(c.value))===i).map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),
      el('label',{},'Or enter the correct value: ',other,el('button',{type:'button',className:'text-button',text:'Use this value',onclick:()=>{if(other.value!=='')choose(numeric?Number(other.value):other.value.trim());}})),
-     p.value!=null&&p.value!==''?el('button',{type:'button',className:'text-button',text:`Confirm the value as read (${p.value})`,onclick:()=>choose(null)})
+     p.value!=null&&p.value!==''?(!p.candidates.some(c=>String(c.value)===String(p.value))&&el('button',{type:'button',className:'text-button',text:`Confirm the value as read (${p.value})`,onclick:()=>choose(null)}))
       :el('button',{type:'button',className:'text-button',text:'Confirm it is unreadable (stays unknown, not zero)',onclick:()=>choose(null)})));
    }
   }
@@ -200,7 +201,14 @@ export function reviewExisting(data,text,file=null){
    const dateIssue=kind==='invoice'?invoiceDateIssue(current.date,current.due):'';
    dateReview.classList.toggle('check',Boolean(dateIssue));dateReview.textContent=dateIssue;dateReview.hidden=!dateIssue;
    const status=reviewStatus(current);
-   renderConfirmations(status.pending);
+   const pending=status.pending.map(p=>{
+    if(!p.path.startsWith('taxes.')||!data.taxProposal)return p;
+    const tax=current.taxes[Number(p.path.split('.')[1])];
+    if(current.subtotal===data.subtotal&&current.total===data.total&&current.currency===data.currency&&
+       tax?.ratePercent===data.taxProposal.rate&&current.taxes.length===1&&!current.adjustments.length)return p;
+    return {...p,candidates:[],reason:'The tax inputs changed. Verify the taxable base and enter the amount from your review.'};
+   });
+   renderConfirmations(pending);
    const item=(c,cls)=>el('p',{className:cls},c.message||`${c.label}: agrees.`,
     c.evidence?.length?el('small',{text:' Source: '+c.evidence.map(e=>`page ${e.page}, row ${e.row}: “${e.text}”`).join('; ')}):null);
    const section=(title,list,cls)=>list.length?[el('h3',{text:title}),list.map(c=>item(c,cls))]:[];

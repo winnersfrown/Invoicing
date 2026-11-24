@@ -375,3 +375,20 @@ describe('concurrency and router wiring', () => {
     expect(dto.investigation_status).toBe('completed');
   });
 });
+
+it('investigates a missing tax amount using the printed rate and a deterministic proposal', async () => {
+  const env = await agentEnv(scriptedModel());
+  try {
+    const org = await env.newOrg();
+    const s = await env.scenario(org, {po:null, invoice:{subtotal:'540.00',total_amount:'594.00',tax_amount:null,
+      source_text:'Currency: USD\nSubtotal: 540\nSales Tax: 10%\nTotal: 594'}});
+    const finding = s.discrepancies.find(d=>d.discrepancy_type==='potential_extraction_error')!;
+    const before = await env.snapshot(org.id);
+    const dto = await env.investigate(org.reviewer,finding.id);
+    expect(dto.result.summary).toContain('10% × 540.00 = 54.00');
+    expect(dto.result.findings[0].evidence_ids.length).toBeGreaterThan(0);
+    expect(dto.result.requires_human_approval).toBe(true);
+    expect(dto.result.verified_financial_impact).toBeNull();
+    expect(JSON.parse(await env.snapshot(org.id)).invoices).toEqual(JSON.parse(before).invoices);
+  } finally { await env.close(); }
+});

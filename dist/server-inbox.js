@@ -160,7 +160,7 @@ export function warningPresentation(warning, extraction = null) {
       kind: 'review_requirement', group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields, details,
     };
     if (flagged.length === 1 && flagged[0] === 'tax_amount' && e.missing?.includes('tax_amount')) return {
-      kind: 'extraction_error', group: 'Review required', title: 'Invoice tax amount missing', message: 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
+      kind: 'extraction_error', group: 'Review required', title: 'Invoice tax amount missing', message: e.tax_proposal?.reason || 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
     };
     const title = e.check === 'date_order' ? 'Review invoice dates'
       : ['currency_conversion', 'mixed_currency_po'].includes(e.check) ? 'Review currency details' : 'Review extracted fields';
