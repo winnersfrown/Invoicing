@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { TOOL_NAMES, type EvidenceItem } from '../../server/contracts/index';
 import { scriptedModel } from '../../server/agent/model';
 import { runTool, TOOLS, type ToolContext } from '../../server/agent/tools';
@@ -19,9 +19,8 @@ beforeAll(async () => {
 });
 afterAll(async () => env.close());
 
-const logged = async () => env.db.query<{ tool_name: string; arguments: any; ok: boolean; duration_ms: number }>(
-  'select tool_name, arguments, ok, duration_ms from tool_calls where investigation_id = $1 order by created_at, id', [ctx.investigationId]);
-const lastLog = async () => (await logged()).at(-1)!;
+const logged = async () => env.db.query<{ id: string; tool_name: string; arguments: any; ok: boolean; duration_ms: number }>(
+  'select id, tool_name, arguments, ok, duration_ms from tool_calls where investigation_id = $1', [ctx.investigationId]);
 
 describe('tool registry', () => {
   it('has exactly the nine contract tools, each with an object JSON schema', () => {
@@ -40,12 +39,16 @@ describe('tool registry', () => {
 });
 
 describe('runTool', () => {
+  let earlierLogIds: Set<string>;
+  beforeEach(async () => { earlierLogIds = new Set((await logged()).map(row => row.id)); });
+  const newLogs = async () => (await logged()).filter(row => !earlierLogIds.has(row.id));
+
   it('returns data and evidence, records the call and remembers evidence ids', async () => {
     const r = await runTool(ctx, 'get_invoice', JSON.stringify({ invoice_id: A.invoiceId }));
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.evidence.map((e) => e.id)).toContain(`invoice:${A.invoiceId}`);
     expect(ctx.evidence.has(`invoice:${A.invoiceId}`)).toBe(true);
-    expect(await lastLog()).toMatchObject({ tool_name: 'get_invoice', arguments: { invoice_id: A.invoiceId }, ok: true, duration_ms: expect.any(Number) });
+    expect(await newLogs()).toMatchObject([{ tool_name: 'get_invoice', arguments: { invoice_id: A.invoiceId }, ok: true, duration_ms: expect.any(Number) }]);
   });
 
   it('another organisation\'s ids are not_found, exactly like missing ones', async () => {
@@ -53,7 +56,7 @@ describe('runTool', () => {
     const missing = await runTool(ctx, 'get_invoice', JSON.stringify({ invoice_id: randomUUID() }));
     expect(foreign).toEqual({ ok: false, error: { code: 'not_found', message: 'Not found' } });
     expect(missing).toEqual(foreign);
-    expect(await lastLog()).toMatchObject({ ok: false });
+    expect(await newLogs()).toMatchObject([{ ok: false }, { ok: false }]);
     expect(ctx.evidence.has(`invoice:${B.invoiceId}`)).toBe(false);
   });
 
@@ -65,13 +68,13 @@ describe('runTool', () => {
   ])('rejects %s as invalid_arguments and logs it', async (_label, name, args) => {
     const r = await runTool(ctx, name, typeof args === 'string' ? args : JSON.stringify(args));
     expect(r).toMatchObject({ ok: false, error: { code: 'invalid_arguments' } });
-    expect(await lastLog()).toMatchObject({ tool_name: name, ok: false });
+    expect(await newLogs()).toMatchObject([{ tool_name: name, ok: false }]);
   });
 
   it.each(['approve_invoice', 'resolve_discrepancy', 'run_sql', 'toString', '__proto__'])('rejects unknown tool %s and logs it', async (name) => {
     const r = await runTool(ctx, name, '{}');
     expect(r).toMatchObject({ ok: false, error: { code: 'unknown_tool' } });
-    expect(await lastLog()).toMatchObject({ tool_name: name, ok: false });
+    expect(await newLogs()).toMatchObject([{ tool_name: name, ok: false }]);
   });
 
   it('draft_supplier_message only stores a draft, for this discrepancy, citing evidence from this run', async () => {
