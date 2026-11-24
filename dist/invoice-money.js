@@ -115,7 +115,7 @@ export function readSummary(row, inTable) {
     if (!amount) {
       if (key === 'tax' && found.rate && !rest) return {...common, rateOnly:true, value:null, currency:code, marker:''};
       // A labelled amount that cannot be read stays unknown and is flagged; it is never zero.
-      if (rest && looksNumeric(rest)) return {...common, value: null, currency: code, marker: '', unreadable: true, text: rest};
+      if (rest && (looksNumeric(rest) || (key==='tax' && found.rate && !inTable && /\d/.test(rest)))) return {...common, value: null, currency: code, marker: '', unreadable: true, text: rest};
       continue;
     }
     const value = kind && reductions.has(kind) ? -Math.abs(amount.value) : amount.value;

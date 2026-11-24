@@ -42,5 +42,5 @@ try{
   report.push({file:key.file,ms:Math.round(performance.now()-started),...result});
   console.log(key.file,result.error||result.lines.length);
  }
- await fs.writeFile(path.join(here,'browser-results.json'),JSON.stringify(report,null,2)+'\n');
+ await fs.writeFile(path.join(here,process.argv.includes('--followup')?'../followup/browser-results.json':'browser-results.json'),JSON.stringify(report,null,2)+'\n');
 }finally{await browser.close();}

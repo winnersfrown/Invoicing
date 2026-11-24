@@ -57,6 +57,14 @@ export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof Create
     if (orig.status === 'superseded') fail('conflict', 'That invoice has already been superseded.');
     await setInvoiceStatus(db, ctx.orgId, actor, req.supersedes_invoice_id, orig.status, 'superseded', { superseded_by: id });
   }
+  // Preserve source gaps before lineRow calculates database line totals.
+  const unreviewedAmounts = x.extraction.method !== 'json' &&
+    (x.extraction.support_labels?.lineItemReview as {confirmed?:boolean} | undefined)?.confirmed !== true &&
+    x.lines.some(line=>line.line_total==null);
+  if(unreviewedAmounts){
+    x.extraction.uncertain=[...new Set([...x.extraction.uncertain,'lines'])];
+    x.extraction.reviewed_fields=x.extraction.reviewed_fields?.filter(field=>field!=='lines');
+  }
   const path = `${ctx.orgId}/${id}/${req.file.sha256}`;
   await db.query(
     `insert into invoices (id, organization_id, supplier_name_raw, invoice_number, invoice_date, due_date, po_reference, currency, subtotal, tax_amount,

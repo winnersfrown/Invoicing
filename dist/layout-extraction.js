@@ -44,6 +44,11 @@ function columns(row){
  }
  if(mapped.some(c=>c.key==='quantity')&&mapped.some(c=>c.key==='unitPrice'))return {positions:mapped,order:mapped.map(c=>c.key)};
  if(headers.includes('quantity')&&headers.includes('unitPrice'))return {headers,order:headers.filter(Boolean)};
+ // Sparse OCR can lose the quantity heading. Keep the two explicitly
+ // labeled money columns; a missing factor must stay available for review.
+ if(mapped.some(c=>c.key==='unitPrice')&&mapped.some(c=>c.key==='amount')&&
+    mapped.every(c=>['description','unitPrice','amount'].includes(c.key)))
+  return {positions:mapped,order:mapped.map(c=>c.key),partial:true};
  return null;
 }
 
@@ -124,8 +129,20 @@ function tableValues(row, table) {
  const description = text.find(c=>c.key==='description');
  const prices = numeric.filter(c=>['unitPrice','amount'].includes(c.key));
  const numericStart = numeric[0].x - 14;
+ if(table.partial){
+  const prefix=row.tokens.filter(t=>t.x<numericStart);
+  const last=prefix.at(-1), before=prefix.at(-2);
+  if(!last || !numeric.some(c=>c.key==='amount' && row.tokens.some(t=>columnDistance(t,c)<35)))return {};
+  // An isolated numeric cell between the description and labeled price can
+  // be a quantity. Never split a trailing model number out of a description.
+  if(before && /^\d+(?:[.,]\d+)?$/.test(last.text)&&last.x-before.x-before.width>Math.max(32,before.width)){
+   values.quantity=prefix.pop().text;
+  }
+  values.description=prefix.map(t=>t.text).join(' ');
+ }
  const append = (key, value) => { values[key] = [values[key],value].filter(Boolean).join(' '); };
  for (const token of row.tokens) {
+  if(table.partial && token.x<numericStart)continue;
   const split = row.method==='ocr' && separateOcrPrice(token,description,prices,numericStart);
   if (split) {
    append('description',split.description);
@@ -147,7 +164,7 @@ function tableLine(values) {
  const quantity = !rate && quantityRead?.marker ? null : quantityRead?.value ?? null;
  const unitPrice = rate ? null : amount(values.unitPrice);
  const printed = amount(values.amount);
- if (values.recoveredPrice && values.description && (unitPrice != null || printed != null)) {
+ if (values.description && !rate && ((values.recoveredPrice && (unitPrice != null || printed != null)) || (quantity == null && unitPrice != null && printed != null))) {
   // Keep the recoverable fields even if OCR missed the quantity or another amount.
   return {sku:values.sku || '', description:values.description, quantity, unitPrice, amount:printed};
  }
@@ -166,7 +183,7 @@ export function parseLayoutText(text,kind,layout=[]){
  const d={taxProposal:/** @type {{rate:number,basisCents:number,cents:number,reason:string}|null} */(null),type:kind,vendor:'',customer:'',number:'',poNumber:'',currency:'',date:'',due:'',subtotal:null,tax:null,taxRate:null,total:null,shipping:null,discount:null,lines:[],note:'Extracted values require source verification.'};
  const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text',...(row.coordinateSpace?{coordinateSpace:row.coordinateSpace}:{})};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.includes('.'))d[key]=value;};
  readDocumentMetadata(inputRows.filter(row=>!row.gridCells),kind,fields,set);
- const summaries=[];let exchange=null;
+ const summaries=[],unassignedRows=[];let exchange=null;
  let table=null, page;
  for(const row of rows){
   if(row.page!==page){table=null;page=row.page;}
@@ -188,29 +205,47 @@ export function parseLayoutText(text,kind,layout=[]){
   if(rateLine){set('taxRate',Number(rateLine[1].replace(',','.')),row);continue;}
   const fx=!exchange&&readExchangeRate(t);
   if(fx){exchange={...fx,row};continue;}
-  const summary=readSummary(t,Boolean(table));
+  let summary=readSummary(t,Boolean(table));
+  if(summary?.key==='adjustment'&&table?.positions){
+   const cells=tableValues(row,table);
+   if(cells.quantity && cells.unitPrice && amount(cells.amount)!=null)summary=null;
+  }
+  if(!summary && row.method==='ocr' && /^sub\s*total\b/i.test(t) && /\d/.test(t))
+   summary={key:'subtotal',value:null,unreadable:true,text:t};
   if(summary){summaries.push({...summary,row});table=null;continue;}
  const head=columns(row);if(head){table={...head,source:row};continue;}
  let l=null,support='supported';
  if(table){
   const values=tableValues(row,table);
   l=tableLine(values);
-  if(values.recoveredPrice) support='uncertain';
+  if(values.recoveredPrice||table.partial) support='uncertain';
+  if(l && table.partial && l.quantity!=null)l.inferredQuantity=true;
  }
  // A money value inside the description means the columns were misread; split the row by arithmetic instead.
  if(l&&/[$€£]?\d[\d,]*\.\d{2}\s*$/.test(l.description||'')){const split=splitLineRow(t,table?.order);if(split){l=split;support='uncertain';}}
  if(!l){l=splitLineRow(t,table?.order);if(l)support='uncertain';}
+ if(!l && table?.positions && row.method==='ocr'){
+  const cells=tableValues(row,table);
+  const printed=amount(cells.amount);
+  if(cells.description && /\p{L}/u.test(cells.description) && printed!=null && (cells.quantity || cells.unitPrice)){
+   // OCR can read the extended amount even when both factors are illegible.
+   l={sku:cells.sku||'',description:cells.description,quantity:null,unitPrice:null,amount:printed};
+   support='uncertain';
+  }
+ }
  if(l){
-  const {ambiguousColumns,...line}=l;
+  const {ambiguousColumns,inferredQuantity,...line}=l;
   const n=d.lines.length;d.lines.push(line);
   for(const [key,value] of Object.entries(line))set(`lines.${n}.${key}`,value,table?.source&&['unitPrice','quantity'].includes(key)?{...row,sourceRows:[table.source,row]}:row,value==null||value===''?'uncertain':support);
+  if(inferredQuantity)Object.assign(fields[`lines.${n}.quantity`],{needsConfirmation:true,
+   reason:'The quantity heading is unreadable. Verify the isolated numeric cell against the source.'});
   if(ambiguousColumns)for(const key of ['quantity','unitPrice']){
    Object.assign(fields[`lines.${n}.${key}`],{needsConfirmation:true,support:'uncertain',
     reason:'Both numbers could be the quantity or unit price. Check the printed columns.',
     candidates:[line.quantity,line.unitPrice].map(value=>({value,label:String(value)}))});
   }
  }
- else if(table?.positions&&d.lines.length&&row.tokens?.length&&row.tokens.every(token=>token.x+token.width < table.positions.find(c=>['unitPrice','quantity','amount'].includes(c.key)).x-8)&&
+ else if(table?.positions && !table.partial && d.lines.at(-1)?.quantity!=null && d.lines.at(-1)?.amount!=null && row.tokens?.length&&row.tokens.every(token=>token.x+token.width < table.positions.find(c=>['unitPrice','quantity','amount'].includes(c.key)).x-8)&&
    Math.abs(row.tokens[0].x-(table.positions.find(c=>c.key==='description')?.x??Infinity))<=10&&
    !/^(?:continued|payment|terms|thank|page|bank)\b/i.test(t)){
    const line=d.lines.at(-1), key=`lines.${d.lines.length-1}.description`;
@@ -218,6 +253,11 @@ export function parseLayoutText(text,kind,layout=[]){
    delete fields[key];
    line.description+=(line.description?' ':'')+t;
    set(key,line.description,{...row,sourceRows:[previous,row]},'uncertain');
+ }
+ else if(table?.positions && row.method==='ocr' && row.tokens?.length && /\p{L}/u.test(t) &&
+    !/^(?:subtotal|total|continued|payment|terms|thank|page|bank)\b/i.test(t) &&
+    row.tokens.some(token=>Math.abs(token.x-(table.positions.find(c=>c.key==='description')?.x??Infinity))<=12)){
+   unassignedRows.push({page:row.page||1,text:t});
  }
  }
  // OCR reads a leading I or O as 1 or 0. When the other item codes start with letters, offer both
@@ -372,7 +412,7 @@ export function parseLayoutText(text,kind,layout=[]){
  }
  if(kind==='purchase_order'){d.number=d.poNumber;fields.number=fields.poNumber;}
  for(const key of ['vendor','number','poNumber','currency','subtotal','tax','total'])if(!fields[key])fields[key]={value:d[key],support:'missing',reason:key==='poNumber'?'No PO reference found. Leave blank if the document does not list one.':key==='vendor'?'No supplier identified. Check the issuer or letterhead.':'No unambiguous labeled value found.',evidence:[]};
- d.extraction={method:'layout-aware-v1',confidenceMeaning:'Heuristic support labels, not calibrated probabilities.',fields,ruledTable:inputRows.some(row=>row.gridCells)};
+ d.extraction={unassignedRows,method:'layout-aware-v1',confidenceMeaning:'Heuristic support labels, not calibrated probabilities.',fields,ruledTable:inputRows.some(row=>row.gridCells)};
  if(exchange)d.exchangeRate={base:exchange.base,quote:exchange.quote,rate:exchange.rate,decimals:exchange.decimals,sourceText:exchange.sourceText,evidence:fields.exchangeRate.evidence};
  if(kind==='credit_note')return {...d,arithmetic:[],arithmeticReview:{contradictions:[],uncertain:[],passed:[],conversions:[]}};
  d.arithmeticReview=arithmeticReview(d);

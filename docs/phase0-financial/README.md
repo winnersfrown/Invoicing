@@ -1,5 +1,7 @@
 # Phase 0 financial extraction review
 
+The four requested fixes and subsequent benchmark runs are documented in the [PR #23 follow-up](FOLLOWUP.md). The results below describe the earlier evaluation.
+
 **Recommendation: keep Phase 0 open.** The reported quantity reversal and unsupported line-amount suggestions have targeted regression coverage. Tax proposals now show their calculation and source. Degraded scans can still lose entire invoice lines, and a production two-account acceptance run is outstanding.
 
 ## Changes and evidence

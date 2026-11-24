@@ -81,3 +81,42 @@ test('grouped registration numbers never become priced rows',()=>{
  const d=parse('Terms: 30 days  VAT Reg No: GB 715 36 53\nTel: 111 223 445\nSKU Description Rate Qty Total\nAB-1 Design 35 2 70');
  assert.deepEqual(d.lines.map(l=>l.sku),['AB-1']);
 });
+
+test('regrouped high-confidence OCR exposes a subtotal gap and weak words stay uncertain',async()=>{
+ const {alignOcrRows}=await import('../dist/ocr-layout.js');
+ const words=(texts,y)=>texts.map(([text,x,confidence=95])=>({text,x,width:22,confidence,box:{x0:x,x1:x+22,y0:y,y1:y+9}}));
+ const samples=[[['Description',0],['Rate',180],['Qty',260],['Amount',360]],
+  [['Widget',0],['12',180],['5',260],['60',360]],[['Kit',0],['13',180],['1',260],['13',360]],
+  [['Subtotal',200],['76',360]]];
+ const read=()=>parseExtractedText('','invoice',alignOcrRows(samples.map((r,i)=>({page:1,tokens:words(r,i*15)}))));
+ assert.ok(read().arithmetic.some(c=>c.code==='printed_line_sum'&&c.differenceCents===300));
+ samples[3][1][2]=45;
+ assert.ok(read().arithmeticReview.uncertain.some(c=>c.code==='printed_line_sum'&&c.differenceCents===300));
+});
+
+test('separate tax rates with unprinted bases leave allocation open and preserve total checks',()=>{
+ const body='Subtotal 100\nGST 5% 3.00\nPST 10% 4.00\nTotal ';
+ const d=parse(body+'107');
+ assert.deepEqual(d.arithmetic,[]);
+ assert.equal(d.arithmeticReview.uncertain.filter(c=>c.code==='tax_rate'&&c.expectedCents===null).length,2);
+ assert.ok(parse(body+'110').arithmetic.some(c=>c.code==='displayed_total'));
+});
+
+test('incomplete aligned rows retain the printed price and amount for mandatory line review',async()=>{
+ const {lineReviewReasons}=await import('../dist/extraction-validation.js');
+ const header=[['Description',10],['Rate',180],['Qty',260],['Amount',360]];
+ const data=[['Binding 24',10],['33.50',180],['?',260],['67.00',360]];
+ const rows=[header,data].map(c=>({text:c.map(([t])=>t).join(' '),method:'ocr',page:1,
+  tokens:c.map(([text,x])=>({text,x,width:25})),ocrConfidence:93}));
+ const doc=parseExtractedText('','invoice',rows);
+ assert.deepEqual(doc.lines,[{description:'Binding 24',sku:'',unitPrice:33.5,quantity:null,amount:67}]);
+ assert.match(lineReviewReasons(doc)[0],/quantity/);
+ const broken=structuredClone(rows);
+ broken[1].tokens[1].text='illegible';
+ broken[1].text=broken[1].tokens.map(t=>t.text).join(' ');
+ const partial=parseExtractedText('','invoice',broken);
+ assert.deepEqual(partial.lines,[{description:'Binding 24',sku:'',unitPrice:null,quantity:null,amount:67}]);
+ assert.match(lineReviewReasons(partial)[0],/quantity or basis, price or rate/);
+ assert.match(lineReviewReasons(parse('Total 9'))[0],/No line items/);
+ assert.match(lineReviewReasons(parse('Description Qty Rate Amount\nBox 2 4 8\nSubtotal 10'))[0],/line sum/);
+});

@@ -56,6 +56,7 @@ export function findDiscrepancies({ inv, po, poMatches, duplicates, candidate, b
   const pendingReview = (field: string) => !reviewed.has(field.split(/[.\[]/, 1)[0]);
   const missing = [...new Set([...Object.keys(required).filter((k) => required[k] == null),
     ...(ex.missing ?? []).filter((k: string) => k !== 'po_reference' && k !== 'tax_amount' && pendingReview(k))])].sort();
+  for(const line of inv.lines)if(!line.description.trim())missing.push(`lines.${line.line_number}.description`);
   const lowConfidence = Object.entries((ex.field_confidence ?? {}) as Record<string, number>).filter(([, c]) => c < LOW_CONFIDENCE).map(([k]) => k);
   const uncertain = [...new Set<string>([...(ex.uncertain ?? []), ...lowConfidence])].filter((f) => !missing.includes(f) && pendingReview(f)).sort();
   const unsure = [...missing, ...uncertain];

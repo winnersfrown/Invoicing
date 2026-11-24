@@ -54,14 +54,14 @@ async function pdfLib(){if(!pdfPromise)pdfPromise=import(CDN+'pdfjs-dist@4.10.38
 async function ocrLib(){if(!ocrPromise)ocrPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=CDN+'tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=()=>resolve(window.Tesseract);s.onerror=()=>{ocrPromise=null;reject(Error('OCR library could not load. Check your internet connection and retry.'));};document.head.append(s);});return ocrPromise;}
 function invoiceQuality(doc) {
  const lines=doc.lines.filter(line=>line.description&&line.amount!=null);
+ const completeLines=lines.filter(line=>line.quantity!=null&&(line.unitPrice!=null||line.ratePercent!=null));
  const completeSummary=[doc.subtotal,doc.tax,doc.total].every(Number.isFinite);
  const reconciled=completeSummary && Math.abs(toCents(doc.subtotal)+toCents(doc.tax)+(adjustmentCents(doc)??NaN)-toCents(doc.total))<=1;
  const totalIssue=doc.arithmetic.some(issue=>issue.path==='total');
- const itemsAgree=lines.length && doc.subtotal!=null && !doc.arithmetic.some(issue=>issue.path==='subtotal');
+ const itemsAgree=doc.arithmeticReview.passed.some(check=>check.code==='printed_line_sum');
  return {
-  weak:!doc.vendor||doc.total==null||totalIssue||!itemsAgree,
-  score: 2*Boolean(doc.vendor)+2*Boolean(doc.number)+Boolean(doc.currency)+2*(doc.total!=null)+4*reconciled+3*Boolean(itemsAgree)+2*lines.length
-    - Math.min(12,2*doc.arithmetic.length)
+  weak:!doc.vendor||doc.total==null||totalIssue||!itemsAgree||completeLines.length!==doc.lines.length,
+  score: 2*Boolean(doc.vendor)+2*Boolean(doc.number)+Boolean(doc.currency)+2*(doc.total!=null)+4*reconciled+3*Boolean(itemsAgree)+2*lines.length+3*completeLines.length
  };
 }
 

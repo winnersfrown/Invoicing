@@ -212,10 +212,12 @@ export function arithmeticReview(d) {
       if (tries.at(-1).status === 'pass') return void out.passed.push({...tries.at(-1), basisCents: basis});
     }
     const failed = {...tries[0], label: name};
-    const sameTaxNoBasis = taxes.filter(x => x.basisCents == null && present(x.ratePercent) && x.ratePercent !== t.ratePercent &&
-      (x.label || '').split(/\W/)[0].toLowerCase() === (t.label || '').split(/\W/)[0].toLowerCase());
-    if (sameTaxNoBasis.length) out.uncertain.push({...failed, status: 'uncertain',
-      message: `${name}: the taxable amount for each rate is not printed, so this rate cannot be checked against the subtotal.`});
+    // Separate tax authorities can apply to different baskets of goods.
+    // Their labels alone do not establish a common taxable base.
+    const differentRates = taxes.some(other => present(other.ratePercent) && other.ratePercent !== t.ratePercent);
+    if (differentRates) out.uncertain.push({...failed, status:'uncertain', expectedCents:null, differenceCents:null,
+      numbers:{...failed.numbers,calculated:null}, suspects:[],
+      message:`${name}: the taxable amount for each rate is not printed. Verify the taxable base for this tax.`});
     else if (failed.status === 'uncertain') out.uncertain.push(failed);
     else out.contradictions.push({...failed, message: `Tax from displayed subtotal and tax rate: ${name} displayed ${money(t.cents, currency)}; calculated ${money(failed.expectedCents, currency)} on ${money(subtotal, currency)}${optional.length ? ', with or without each adjustment of unknown taxability' : ''}.`});
   });

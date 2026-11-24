@@ -13,7 +13,8 @@ const dir=new URL('./',import.meta.url);
 const read=file=>fs.readFileSync(new URL(file,dir));
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const answers=JSON.parse(read('answers.json'));
-const freeze=JSON.parse(read('../../holdout/engine-freeze.v7.json'));
+const followup=process.argv.includes('--followup');
+const freeze=JSON.parse(read(followup?'../../holdout/engine-freeze.v8.json':'../../holdout/engine-freeze.v7.json'));
 for(const [file,hash] of Object.entries(freeze))assert.equal(sha(fs.readFileSync(file)),hash,file);
 const results=[];
 let worker;
@@ -89,5 +90,5 @@ const summary={documents:results.length,errors:results.filter(r=>r.error).length
  creditsBlocked:results.filter(r=>r.kind==='credit_note'&&r.blocked).length,credits:answers.filter(k=>k.kind==='credit_note').length,
  proposedTaxCorrect:count(r=>r.taxProposalExpected!=null&&r.taxProposal===r.taxProposalExpected),taxProposalsExpected:answers.filter(k=>k.proposedTax!=null).length,
  ms:results.reduce((s,r)=>s+r.ms,0)};
-fs.writeFileSync(new URL('results.json',dir),JSON.stringify({freeze,answerKeySha256:sha(read('answers.json')),summary,results},null,2)+'\n');
+fs.writeFileSync(new URL(followup?'../followup/results.json':'results.json',dir),JSON.stringify({freeze,answerKeySha256:sha(read('answers.json')),summary,results},null,2)+'\n');
 console.log(summary);
