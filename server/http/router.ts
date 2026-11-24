@@ -10,7 +10,7 @@ import { findDuplicateCandidates } from '../services/duplicates.ts';
 import { createInvoice, createPurchaseOrder, reviewInvoiceFields, setInvoiceArchived, unlinkPurchaseOrder } from '../services/invoices.ts';
 import { enqueue, runJobs } from '../services/jobs.ts';
 import { draftSupplierMessage } from '../services/matching.ts';
-import { discrepancyHistory, getDiscrepancies, getInvoiceDto, invoiceManagementHistory, listInvoices, listPurchaseOrders } from '../services/records.ts';
+import { discrepancyHistory, getDiscrepancies, getInvoiceDto, getPurchaseOrder, invoiceManagementHistory, listInvoices, listPurchaseOrders, listWorkspaceActivity, listWorkspaceFindings } from '../services/records.ts';
 import { getInvestigation, requestInvestigation, resolveDiscrepancy } from '../services/resolution.ts';
 import type { Storage } from '../services/storage.ts';
 import { ApiError, canonical, fail, notFound, sha256, STATUS } from '../services/util.ts';
@@ -33,7 +33,7 @@ export type HttpResponse = { status: number; body: unknown };
 
 type RouteKey = keyof typeof ROUTES;
 type JobRequest = { kind: string; payload: Record<string, unknown>; idempotencyKey: string };
-type Ctx = { tx: Db; caller: Caller; id: string; body: unknown; deps: Deps };
+type Ctx = { tx: Db; caller: Caller; id: string; body: unknown; query: URLSearchParams; deps: Deps };
 type Result = { status?: number; data: unknown; jobs?: JobRequest[] };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -89,6 +89,19 @@ const HANDLERS: Record<Exclude<RouteKey, 'POST /api/jobs/run' | 'GET /api/jobs/r
     };
   },
   'GET /api/purchase-orders': async (c) => ({ data: await listPurchaseOrders(c.tx, c.caller.orgId) }),
+  'GET /api/purchase-orders/:id': async (c) => ({ data: (await getPurchaseOrder(c.tx, c.caller.orgId, c.id)).data }),
+  'GET /api/workspace/findings': async (c) => {
+    const kind = c.query.get('kind');
+    if (kind !== 'duplicates' && kind !== 'discrepancies') return fail('invalid_request', 'Choose a findings category.');
+    return { data: await listWorkspaceFindings(c.tx, c.caller.orgId, kind === 'duplicates') };
+  },
+  'GET /api/workspace/activity': async (c) => {
+    const before = c.query.get('before');
+    if (before !== null && (!/^[1-9]\d{0,18}$/.test(before) || BigInt(before) > 9223372036854775807n)) {
+      return fail('invalid_request', 'Invalid activity cursor.');
+    }
+    return { data: await listWorkspaceActivity(c.tx, c.caller.orgId, before) };
+  },
   'POST /api/discrepancies/:id/investigate': async (c) => {
     const r = await requestInvestigation(c.tx, user(c), c.id, c.deps.model ?? 'unconfigured');
     return {
@@ -136,7 +149,7 @@ export function createRouter(deps: Deps) {
 
   return async function route(req: HttpRequest): Promise<HttpResponse> {
     const started = Date.now(), requestId = randomUUID();
-    const path = new URL(req.url, 'http://local').pathname;
+    const { pathname: path, searchParams } = new URL(req.url, 'http://local');
     const match = COMPILED.map((r) => ({ r, m: req.method === r.method ? r.pattern.exec(path) : null })).find((x) => x.m);
     let caller: Caller | undefined;
     let res: HttpResponse;
@@ -181,7 +194,7 @@ export function createRouter(deps: Deps) {
               `select count(*)::int as n from idempotency_keys where user_id = $1 and created_at > now() - interval '1 minute'`, [c.userId]);
             if (n >= (deps.rateLimitPerMinute ?? 60)) fail('rate_limited', 'Too many requests. Try again in a minute.');
           }
-          const out = await asUser(tx, c.userId, () => HANDLERS[key as keyof typeof HANDLERS]({ tx, caller: c, id, body: req.body, deps }));
+          const out = await asUser(tx, c.userId, () => HANDLERS[key as keyof typeof HANDLERS]({ tx, caller: c, id, body: req.body, query: searchParams, deps }));
           kick = !!out.jobs?.length;
           for (const j of out.jobs ?? []) await enqueue(tx, { organizationId: c.orgId, kind: j.kind, payload: j.payload, idempotencyKey: j.idempotencyKey, now: now() });
           const response = { status: out.status ?? 200, body: { data: out.data } };

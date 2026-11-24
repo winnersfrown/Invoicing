@@ -25,6 +25,34 @@ it('provisions separate sample workspaces for verified accounts, once per accoun
   expect((await env.call('GET', '/api/purchase-orders', { user: a })).body.data).toEqual([
     expect.objectContaining({ purchase_order_number: 'PO-2026-042', total_amount: '600.00' }),
   ]);
+  const [poA] = (await env.call('GET', '/api/purchase-orders', { user: a })).body.data;
+  expect((await env.call('GET', `/api/purchase-orders/${poA.id}`, { user: a })).body.data.lines).toHaveLength(2);
+  expect((await env.call('GET', `/api/purchase-orders/${poA.id}`, { user: b })).status).toBe(404);
+  const findingsPath = '/api/workspace/findings?kind=discrepancies';
+  const activityPath = '/api/workspace/activity';
+  const findingsA = (await env.call('GET', findingsPath, { user: a })).body.data;
+  const findingsB = (await env.call('GET', findingsPath, { user: b })).body.data;
+  expect(findingsA).toContainEqual(expect.objectContaining({ invoice_id: fromA.id, difference_amount: '60.00' }));
+  expect(findingsB).toContainEqual(expect.objectContaining({ invoice_id: fromB.id, difference_amount: '60.00' }));
+  expect(findingsB.every((finding: { invoice_id: string }) => finding.invoice_id === fromB.id)).toBe(true);
+  expect((await env.call('GET', '/api/workspace/findings?kind=duplicates', { user: a })).body.data).toEqual([]);
+  expect((await env.call('GET', '/api/workspace/findings?kind=invalid', { user: a })).status).toBe(400);
+  expect((await env.call('GET', `${activityPath}?before=9223372036854775808`, { user: a })).status).toBe(400);
+
+  const [priceFinding] = findingsA.filter((finding: { difference_amount: string }) => finding.difference_amount === '60.00');
+  const notes = 'Verified 12 cases against the original purchase order.';
+  const decision = await env.call('POST', `/api/discrepancies/${priceFinding.id}/resolve`, { user: a,
+    body: { decision: 'more_info_requested', notes } });
+  expect(decision.status).toBe(200);
+  expect((await provision(a)).status).toBe(200);
+  const activityA = (await env.call('GET', activityPath, { user: a })).body.data;
+  expect(activityA.events).toContainEqual(expect.objectContaining({ invoice_id: fromA.id, discrepancy_id: priceFinding.id,
+    approval_status: 'more_info_requested', reviewer_notes: notes }));
+  expect(activityA.events).toContainEqual(expect.objectContaining({ purchase_order_id: poA.id, purchase_order_number: 'PO-2026-042' }));
+  const activityB = (await env.call('GET', activityPath, { user: b })).body.data;
+  expect(JSON.stringify(activityB)).not.toContain(fromA.id);
+  expect(JSON.stringify(activityB)).not.toContain(poA.id);
+  expect(JSON.stringify(activityB)).not.toContain(notes);
   const pathA = `/api/invoices/${fromA.id}`;
   expect((await env.call('GET', pathA, { user: b })).status).toBe(404);
   expect((await env.call('GET', pathA, { user: a })).body.data.document_url).toMatch(/^https:\/\//);
@@ -33,6 +61,15 @@ it('provisions separate sample workspaces for verified accounts, once per accoun
   const [{ document_storage_path: foreignPath }] = await env.db.query('select document_storage_path from invoices where id = $1', [fromA.id]);
   await env.db.query('update invoices set document_storage_path = $1 where id = $2', [foreignPath, fromB.id]);
   expect((await env.call('GET', `/api/invoices/${fromB.id}`, { user: b })).body.data.document_url).toBeUndefined();
+
+  const [{ organization_id }] = await env.db.query('select organization_id from invoices where id = $1', [fromA.id]);
+  await env.db.query(`insert into audit_events (organization_id, actor_type, event_type, target_type, target_id)
+    select $1, 'system', 'invoice.test_event', 'invoice', $2 from generate_series(1, 55)`, [organization_id, fromA.id]);
+  const page = (await env.call('GET', activityPath, { user: a })).body.data;
+  expect(page.events).toHaveLength(50);
+  const olderPage = (await env.call('GET', `${activityPath}?before=${page.next_before}`, { user: a })).body.data;
+  expect(olderPage.events).toContainEqual(expect.objectContaining({ reviewer_notes: notes }));
+  expect(olderPage.events.every((event: { id: string }) => BigInt(event.id) < BigInt(page.next_before))).toBe(true);
 });
 
 it('takes a verified signup through upload, field review, matching, and audited discrepancy review', async () => {

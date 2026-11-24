@@ -12,10 +12,11 @@
 <body>
   <aside class="sidebar">
     <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Sorikano</a>
+    <nav id="workspace-nav" aria-label="Workspace" hidden></nav>
   </aside>
   <main>
     <header>
-      <span>Invoice workspace</span>
+      <span id="workspace-breadcrumb">Invoice workspace</span>
       <div id="auth-area" class="auth-area"></div>
     </header>
     <div class="content">
@@ -25,7 +26,7 @@
           <p>Sign up or log in to review sample invoices and purchase orders in your private demo workspace.</p>
         </div>
       </section>
-      <section id="invoices-page" aria-label="Invoice workspace" hidden></section>
+      <section id="workspace" aria-label="Private Reviewer workspace" hidden></section>
     </div>
   </main>
   <script type="module" src="auth-ui.js"></script>
