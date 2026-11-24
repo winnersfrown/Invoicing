@@ -111,7 +111,7 @@ function openAuth(signup = false) {
         const credentials = {email: String(f.get('email')).trim(), password: String(f.get('password'))};
         if (signup) {
           const {data, error: err} = await supabase.auth.signUp({
-            ...credentials, options: {emailRedirectTo: new URL('./', location.href).href},
+            ...credentials, options: {emailRedirectTo: new URL('demo.html', location.href).href},
           });
           if (err) {
             if (err.code === 'weak_password') throw Error('Choose a stronger password and try again.');
