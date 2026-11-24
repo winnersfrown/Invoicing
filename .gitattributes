@@ -1,1 +1,2 @@
 graphify-out/graph.json merge=graphify
+benchmark/phase0-financial/unseen/documents/*.pdf binary

@@ -1,0 +1,1266 @@
+[
+  {
+    "file": "case-01.pdf",
+    "ms": 461,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-100",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 11,
+        "amount": 22
+      },
+      {
+        "sku": "KT-200",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 36.55,
+    "tax": 2.55,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-02.pdf",
+    "ms": 149,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-101",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 12.75,
+        "amount": 38.25
+      },
+      {
+        "sku": "KT-201",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 54.02,
+    "tax": 3.77,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-03.pdf",
+    "ms": 120,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-102",
+        "description": "Meter sleeve 24",
+        "quantity": 13,
+        "unitPrice": 4,
+        "amount": 52
+      },
+      {
+        "sku": "KT-202",
+        "description": "Finishing kit",
+        "quantity": 12,
+        "unitPrice": 1,
+        "amount": 12
+      }
+    ],
+    "total": 68.8,
+    "tax": 4.8,
+    "proposedTax": null,
+    "pending": [
+      "lines.0.quantity",
+      "lines.0.unitPrice",
+      "lines.1.quantity",
+      "lines.1.unitPrice"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-04.pdf",
+    "ms": 119,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-103",
+        "description": "Meter sleeve 24",
+        "quantity": 5,
+        "unitPrice": 14.75,
+        "amount": 73.75
+      },
+      {
+        "sku": "KT-203",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 92.18,
+    "tax": null,
+    "proposedTax": 643,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-05.pdf",
+    "ms": 100,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-104",
+        "description": "Meter sleeve 24",
+        "quantity": 6,
+        "unitPrice": 15,
+        "amount": 90
+      },
+      {
+        "sku": "KT-204",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 107.7,
+    "tax": 5.7,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-06.pdf",
+    "ms": 124,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-105",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 16.75,
+        "amount": 117.25
+      },
+      {
+        "sku": "KT-205",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 142.94,
+    "tax": 9.69,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-07.pdf",
+    "ms": 116,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-106",
+        "description": "Meter sleeve 24 Series 7",
+        "quantity": 8,
+        "unitPrice": 17,
+        "amount": 136
+      },
+      {
+        "sku": "KT-206",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 159.1,
+    "tax": 11.1,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-08.pdf",
+    "ms": 127,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-107",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 18.75,
+        "amount": 37.5
+      },
+      {
+        "sku": "KT-207",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 53.21,
+    "tax": 3.71,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-09.pdf",
+    "ms": 120,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-108",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 19,
+        "amount": 57
+      },
+      {
+        "sku": "KT-208",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 77.4,
+    "tax": 5.4,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-10.pdf",
+    "ms": 98,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-109",
+        "description": "Meter sleeve 24",
+        "quantity": 4,
+        "unitPrice": 20.75,
+        "amount": 83
+      },
+      {
+        "sku": "KT-209",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 104.13,
+    "tax": 7.13,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-11.pdf",
+    "ms": 98,
+    "kind": "credit_note",
+    "lines": [
+      {
+        "sku": "KT-110",
+        "description": "Meter sleeve 24",
+        "quantity": 5,
+        "unitPrice": 21,
+        "amount": 105
+      },
+      {
+        "sku": "KT-210",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": null,
+    "tax": 8.78,
+    "proposedTax": null,
+    "pending": [
+      "total"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-12.pdf",
+    "ms": 96,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-111",
+        "description": "Meter sleeve 24",
+        "quantity": 6,
+        "unitPrice": 22.75,
+        "amount": 136.5
+      },
+      {
+        "sku": "KT-211",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 159.64,
+    "tax": 11.14,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-13.pdf",
+    "ms": 97,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-112",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 23,
+        "amount": 161
+      },
+      {
+        "sku": "KT-212",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 185.98,
+    "tax": 12.98,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-14.pdf",
+    "ms": 100,
+    "kind": "purchase_order",
+    "lines": [
+      {
+        "sku": "KT-112",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 23.75,
+        "amount": 166.25
+      },
+      {
+        "sku": "KT-212",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 191.62,
+    "tax": 13.37,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-15.pdf",
+    "ms": 100,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-114",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 25,
+        "amount": 50
+      },
+      {
+        "sku": "KT-214",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 65.75,
+    "tax": null,
+    "proposedTax": 375,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-16.pdf",
+    "ms": 106,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-115",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 26.75,
+        "amount": 80.25
+      },
+      {
+        "sku": "KT-215",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12,
+        "amount": 12
+      }
+    ],
+    "total": 92.25,
+    "tax": null,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-17.pdf",
+    "ms": 117,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-116",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 27,
+        "amount": 108
+      },
+      {
+        "sku": "KT-216",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 130.08,
+    "tax": 9.08,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-18.pdf",
+    "ms": 112,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-117",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 28.75,
+        "amount": 143.75
+      },
+      {
+        "sku": "KT-217",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 168.51,
+    "tax": 11.76,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-19.png",
+    "ms": 1767,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-118",
+        "description": "Packing insert",
+        "quantity": 29,
+        "unitPrice": 6,
+        "amount": 174
+      },
+      {
+        "sku": "KT-218",
+        "description": "Finishing kit",
+        "quantity": 13,
+        "unitPrice": 1,
+        "amount": 13
+      }
+    ],
+    "total": 201.03,
+    "tax": 14.03,
+    "proposedTax": null,
+    "pending": [
+      "lines.0.quantity",
+      "lines.0.unitPrice",
+      "lines.1.quantity",
+      "lines.1.unitPrice"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-20.pdf",
+    "ms": 117,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-119",
+        "description": "Packing insert",
+        "quantity": 7,
+        "unitPrice": 30.75,
+        "amount": 215.25
+      },
+      {
+        "sku": "KT-219",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 245.37,
+    "tax": null,
+    "proposedTax": 1712,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-21.pdf",
+    "ms": 102,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-120",
+        "description": "Packing insert",
+        "quantity": 8,
+        "unitPrice": 31,
+        "amount": 248
+      },
+      {
+        "sku": "KT-220",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 274.7,
+    "tax": 13.7,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-22.png",
+    "ms": 1739,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-121",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 32.75,
+        "amount": 65.5
+      },
+      {
+        "sku": "KT-221",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 88.39,
+    "tax": 5.89,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-23.pdf",
+    "ms": 118,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-122",
+        "description": "Packing insert Series 7",
+        "quantity": 3,
+        "unitPrice": 33,
+        "amount": 99
+      },
+      {
+        "sku": "KT-222",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 120.4,
+    "tax": 8.4,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-24.pdf",
+    "ms": 116,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-123",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 11.75,
+        "amount": 47
+      },
+      {
+        "sku": "KT-223",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 64.5,
+    "tax": 4.5,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-25.png",
+    "ms": 2049,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-124",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 12,
+        "amount": 60
+      },
+      {
+        "sku": "KT-224",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 81.7,
+    "tax": 5.7,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-26.pdf",
+    "ms": 119,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-125",
+        "description": "Packing insert",
+        "quantity": 6,
+        "unitPrice": 13.75,
+        "amount": 82.5
+      },
+      {
+        "sku": "KT-225",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 104.66,
+    "tax": 7.16,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-27.pdf",
+    "ms": 108,
+    "kind": "credit_note",
+    "lines": [
+      {
+        "sku": "KT-126",
+        "description": "Packing insert",
+        "quantity": 7,
+        "unitPrice": 14,
+        "amount": 98
+      },
+      {
+        "sku": "KT-226",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": null,
+    "tax": 8.33,
+    "proposedTax": null,
+    "pending": [
+      "total"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-28.png",
+    "ms": 1596,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-127",
+        "description": "Packing insert",
+        "quantity": 8,
+        "unitPrice": 15.75,
+        "amount": 126
+      },
+      {
+        "sku": "KT-227",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 149.43,
+    "tax": 10.43,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-29.pdf",
+    "ms": 142,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-128",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 16,
+        "amount": 32
+      },
+      {
+        "sku": "KT-228",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 48.38,
+    "tax": 3.38,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-30.pdf",
+    "ms": 107,
+    "kind": "purchase_order",
+    "lines": [
+      {
+        "sku": "KT-128",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 16.75,
+        "amount": 33.5
+      },
+      {
+        "sku": "KT-228",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 49.99,
+    "tax": 3.49,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-31.png",
+    "ms": 1773,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-130",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 18,
+        "amount": 72
+      },
+      {
+        "sku": "KT-230",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 90.4,
+    "tax": null,
+    "proposedTax": 540,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-32.pdf",
+    "ms": 164,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-131",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 19.75,
+        "amount": 98.75
+      },
+      {
+        "sku": "KT-231",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 111.75,
+    "tax": null,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-33.jpg",
+    "ms": 1930,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-132",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 20,
+        "amount": 120
+      },
+      {
+        "sku": "KT-232",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 144.05,
+    "tax": 10.05,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-34.pdf",
+    "ms": 116,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-133",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 21.75,
+        "amount": 152.25
+      },
+      {
+        "sku": "KT-233",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 178.72,
+    "tax": 12.47,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-35.jpg",
+    "ms": 1627,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-134",
+        "description": "Binding service",
+        "quantity": 22,
+        "unitPrice": 8,
+        "amount": 176
+      },
+      {
+        "sku": "KT-234",
+        "description": "Finishing kit",
+        "quantity": 14,
+        "unitPrice": 1,
+        "amount": 14
+      }
+    ],
+    "total": 204.25,
+    "tax": 14.25,
+    "proposedTax": null,
+    "pending": [
+      "lines.0.quantity",
+      "lines.0.unitPrice",
+      "lines.1.quantity",
+      "lines.1.unitPrice"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-36.pdf",
+    "ms": 107,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-135",
+        "description": "Binding service",
+        "quantity": 2,
+        "unitPrice": 23.75,
+        "amount": 47.5
+      },
+      {
+        "sku": "KT-235",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 66.11,
+    "tax": null,
+    "proposedTax": 461,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-37.jpg",
+    "ms": 1791,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-136",
+        "description": "Binding service",
+        "quantity": 3,
+        "unitPrice": 24,
+        "amount": 72
+      },
+      {
+        "sku": "KT-236",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 91,
+    "tax": 5,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-38.pdf",
+    "ms": 99,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-137",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 25.75,
+        "amount": 103
+      },
+      {
+        "sku": "KT-237",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 129.78,
+    "tax": 8.78,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-39.jpg",
+    "ms": 1695,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-138",
+        "description": "Binding service Series 7",
+        "quantity": 5,
+        "unitPrice": 26,
+        "amount": 130
+      },
+      {
+        "sku": "KT-238",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 154.8,
+    "tax": 10.8,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-40.pdf",
+    "ms": 100,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-139",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 27.75,
+        "amount": 166.5
+      },
+      {
+        "sku": "KT-239",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 194.04,
+    "tax": 13.54,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-41.jpg",
+    "ms": 2331,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-140",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 28,
+        "amount": 196
+      },
+      {
+        "sku": "KT-240",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 228.98,
+    "tax": 15.98,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-42.pdf",
+    "ms": 120,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-141",
+        "description": "Binding service",
+        "quantity": 8,
+        "unitPrice": 29.75,
+        "amount": 238
+      },
+      {
+        "sku": "KT-241",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 272.9,
+    "tax": 18.9,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  },
+  {
+    "file": "case-43.jpg",
+    "ms": 1028,
+    "kind": "credit_note",
+    "lines": [],
+    "total": null,
+    "tax": null,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-44.pdf",
+    "ms": 108,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-143",
+        "description": "Binding service",
+        "quantity": 3,
+        "unitPrice": 31.75,
+        "amount": 95.25
+      },
+      {
+        "sku": "KT-243",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 117.44,
+    "tax": 8.19,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-45.jpg",
+    "ms": 1808,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-144",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 32,
+        "amount": 128
+      },
+      {
+        "sku": "KT-244",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 152.65,
+    "tax": 10.65,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-46.pdf",
+    "ms": 108,
+    "kind": "purchase_order",
+    "lines": [
+      {
+        "sku": "KT-144",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 32.75,
+        "amount": 131
+      },
+      {
+        "sku": "KT-244",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 155.88,
+    "tax": 10.88,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "case-47.jpg",
+    "ms": 1825,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-146",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 11,
+        "amount": 66
+      },
+      {
+        "sku": "KT-246",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 84.95,
+    "tax": null,
+    "proposedTax": 495,
+    "pending": [
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-48.pdf",
+    "ms": 120,
+    "kind": "invoice",
+    "lines": [
+      {
+        "sku": "KT-147",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 12.75,
+        "amount": 89.25
+      },
+      {
+        "sku": "KT-247",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14,
+        "amount": 14
+      }
+    ],
+    "total": 103.25,
+    "tax": null,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  }
+]
