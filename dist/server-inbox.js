@@ -205,8 +205,9 @@ async function readInvoiceFile(file, progress) {
   return final && {method, read, final, sourceText: source};
 }
 
-export function createServerInbox({api, root}) {
+export function createServerInbox({api, root, onDetailClosed}) {
   let invoices = [], archivedInvoices = [], stopped = false;
+  let refreshSequence = 0;
   const live = h('div', {class: 'match-message', role: 'status', 'aria-live': 'polite'});
   const say = msg => { live.textContent = msg; if (detail?.live) detail.live.textContent = msg; };
   const fail = e => say(e.message || String(e));
@@ -220,7 +221,12 @@ export function createServerInbox({api, root}) {
     h('div', {class: 'table-scroll'}, h('table', {},
       h('thead', {}, h('tr', {}, ['INVOICE / SUPPLIER', 'AMOUNT', 'ARCHIVED', ''].map(label => h('th', {}, label)))), archivedRows)));
   const uploadInvoiceButton = h('button', {type: 'button', class: 'button primary', onclick: () => pickFile('.json,.txt,.pdf,.png,.jpg,.jpeg,.webp', f => busy(uploadInvoiceButton, () => uploadInvoice(f)))}, '↑ Upload invoice');
-  const uploadPoButton = h('button', {type: 'button', class: 'button secondary', onclick: () => pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', f => busy(uploadPoButton, () => uploadPo(f)))}, '↑ Upload purchase order');
+  function choosePurchaseOrder(button, onUploaded, notify = say) {
+    pickFile('.json,.pdf,.png,.jpg,.jpeg,.webp', file => busy(button, async () => {
+      if (await uploadPo(file, null, notify)) await onUploaded?.();
+    }));
+  }
+  const uploadPoButton = h('button', {type: 'button', class: 'button secondary', onclick: ev => choosePurchaseOrder(ev.currentTarget)}, '↑ Upload purchase order');
   const refreshButton = h('button', {type: 'button', class: 'button secondary', onclick: () => busy(refreshButton, refresh)}, '↻ Refresh');
   const section = h('section', {id: 'server-inbox'},
     h('section', {class: 'panel'},
@@ -252,16 +258,21 @@ export function createServerInbox({api, root}) {
     }) : [h('tr', {}, h('td', {colspan: '6', class: 'empty'}, 'No invoices yet. Upload an invoice to start.'))]));
   }
   async function refresh() {
+    if (stopped) return;
+    const sequence = ++refreshSequence;
     try {
-      [invoices, archivedInvoices] = await Promise.all([api.get('/api/invoices'), api.get('/api/invoices/archived')]);
-      if (stopped) return;
+      const lists = await Promise.all([api.get('/api/invoices'), api.get('/api/invoices/archived')]);
+      if (stopped || sequence !== refreshSequence) return;
+      [invoices, archivedInvoices] = lists;
       renderRows();
       archiveTitle.textContent = `Archived Invoices (${archivedInvoices.length})`;
       fill(archivedRows, archivedInvoices.length ? archivedInvoices.map(inv => h('tr', {},
         identityCell(inv), h('td', {}, formatMoney(inv.total_amount, inv.currency ?? 'USD')),
         h('td', {}, when(inv.archived_at)), openCell(inv)))
         : h('tr', {}, h('td', {colspan: '4', class: 'empty'}, 'No archived invoices.')));
-    } catch (e) { fail(e); }
+    } catch (e) {
+      if (!stopped && sequence === refreshSequence) fail(e);
+    }
   }
 
   let lastUpload = null; // kept after a transient failure so "Try again" resends the same body (same Idempotency-Key)
@@ -289,15 +300,15 @@ export function createServerInbox({api, root}) {
       await sendInvoice(body);
     } catch (e) { fail(e); }
   }
-  async function uploadPo(file, detailView = null) {
+  async function uploadPo(file, detailView = null, notify = say) {
     try {
       let d;
       if (/\.json$/i.test(file.name)) {
         if (file.size > 500000) throw Error('JSON purchase orders must be under 500 KB.');
         try { d = JSON.parse(await file.text()); } catch { throw Error('This JSON file could not be read.'); }
         d = validateDocument(d, 'purchase_order');
-      } else d = await extractAndReview(file, 'purchase_order', say);
-      if (!d) { say('Purchase order upload cancelled.'); return; }
+      } else d = await extractAndReview(file, 'purchase_order', notify);
+      if (!d) { notify('Purchase order upload cancelled.'); return; }
       const po = await api.send('POST', '/api/purchase-orders', purchaseOrderRequest(d));
       if (detailView && !detailView.closed) {
         if (po.purchase_order_number.toLowerCase() === detailView.inv.po_reference?.toLowerCase()) {
@@ -305,9 +316,10 @@ export function createServerInbox({api, root}) {
         }
         await loadDetail(detailView);
       }
-      say(`Purchase order ${po?.purchase_order_number ?? ''} saved.`);
+      notify(`Purchase order ${po?.purchase_order_number ?? ''} saved.`);
       await refresh();
-    } catch (e) { fail(e); }
+      return true;
+    } catch (e) { notify(e.message); }
   }
 
   // ---------- detail dialog ----------
@@ -361,15 +373,33 @@ export function createServerInbox({api, root}) {
   }
 
   let detail = null;
-  async function openDetail(id) {
+  async function openDetail(id, target) {
+    if (stopped) return;
     detail?.close();
     const dialog = h('dialog', {class: 'server-detail', 'aria-labelledby': 'server-detail-title'});
     const d = detail = {dialog, ctrl: new AbortController(), id, closed: false, live: h('div', {class: 'match-message', role: 'status', 'aria-live': 'polite'}), close: () => dialog.open && dialog.close()};
-    dialog.addEventListener('close', () => { d.closed = true; d.ctrl.abort(); dialog.remove(); if (detail === d) detail = null; });
+    dialog.addEventListener('close', () => {
+      d.closed = true;
+      d.ctrl.abort();
+      dialog.remove();
+      if (detail === d) {
+        detail = null;
+        if (!stopped) onDetailClosed?.();
+      }
+    });
     document.body.append(dialog);
     dialog.append(h('div', {class: 'dialog-top'}, h('h2', {id: 'server-detail-title'}, 'Loading invoice…'), h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close invoice', onclick: () => dialog.close()}, '×')), d.live);
     dialog.showModal();
     await loadDetail(d);
+    if (!d.closed && target) {
+      const item = [...dialog.querySelectorAll('[data-ev]')].find(el => el.dataset.ev === target);
+      if (item) {
+        const parent = item.closest('details');
+        if (parent) parent.open = true;
+        item.scrollIntoView({block: 'center'});
+        item.focus({preventScroll: true});
+      }
+    }
   }
 
   function confirmManagement(d, {title, message, action, body, success}) {
@@ -409,12 +439,12 @@ export function createServerInbox({api, root}) {
   }
 
   async function loadDetail(d) {
-    let inv, discrepancies, management, pos = [];
+    let inv, discrepancies, management, po = null;
     try {
       [inv, discrepancies, management] = await Promise.all([
         api.get(`/api/invoices/${d.id}`), api.get(`/api/invoices/${d.id}/discrepancies`), api.get(`/api/invoices/${d.id}/history`),
       ]);
-      if (inv.purchase_order_id) pos = await api.get('/api/purchase-orders');
+      if (inv.purchase_order_id) po = await api.get(`/api/purchase-orders/${inv.purchase_order_id}`);
     } catch (e) { d.live.textContent = e.message; return; }
     if (d.closed) return;
     // No route returns a discrepancy's investigations, so the latest one is found through its audit history.
@@ -425,7 +455,7 @@ export function createServerInbox({api, root}) {
     }));
     if (d.closed) return;
     d.ctrl.abort(); // stop pollers from the previous render of this dialog
-    Object.assign(d, {lastDecision: new Map(discrepancies.map((x, i) => [x.id, histories[i]?.resolutions.at(-1) ?? null])), ctrl: new AbortController(), inv, po: pos.find(p => p.id === inv.purchase_order_id) ?? null});
+    Object.assign(d, {lastDecision: new Map(discrepancies.map((x, i) => [x.id, histories[i]?.resolutions.at(-1) ?? null])), ctrl: new AbortController(), inv, po});
     renderDetail(d, discrepancies, investigations, management);
     d.notice = null; // shown once, on the card it was recorded for
   }
@@ -457,8 +487,7 @@ export function createServerInbox({api, root}) {
         await refresh();
         say('Line matches rechecked.');
       } catch (e) { fail(e); }
-    })}, 'Recheck line matches');
-    const hasUnmatchedLines = discrepancies.some(x => !CLOSED.includes(x.status) && x.discrepancy_type === 'unmatched_line');
+    })}, 'Compare invoice & PO');
     const correct = field => h('button', {type: 'button', class: 'button secondary', onclick: () => reviewField(d, field)}, field === 'currency' ? 'Confirm currency' : field === 'po_reference' ? 'Correct PO reference' : 'Correct field');
     const correctedUpload = () => h('button', {type: 'button', class: 'button secondary', onclick: ev => {
       const b = ev.currentTarget;
@@ -495,7 +524,7 @@ export function createServerInbox({api, root}) {
       lineTable('invoice_line', inv.lines ?? [], `document:${inv.id}#lines`, pricingCur),
       h('p', {class: 'hint'}, inv.extraction?.reviewed_fields?.includes('currency') ? `Currency confirmed by reviewer · ${inv.currency}` : `Extraction: ${inv.extraction?.method ?? 'unknown'}`),
       docUrl ? h('a', {href: docUrl, target: '_blank', rel: 'noopener noreferrer'}, 'Open original document ↗') : h('p', {class: 'hint'}, 'Original document link unavailable.'),
-      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload(), po && hasUnmatchedLines && recheck));
+      editable && h('div', {class: 'actions'}, correct('supplier_name'), correctedUpload(), recheck));
     const poCard = po ? h('article', {class: 'source-card', 'data-ev': `po:${po.id}`},
       h('div', {class: 'source-heading'}, h('span', {class: 'eyebrow'}, 'PURCHASE ORDER'), h('span', {class: 'demo-badge'}, po.status.toUpperCase())),
       h('h3', {}, po.supplier_name), h('div', {class: 'source-meta'}, h('span', {}, po.purchase_order_number), h('span', {}, po.currency)),
@@ -530,6 +559,8 @@ export function createServerInbox({api, root}) {
       if (editable && !closed && view.needsSourceReview) actions.push(correctedUpload());
       const evidence = x.deterministic_evidence;
       const summarize = lines => lines.map(line => ({...line, number: line.line_number}));
+      const duplicate = x.discrepancy_type === 'duplicate_candidate' && evidence?.other_invoice_id;
+      if (duplicate) actions.push(h('button', {type: 'button', class: 'button secondary', onclick: () => openDetail(evidence.other_invoice_id)}, 'Open suspected duplicate'));
       const card = evidence?.check === 'line_match_review' && !closed && po?.id === x.purchase_order_id
         ? renderLineMatchReview({
           candidates: evidence.candidates.map(c => ({invoiceLine: c.invoice_line_id, poLine: c.po_line_id, description: c.description, sameQuantity: c.same_quantity})),
@@ -549,17 +580,19 @@ export function createServerInbox({api, root}) {
           } : null,
         })
         : discrepancyCard(d, x, investigations[i], cur, showEvidence, view, actions);
+      card.dataset.ev = `discrepancy:${x.id}`;
+      card.tabIndex = -1;
       groups.set(group, [...(groups.get(group) ?? []), card]);
     }
     const sections = ['Review required', 'Missing documents', 'Discrepancies'].flatMap(group => groups.has(group)
       ? [h('h3', {}, group), ...groups.get(group)] : []);
     fill(d.dialog, 
-      h('div', {class: 'dialog-top'}, h('div', {}, h('span', {class: 'eyebrow'}, 'SHARED WORKSPACE · INVOICE'), h('h2', {id: 'server-detail-title'}, `${inv.invoice_number ?? 'Invoice'} · ${inv.supplier_name ?? 'Unknown supplier'}`)),
+      h('div', {class: 'dialog-top'}, h('div', {}, h('span', {class: 'eyebrow'}, 'PRIVATE WORKSPACE · INVOICE'), h('h2', {id: 'server-detail-title'}, `${inv.invoice_number ?? 'Invoice'} · ${inv.supplier_name ?? 'Unknown supplier'}`)),
         h('button', {type: 'button', class: 'icon-button', 'aria-label': 'Close invoice', onclick: () => d.dialog.close()}, '×')),
       h('div', {class: 'server-detail-body'},
         h('div', {class: 'actions invoice-management-actions'},
           archived && h('span', {class: 'status'}, `Archived ${when(inv.archived_at)}`), managementButton(lifecycle)),
-        h('div', {class: 'pair-documents'}, invoiceCard, poCard), evidenceBox,
+        h('div', {class: 'pair-documents', 'data-ev': 'matching', tabindex: '-1'}, invoiceCard, poCard), evidenceBox,
         sections.length ? sections : h('p', {class: 'check ok'}, 'No open findings.'),
         groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history')),
         h('details', {}, h('summary', {}, 'Invoice management history'),
@@ -599,6 +632,8 @@ export function createServerInbox({api, root}) {
       h('div', {class: 'source-heading'}, h('strong', {}, view.title), h('span', {class: `status ${open ? 'review' : 'approved'}`}, view.group === 'Discrepancies' ? `${DISC_STATUS[x.status] ?? words(x.status)} · ${x.severity} severity` : DISC_STATUS[x.status])),
       view.kind && view.kind !== 'discrepancy' && h('small', {class: 'eyebrow warning-kind'}, KIND_LABEL[view.kind]),
       view.message && h('p', {}, view.message),
+      x.discrepancy_type === 'duplicate_candidate' && Array.isArray(x.deterministic_evidence?.evidence)
+        && h('ul', {class: 'warning-details'}, x.deterministic_evidence.evidence.map(reason => h('li', {}, reason))),
       view.details && h('ul', {class: 'warning-details'}, view.details.map(t => h('li', {}, t))),
       x.deterministic_evidence?.match_basis === 'reviewer_confirmed' && h('p', {},
         `${x.deterministic_evidence.line.description} · ${x.deterministic_evidence.line.invoice.sku} ↔ ${x.deterministic_evidence.line.po.sku} · Confirmed by reviewer`),
@@ -695,5 +730,5 @@ export function createServerInbox({api, root}) {
   }
 
   refresh();
-  return {refresh, stop() { stopped = true; detail?.close(); section.remove(); }};
+  return {refresh, openDetail, choosePurchaseOrder, stop() { stopped = true; detail?.close(); section.remove(); }};
 }

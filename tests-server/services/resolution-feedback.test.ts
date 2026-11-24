@@ -19,7 +19,7 @@ async function upload(o: { reviewer: string }, over: Record<string, unknown> = {
   expect(r.status, JSON.stringify(r.body)).toBe(201);
   return r.body.data;
 }
-const findings = async (o: { viewer: string }, id: string) => (await env.call('GET', `/api/invoices/${id}/discrepancies`, { user: o.viewer })).body.data as any[];
+const findings = async (o: { secondReviewer: string }, id: string) => (await env.call('GET', `/api/invoices/${id}/discrepancies`, { user: o.secondReviewer })).body.data as any[];
 const resolve = (o: { reviewer: string }, id: string, body: Record<string, unknown>) => env.call('POST', `/api/discrepancies/${id}/resolve`, { user: o.reviewer, body });
 
 describe('decisions say what is still required', () => {
@@ -40,12 +40,12 @@ describe('decisions say what is still required', () => {
     expect(again.body.error.message).toMatch(/already approved/i);
     expect(await env.db.query('select 1 from resolution_actions where discrepancy_id = $1', [d.id])).toHaveLength(1);
 
-    const fresh = (await env.call('GET', `/api/invoices/${inv.id}`, { user: o.viewer })).body.data;
+    const fresh = (await env.call('GET', `/api/invoices/${inv.id}`, { user: o.secondReviewer })).body.data;
     const fix = await env.call('POST', `/api/invoices/${inv.id}/review-fields`, { user: o.reviewer, body: { updated_at: fresh.updated_at, values: { currency: 'USD' } } });
     expect(fix.status, JSON.stringify(fix.body)).toBe(200);
     expect((await findings(o, inv.id))[0].status).toBe('dismissed');
-    expect((await env.call('GET', `/api/invoices/${inv.id}`, { user: o.viewer })).body.data.status).toBe('resolved');
-    const hist = (await env.call('GET', `/api/discrepancies/${d.id}/history`, { user: o.viewer })).body.data;
+    expect((await env.call('GET', `/api/invoices/${inv.id}`, { user: o.secondReviewer })).body.data.status).toBe('resolved');
+    const hist = (await env.call('GET', `/api/discrepancies/${d.id}/history`, { user: o.secondReviewer })).body.data;
     expect(hist.resolutions.map((x: any) => x.reviewer_notes)).toEqual(['Currency looks wrong']);
   });
 

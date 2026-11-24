@@ -1,15 +1,17 @@
 // The account gateway opens a private workspace after authentication.
 // The browser holds only the Supabase anon key (public by design) and the user's own session token.
 import {createApiClient} from './api-client.js';
-import {createServerInbox} from './server-inbox.js';
+import {createWorkspace} from './workspace-ui.js';
 import {fill, h} from './investigation-ui.js';
 
 const SUPABASE_ESM = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm'; // pinned, like PDF.js in extraction.js
 const DEV_KEY = 'rekono-dev-session';
 const area = document.querySelector('#auth-area');
 const gateway = document.querySelector('#account-gateway');
-const workspace = document.querySelector('#invoices-page');
-let config = null, supabase = null, user = null, inbox = null;
+const workspace = document.querySelector('#workspace');
+const nav = document.querySelector('#workspace-nav');
+const breadcrumb = document.querySelector('#workspace-breadcrumb');
+let config = null, supabase = null, user = null, app = null;
 
 const api = createApiClient({
   getToken: async () => (config?.mode === 'supabase' ? (await supabase?.auth.getSession())?.data.session?.access_token : user?.token) ?? null,
@@ -32,14 +34,23 @@ function enter(next) {
   document.body.classList.add('server-mode');
   gateway.hidden = true;
   workspace.hidden = false;
-  inbox?.stop();
-  inbox = createServerInbox({api, root: workspace});
+  app?.stop();
+  const workspaceApi = createApiClient({
+    getToken: async () => {
+      if (user !== next) throw Error('This workspace session has ended.');
+      const session = config.mode === 'supabase' ? (await supabase.auth.getSession()).data.session : null;
+      if (user !== next || (session && session.user.id !== next.id)) throw Error('This workspace session has ended.');
+      return session?.access_token ?? next.token;
+    },
+    onUnauthenticated: () => { if (user === next) signOut('Your session has ended. Sign in again.'); },
+  });
+  app = createWorkspace({api: workspaceApi, root: workspace, nav, breadcrumb});
   renderArea('Signed in to your workspace.');
 }
 
 async function signOut(message = 'Signed out.') {
-  inbox?.stop();
-  inbox = null;
+  app?.stop();
+  app = null;
   user = null;
   sessionStorage.removeItem(DEV_KEY);
   document.body.classList.remove('server-mode');
@@ -65,7 +76,7 @@ async function supabaseUser(session) {
     // Existing reviewers can still sign in when signup is disabled.
     await api.get('/api/invoices');
   }
-  return {label: session.user.email ?? 'Signed in'};
+  return {id: session.user.id, label: session.user.email ?? 'Signed in'};
 }
 
 function openAuth(signup = false) {

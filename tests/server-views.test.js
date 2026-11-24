@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {extractedInvoice, fileUpload, purchaseOrderRequest, toMoneyString, warningPresentation} from '../dist/server-inbox.js';
+import {createServerInbox, extractedInvoice, fileUpload, purchaseOrderRequest, toMoneyString, warningPresentation} from '../dist/server-inbox.js';
 import {applyConfirmations} from '../dist/extraction-review.js';
 import {investigationView, formatMoney, decisionMessage, alreadyApproved} from '../dist/investigation-ui.js';
 import {parseExtractedText} from '../dist/extraction.js';
@@ -241,4 +241,41 @@ test('the same approval is blocked only while the discrepancy has not changed', 
   assert.equal(alreadyApproved(last, 'request_corrected_invoice', 'investigating'), false);
   assert.equal(alreadyApproved(null, 'correct_extraction_error', 'investigating'), false);
   assert.equal(alreadyApproved({...last, approval_status: 'rejected'}, 'correct_extraction_error', 'investigating'), false);
+});
+
+test('inbox keeps the newest refresh when older requests settle later', async t => {
+  class Element {
+    children = [];
+    setAttribute() {}
+    addEventListener() {}
+    replaceChildren(...children) { this.children = children; }
+    prepend(child) { this.children.unshift(child); }
+    get textContent() { return this.children.map(child => child.textContent ?? child).join(''); }
+    set textContent(value) { this.children = [value]; }
+  }
+  globalThis.document = {createElement: () => new Element()};
+  t.after(() => { delete globalThis.document; });
+  let finishInitial, failStale;
+  const initial = new Promise(resolve => { finishInitial = resolve; });
+  const stale = new Promise((_, reject) => { failStale = reject; });
+  const invoice = {id: 'new', invoice_number: 'NEW-123', currency: 'USD', open_discrepancy_count: 0};
+  const archived = {...invoice, id: 'archived', invoice_number: 'ARCHIVED-123'};
+  const replies = new Map([
+    ['/api/invoices', [initial, [invoice], stale, [invoice]]],
+    ['/api/invoices/archived', [[], [archived], [], [archived]]],
+  ]);
+  const root = new Element();
+  const inbox = createServerInbox({root, api: {get: path => replies.get(path).shift()}});
+
+  await inbox.refresh();
+  finishInitial([]);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(root.textContent, /NEW-123/);
+  assert.match(root.textContent, /ARCHIVED-123/);
+
+  const staleRefresh = inbox.refresh();
+  await inbox.refresh();
+  failStale(new Error('Stale refresh error'));
+  await staleRefresh;
+  assert.doesNotMatch(root.textContent, /Stale refresh error/);
 });

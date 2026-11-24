@@ -122,6 +122,46 @@ export async function discrepancyHistory(db: Db, orgId: string, discrepancyId: s
   return { resolutions: resolutions.map(resolutionDto), audit: events.map(auditDto) };
 }
 
+/** Active review queue. The invoice detail remains the source of full evidence and actions. */
+export async function listWorkspaceFindings(db: Db, orgId: string, duplicates: boolean) {
+  return db.query(`select d.id, d.invoice_id, d.discrepancy_type, d.status, d.severity, d.observed_value,
+      d.difference_amount::text, i.invoice_number, i.supplier_name_raw as supplier_name, i.currency,
+      jsonb_build_object('check', d.deterministic_evidence -> 'check',
+        'suspected_type', d.deterministic_evidence -> 'suspected_type',
+        'po_reference', d.deterministic_evidence -> 'po_reference') as deterministic_evidence
+    from discrepancies d
+    join invoices i on i.organization_id = d.organization_id and i.id = d.invoice_id
+    where d.organization_id = $1 and d.status in ${OPEN_STATUSES_SQL}
+      and i.archived_at is null and i.status not in ('rejected', 'superseded')
+      and (d.discrepancy_type = 'duplicate_candidate') = $2
+    order by d.created_at desc, d.id desc limit 200`, [orgId, duplicates]);
+}
+
+/** Workspace history exposes event summaries and the corresponding invoice or PO when available. */
+export async function listWorkspaceActivity(db: Db, orgId: string, before: string | null) {
+  const rows = await db.query<{ id: string; timestamp: string }>(`with page as (
+      select id, organization_id, event_type, actor_type, timestamp, target_type, target_id,
+        new_state ->> 'discrepancy_id' as related_discrepancy
+      from audit_events
+      where organization_id = $1 and ($2::bigint is null or id < $2)
+      order by id desc limit 51
+    )
+    select a.id::text as id, a.event_type, a.actor_type, a.timestamp,
+      i.id as invoice_id, i.invoice_number, d.id as discrepancy_id,
+      p.id as purchase_order_id, p.purchase_order_number,
+      r.approval_status, r.approved_action, r.reviewer_notes
+    from page a
+    left join discrepancies d on d.organization_id = a.organization_id and d.id::text =
+      case when a.target_type = 'discrepancy' then a.target_id else a.related_discrepancy end
+    left join invoices i on i.organization_id = a.organization_id and
+      (i.id = d.invoice_id or (a.target_type = 'invoice' and i.id::text = a.target_id))
+    left join purchase_orders p on p.organization_id = a.organization_id and a.target_type = 'purchase_order' and p.id::text = a.target_id
+    left join resolution_actions r on r.organization_id = a.organization_id and a.target_type = 'resolution_action' and r.id::text = a.target_id
+    order by a.id desc`, [orgId, before]);
+  const events = rows.slice(0, 50).map(row => ({ ...row, timestamp: iso(row.timestamp) }));
+  return { events, next_before: rows.length > 50 ? events.at(-1)!.id : null };
+}
+
 // ---------- document evidence and history for the agent ----------
 const DOCUMENT_FIELDS = ['supplier_name', 'invoice_number', 'invoice_date', 'due_date', 'po_reference', 'currency', 'subtotal', 'tax_amount', 'total_amount', 'lines'] as const;
 
