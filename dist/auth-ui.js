@@ -29,7 +29,7 @@ function renderArea(message = '') {
   }
 }
 
-function enter(next) {
+function enter(next, restoreSection = false) {
   user = next;
   document.body.classList.add('server-mode');
   gateway.hidden = true;
@@ -44,7 +44,7 @@ function enter(next) {
     },
     onUnauthenticated: () => { if (user === next) signOut('Your session has ended. Sign in again.'); },
   });
-  app = createWorkspace({api: workspaceApi, root: workspace, nav, breadcrumb});
+  app = createWorkspace({api: workspaceApi, root: workspace, nav, breadcrumb, restoreSection});
   renderArea('Signed in to your workspace.');
 }
 
@@ -152,11 +152,11 @@ async function start() {
     if (config.mode === 'dev') {
       const saved = JSON.parse(sessionStorage.getItem(DEV_KEY) ?? 'null');
       const u = saved && config.dev_users.find(x => x.token === saved.token);
-      if (u) enter(u);
+      if (u) enter(u, true);
     } else {
       await loadSupabase();
       const {data} = await supabase.auth.getSession();
-      if (data.session) enter(await supabaseUser(data.session));
+      if (data.session) enter(await supabaseUser(data.session), true);
     }
   } catch (e) {
     renderArea(e.message);

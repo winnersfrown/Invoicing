@@ -595,7 +595,7 @@ export function createServerInbox({api, root, onDetailClosed}) {
         h('div', {class: 'pair-documents', 'data-ev': 'matching', tabindex: '-1'}, invoiceCard, poCard), evidenceBox,
         sections.length ? sections : h('p', {class: 'check ok'}, 'No open findings.'),
         groups.has('Validation history') && h('details', {}, h('summary', {}, 'Validation history'), groups.get('Validation history')),
-        h('details', {}, h('summary', {}, 'Invoice management history'),
+        h('details', {'data-ev': 'invoice-history', tabindex: '-1'}, h('summary', {}, 'Invoice management history'),
           management.length ? management.map(event => h('div', {class: 'activity-item'},
             h('strong', {}, {'invoice.archived': 'Invoice archived', 'invoice.restored': 'Invoice restored',
               'invoice.purchase_order_unlinked': 'Purchase order unlinked'}[event.event_type]),
