@@ -1,5 +1,5 @@
 import {readDocumentMetadata} from './document-metadata.js';
-import {arithmeticReview,FEE_KINDS} from './arithmetic.js';
+import {arithmeticReview,percentageCents,toCents,FEE_KINDS} from './arithmetic.js';
 import {readMoney, readSummary, readExchangeRate, sharedSymbols} from './invoice-money.js';
 
 const amount = value => readMoney(value)?.value ?? null;
@@ -26,51 +26,76 @@ function columns(row){
  const sku = (list, labels) => {const d=list.flatMap((k,i)=>k==='description'?[i]:[]);if(d.length>1&&!list.includes('sku'))list[d.find(i=>/^item$/i.test(labels[i].trim()))??d[1]]='sku';return list;};
  const keys=sku(mapped.map(c=>c.key),mapped.map(c=>c.label));mapped.forEach((c,i)=>{c.key=keys[i];});
  headers=sku(headers,cells);
+ // OCR sometimes returns the entire heading as one token. Recover the order
+ // only if the whole row consists of labels. Estimated positions would be misleading.
+ const words=row.text.trim().split(/[\s|]+/);
+ const labels=[];
+ for(let i=0;i<words.length;){
+  const label=[3,2,1].filter(n=>i+n<=words.length).map(n=>words.slice(i,i+n).join(' '))
+   .find(label=>Object.values(aliases).some(pattern=>pattern.test(label)));
+  if(!label)break;
+  labels.push(label);
+  i+=label.split(' ').length;
+  if(i===words.length){
+   const order=sku(labels.map(l=>Object.keys(aliases).find(k=>aliases[k].test(l))),labels);
+   if(order.includes('quantity')&&order.includes('unitPrice')&&mapped.length!==order.length)
+    return {order,headers:headers.length===order.length?headers:undefined};
+  }
+ }
  if(mapped.some(c=>c.key==='quantity')&&mapped.some(c=>c.key==='unitPrice'))return {positions:mapped,order:mapped.map(c=>c.key)};
  if(headers.includes('quantity')&&headers.includes('unitPrice'))return {headers,order:headers.filter(Boolean)};
+ // Sparse OCR can lose the quantity heading. Keep the two explicitly
+ // labeled money columns; a missing factor must stay available for review.
+ if(mapped.some(c=>c.key==='unitPrice')&&mapped.some(c=>c.key==='amount')&&
+    mapped.every(c=>['description','unitPrice','amount'].includes(c.key)))
+  return {positions:mapped,order:mapped.map(c=>c.key),partial:true};
  return null;
 }
 
-const numberToken = /^[$€£]?\d[\d,]*(?:\.\d{1,3})?$/;
-// A code has letters and digits; one printed after the description must also contain a hyphen.
+const numberToken = /^[$€£]?\d[\d,]*(?:\.\d{1,3})?%?$/;
 const skuLike = (s, after = false) => /^(?=.*\d)(?=.*[A-Z])[A-Z0-9][A-Z0-9._/-]{1,19}$/i.test(s) && (!after || s.includes('-'));
-const centsOf = s => Math.round((readMoney(s)?.value ?? NaN) * 100);
-/**
- * Splits a row such as "SMM-001 Social Media Strategy Plan $100.00 1 $100.00" into its columns
- * without a usable header. Trailing numbers are assigned by arithmetic (quantity × unit price =
- * amount), so a price printed before the quantity never lands in the description.
- * Returns null when the numbers cannot be assigned with confidence.
- */
+
+/** Keep printed column assignments even when a line does not multiply out. */
 export function splitLineRow(text, order = []) {
- const words = text.trim().split(/\s+/);
- const numbers = [];
- while (words.length > 1 && numbers.length < 4 && numberToken.test(words.at(-1))) numbers.unshift(words.pop());
- if (numbers.length < 2) return null;
- let sku = '';
- if (skuLike(words[0])) sku = words.shift();
- else if (words.length > 1 && skuLike(words.at(-1), true)) sku = words.pop();
- const description = words.join(' ');
- if (!description || numberToken.test(description)) return null;
- // Quantities carry no currency symbol and are not printed with exactly two decimals.
- const isQuantity = s => !/^[$€£]/.test(s) && !/\.\d{2}$/.test(s) && /^\d+(?:\.\d+)?$/.test(s.replace(/,/g, ''));
- const make = (q, p, a) => ({sku, description, quantity: readMoney(q, 3)?.value ?? null, unitPrice: amount(p), amount: a == null ? null : amount(a)});
- if (numbers.length === 2) return isQuantity(numbers[0]) && !isQuantity(numbers[1]) ? make(numbers[0], numbers[1], null) : null;
- // A fourth number is a converted amount in a second currency column; the line is read in the first.
- if (numbers.length === 4) {
-  const [q, p, a] = numbers;
-  const line = isQuantity(q) && Math.round(Number(q.replace(/,/g, '')) * centsOf(p)) === centsOf(a) ? make(q, p, a) : null;
-  return line && {...line, convertedAmount: amount(numbers[3])};
+ // Registration, banking and contact identifiers often end in grouped integers.
+ // A labeled metadata row is never evidence of a priced item.
+ if(/\b(?:VAT|GST|tax|company)\s+(?:reg(?:istration)?\.?|id|no\.?|number)\b|^(?:tel(?:ephone)?|fax|phone|account (?:no|number)|sort code|IBAN)\s*[:#]/i.test(text))return null;
+ const words=text.trim().split(/\s+/);
+ const numbers=[];
+ while(words.length>1 && numbers.length<4 && numberToken.test(words.at(-1)))numbers.unshift(words.pop());
+ if(numbers.length<2)return null;
+ const labeled=order.includes('quantity')&&order.includes('unitPrice');
+ const priceFirst=labeled && order.indexOf('unitPrice')<order.indexOf('quantity');
+ const plain=s=>/^\d[\d,.]*$/.test(s);
+ let convertedAmount;
+ if(numbers.length===4){
+  // A fourth trailing number can belong to the description. Prefer the
+  // printed column count when known, then the independently printed amount.
+  const [x,y,z]=numbers;
+  if(order.filter(k=>k==='amount').length>1 || (!labeled && amount(x)*amount(y)===amount(z)))convertedAmount=amount(numbers.pop());
+  else words.push(numbers.shift());
  }
- const [a, b, c] = numbers;
- const fits = (q, p) => isQuantity(q) && Math.round(Number(q.replace(/,/g, '')) * centsOf(p)) === centsOf(c);
- const priceFirst = order.indexOf('unitPrice') !== -1 && order.indexOf('unitPrice') < order.indexOf('quantity');
- const options = [[a, b], [b, a]].filter(([q, p]) => fits(q, p));
- if (options.length === 2) return make(...(priceFirst ? [b, a] : [a, b]), c);
- if (options.length === 1) return make(...options[0], c);
- // Nothing reconciles: keep the printed amount and let arithmetic review flag the row.
- if (isQuantity(a) && !isQuantity(b)) return make(a, b, c);
- if (isQuantity(b) && !isQuantity(a)) return make(b, a, c);
- return null;
+ let sku='';
+ if(skuLike(words[0]))sku=words.shift();
+ else if(words.length>1&&skuLike(words.at(-1),true))sku=words.pop();
+ const description=words.join(' ');
+ if(!description||numberToken.test(description))return null;
+ const [a,b,printed]=numbers;
+ let [q,p]=priceFirst?[b,a]:[a,b];
+ if(!labeled){
+  if(!plain(a)&&plain(b))[q,p]=[b,a];
+  else if(plain(a)&&plain(b)&&/\.\d\d$/.test(a)&&!b.includes('.'))[q,p]=[b,a];
+  if(!printed && plain(a)===plain(b) && !/\.\d\d$/.test(b))return null;
+ }
+ if(!plain(q))return null;
+ const quantity=readMoney(q,3)?.value;
+ const rate=p.match(/^(\d+(?:\.\d+)?)%$/);
+ const unitPrice=rate?null:amount(p);
+ if(quantity==null || (!rate && unitPrice==null))return null;
+ return {sku,description,quantity,unitPrice,amount:amount(printed),
+  ...(rate?{ratePercent:Number(rate[1])}:{}),
+  ...(convertedAmount!=null?{convertedAmount}:{}),
+  ...(!labeled&&plain(a)&&plain(b)&&quantity!==unitPrice?{ambiguousColumns:true}:{})};
 }
 const columnDistance = (token, column) => Math.min(
  Math.abs(token.x - column.x), Math.abs(token.x + token.width - column.right)
@@ -104,8 +129,20 @@ function tableValues(row, table) {
  const description = text.find(c=>c.key==='description');
  const prices = numeric.filter(c=>['unitPrice','amount'].includes(c.key));
  const numericStart = numeric[0].x - 14;
+ if(table.partial){
+  const prefix=row.tokens.filter(t=>t.x<numericStart);
+  const last=prefix.at(-1), before=prefix.at(-2);
+  if(!last || !numeric.some(c=>c.key==='amount' && row.tokens.some(t=>columnDistance(t,c)<35)))return {};
+  // An isolated numeric cell between the description and labeled price can
+  // be a quantity. Never split a trailing model number out of a description.
+  if(before && /^\d+(?:[.,]\d+)?$/.test(last.text)&&last.x-before.x-before.width>Math.max(32,before.width)){
+   values.quantity=prefix.pop().text;
+  }
+  values.description=prefix.map(t=>t.text).join(' ');
+ }
  const append = (key, value) => { values[key] = [values[key],value].filter(Boolean).join(' '); };
  for (const token of row.tokens) {
+  if(table.partial && token.x<numericStart)continue;
   const split = row.method==='ocr' && separateOcrPrice(token,description,prices,numericStart);
   if (split) {
    append('description',split.description);
@@ -123,10 +160,11 @@ function tableValues(row, table) {
 
 function tableLine(values) {
  const rate = values.unitPrice?.match(/^(\d+(?:[.,]\d+)?)\s*%$/);
- const quantity = readMoney(values.quantity, rate ? 3 : 2)?.value ?? null;
- const unitPrice = amount(values.unitPrice);
+ const quantityRead = readMoney(values.quantity, 3);
+ const quantity = !rate && quantityRead?.marker ? null : quantityRead?.value ?? null;
+ const unitPrice = rate ? null : amount(values.unitPrice);
  const printed = amount(values.amount);
- if (values.recoveredPrice && values.description && (unitPrice != null || printed != null)) {
+ if (values.description && !rate && ((values.recoveredPrice && (unitPrice != null || printed != null)) || (quantity == null && unitPrice != null && printed != null))) {
   // Keep the recoverable fields even if OCR missed the quantity or another amount.
   return {sku:values.sku || '', description:values.description, quantity, unitPrice, amount:printed};
  }
@@ -142,10 +180,10 @@ export function parseLayoutText(text,kind,layout=[]){
  const standalone=/^(?:vendor|supplier|seller|from|invoice(?:\s*(?:number|no\.?|#))?|purchase\s*order(?:\s*(?:number|no\.?|reference))?|p\.?o\.?(?: reference)?|currency|invoice date|issue date|due date|subtotal|sub total|tax|vat|grand total|total|amount due|balance due)\s*[:#]?$/i;
  const rawRows=[];for(let i=0;i<inputRows.length;i++){const r=inputRows[i],next=inputRows[i+1];if(!r.gridCells&&standalone.test(r.text.trim())&&next&&!next.gridCells&&!(/^invoice$/i.test(r.text.trim())&&/\s/.test(next.text.trim()))&&r.page===next.page&&!standalone.test(next.text.trim())&&!readSummary(next.text.trim())&&!/[:#]/.test(next.text)&&next.text.trim()){rawRows.push({...r,text:r.text.trim().replace(/[:#]$/,'')+': '+next.text.trim(),sourceRows:[r,next]});i++;}else rawRows.push(r);}
  const rows=rawRows.flatMap(row=>row.gridCells?[row]:row.text.split(/ {2,}(?=(?:vendor|supplier|seller|from|invoice(?:\s+(?:no\.?|number|date))?|purchase order|po(?: reference)?|currency|due(?: date)?|subtotal|tax|total)\s*[:#])/i).map(text=>({...row,text})));
- const d={type:kind,vendor:'',customer:'',number:'',poNumber:'',currency:'',date:'',due:'',subtotal:null,tax:null,taxRate:null,total:null,shipping:null,discount:null,lines:[],note:'Extracted values require source verification.'};
+ const d={taxProposal:/** @type {{rate:number,basisCents:number,cents:number,reason:string}|null} */(null),type:kind,vendor:'',customer:'',number:'',poNumber:'',currency:'',date:'',due:'',subtotal:null,tax:null,taxRate:null,total:null,shipping:null,discount:null,lines:[],note:'Extracted values require source verification.'};
  const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text',...(row.coordinateSpace?{coordinateSpace:row.coordinateSpace}:{})};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.includes('.'))d[key]=value;};
  readDocumentMetadata(inputRows.filter(row=>!row.gridCells),kind,fields,set);
- const summaries=[];let exchange=null;
+ const summaries=[],unassignedRows=[];let exchange=null;
  let table=null, page;
  for(const row of rows){
   if(row.page!==page){table=null;page=row.page;}
@@ -167,23 +205,47 @@ export function parseLayoutText(text,kind,layout=[]){
   if(rateLine){set('taxRate',Number(rateLine[1].replace(',','.')),row);continue;}
   const fx=!exchange&&readExchangeRate(t);
   if(fx){exchange={...fx,row};continue;}
-  const summary=readSummary(t,Boolean(table));
+  let summary=readSummary(t,Boolean(table));
+  if(summary?.key==='adjustment'&&table?.positions){
+   const cells=tableValues(row,table);
+   if(cells.quantity && cells.unitPrice && amount(cells.amount)!=null)summary=null;
+  }
+  if(!summary && row.method==='ocr' && /^sub\s*total\b/i.test(t) && /\d/.test(t))
+   summary={key:'subtotal',value:null,unreadable:true,text:t};
   if(summary){summaries.push({...summary,row});table=null;continue;}
- const head=columns(row);if(head){table=head;continue;}
+ const head=columns(row);if(head){table={...head,source:row};continue;}
  let l=null,support='supported';
  if(table){
   const values=tableValues(row,table);
   l=tableLine(values);
-  if(values.recoveredPrice) support='uncertain';
+  if(values.recoveredPrice||table.partial) support='uncertain';
+  if(l && table.partial && l.quantity!=null)l.inferredQuantity=true;
  }
  // A money value inside the description means the columns were misread; split the row by arithmetic instead.
  if(l&&/[$€£]?\d[\d,]*\.\d{2}\s*$/.test(l.description||'')){const split=splitLineRow(t,table?.order);if(split){l=split;support='uncertain';}}
  if(!l){l=splitLineRow(t,table?.order);if(l)support='uncertain';}
- // Last resort for garbled rows: keep the line with a blank amount so totals stay uncertain rather
- // than contradicted. A first word only counts as the SKU when it looks like a code.
- if(!l){const m=t.match(/^(\S+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,]+\.\d{2})(?:\s+\$?([\d,]+\.\d{2}))?$/);if(m){const code=skuLike(m[1]);l={sku:code?m[1]:'',description:code?m[2]:`${m[1]} ${m[2]}`,quantity:Number(m[3]),unitPrice:amount(m[4]),amount:amount(m[5])};support='uncertain';}}
- if(l){const n=d.lines.length;d.lines.push(l);for(const key of Object.keys(l))set(`lines.${n}.${key}`,l[key],row,l[key]==null||l[key]===''?'uncertain':support);}
- else if(table?.positions&&d.lines.length&&!/\d/.test(t)&&row.tokens?.length&&
+ if(!l && table?.positions && row.method==='ocr'){
+  const cells=tableValues(row,table);
+  const printed=amount(cells.amount);
+  if(cells.description && /\p{L}/u.test(cells.description) && printed!=null && (cells.quantity || cells.unitPrice)){
+   // OCR can read the extended amount even when both factors are illegible.
+   l={sku:cells.sku||'',description:cells.description,quantity:null,unitPrice:null,amount:printed};
+   support='uncertain';
+  }
+ }
+ if(l){
+  const {ambiguousColumns,inferredQuantity,...line}=l;
+  const n=d.lines.length;d.lines.push(line);
+  for(const [key,value] of Object.entries(line))set(`lines.${n}.${key}`,value,table?.source&&['unitPrice','quantity'].includes(key)?{...row,sourceRows:[table.source,row]}:row,value==null||value===''?'uncertain':support);
+  if(inferredQuantity)Object.assign(fields[`lines.${n}.quantity`],{needsConfirmation:true,
+   reason:'The quantity heading is unreadable. Verify the isolated numeric cell against the source.'});
+  if(ambiguousColumns)for(const key of ['quantity','unitPrice']){
+   Object.assign(fields[`lines.${n}.${key}`],{needsConfirmation:true,support:'uncertain',
+    reason:'Both numbers could be the quantity or unit price. Check the printed columns.',
+    candidates:[line.quantity,line.unitPrice].map(value=>({value,label:String(value)}))});
+  }
+ }
+ else if(table?.positions && !table.partial && d.lines.at(-1)?.quantity!=null && d.lines.at(-1)?.amount!=null && row.tokens?.length&&row.tokens.every(token=>token.x+token.width < table.positions.find(c=>['unitPrice','quantity','amount'].includes(c.key)).x-8)&&
    Math.abs(row.tokens[0].x-(table.positions.find(c=>c.key==='description')?.x??Infinity))<=10&&
    !/^(?:continued|payment|terms|thank|page|bank)\b/i.test(t)){
    const line=d.lines.at(-1), key=`lines.${d.lines.length-1}.description`;
@@ -191,6 +253,11 @@ export function parseLayoutText(text,kind,layout=[]){
    delete fields[key];
    line.description+=(line.description?' ':'')+t;
    set(key,line.description,{...row,sourceRows:[previous,row]},'uncertain');
+ }
+ else if(table?.positions && row.method==='ocr' && row.tokens?.length && /\p{L}/u.test(t) &&
+    !/^(?:subtotal|total|continued|payment|terms|thank|page|bank)\b/i.test(t) &&
+    row.tokens.some(token=>Math.abs(token.x-(table.positions.find(c=>c.key==='description')?.x??Infinity))<=12)){
+   unassignedRows.push({page:row.page||1,text:t});
  }
  }
  // OCR reads a leading I or O as 1 or 0. When the other item codes start with letters, offer both
@@ -321,10 +388,33 @@ export function parseLayoutText(text,kind,layout=[]){
   if(gross>=d.tax)set('subtotal',Math.round(gross*100-d.tax*100)/100,{...basis,sourceRows:[basis,tax]},'uncertain','Net subtotal calculated from the tax-inclusive amount minus the displayed tax.');
  }
  d.taxInclusive=included;
+ const rateOnly=taxRows.filter(s=>s.rateOnly);
+ if(rateOnly.length){
+  const s=rateOnly[0], path='taxes.'+taxRows.indexOf(s);
+  const basis=d.taxableAmount??d.subtotal;
+  const cents=basis==null?null:percentageCents(toCents(basis),s.rate);
+  const simple=!summaries.some(s=>s.unreadable)&&taxRows.length===1&&!taxTotal&&!exchange&&!included&&!d.adjustments.length&&
+    !/\b(?:exempt|non[- ]?taxable|zero[- ]rated|tax[- ]inclusive|inclusive of|(?:incl\.?|including|includes?|included)\s+(?:VAT|tax|GST)|(?:VAT|GST)\s+inclusive)\b/i.test(context);
+  const supported=simple&&d.total!=null&&d.subtotal!=null&&s.rate>0&&s.rate<=100&&
+    !['subtotal','total','taxableAmount','taxRate'].some(k=>fields[k]?.evidence?.length>1)&&
+    Number.isSafeInteger(cents)&&toCents(d.total)===toCents(d.subtotal)+cents;
+  for(const row of rateOnly){
+   const field=fields['taxes.'+taxRows.indexOf(row)];
+   Object.assign(field,{support:'uncertain',needsConfirmation:true,candidates:[],
+    reason:'Only a tax rate is printed. Verify the taxable base and amount against the source.'});
+  }
+  if(supported){
+   const reason=`Printed rate ${s.rate}% × ${basis.toFixed(2)} = ${(cents/100).toFixed(2)} calculated tax. Subtotal ${d.subtotal.toFixed(2)} plus this tax agrees with the printed total ${d.total.toFixed(2)}. Confirm the taxable base before using this amount.`;
+   Object.assign(fields[path],{reason,candidates:[{value:cents/100,label:`${(cents/100).toFixed(2)} calculated tax`}],
+    evidence:[...fields[path].evidence,...(fields.taxableAmount??fields.subtotal).evidence,...fields.total.evidence]});
+   d.taxProposal={rate:s.rate,basisCents:toCents(basis),cents,reason};
+  }
+ }
  if(kind==='purchase_order'){d.number=d.poNumber;fields.number=fields.poNumber;}
  for(const key of ['vendor','number','poNumber','currency','subtotal','tax','total'])if(!fields[key])fields[key]={value:d[key],support:'missing',reason:key==='poNumber'?'No PO reference found. Leave blank if the document does not list one.':key==='vendor'?'No supplier identified. Check the issuer or letterhead.':'No unambiguous labeled value found.',evidence:[]};
- d.extraction={method:'layout-aware-v1',confidenceMeaning:'Heuristic support labels, not calibrated probabilities.',fields,ruledTable:inputRows.some(row=>row.gridCells)};
+ d.extraction={unassignedRows,method:'layout-aware-v1',confidenceMeaning:'Heuristic support labels, not calibrated probabilities.',fields,ruledTable:inputRows.some(row=>row.gridCells)};
  if(exchange)d.exchangeRate={base:exchange.base,quote:exchange.quote,rate:exchange.rate,decimals:exchange.decimals,sourceText:exchange.sourceText,evidence:fields.exchangeRate.evidence};
+ if(kind==='credit_note')return {...d,arithmetic:[],arithmeticReview:{contradictions:[],uncertain:[],passed:[],conversions:[]}};
  d.arithmeticReview=arithmeticReview(d);
  d.arithmetic=[...d.arithmeticReview.contradictions,...d.arithmeticReview.conversions.filter(c=>c.status==='contradiction')];
  for(const c of d.arithmetic)if(fields[c.path]){fields[c.path].support='inconsistent';fields[c.path].reason=c.message;}

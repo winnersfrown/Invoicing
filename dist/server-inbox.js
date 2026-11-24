@@ -1,3 +1,4 @@
+import {lineReviewReasons} from './extraction-validation.js';
 import {percentageCents,toCents} from './arithmetic.js';
 // Server-backed inbox, invoice detail, evidence viewer and resolution controls (signed-in mode only).
 // The top half is pure request building (unit-tested); createServerInbox() is the DOM layer.
@@ -68,6 +69,7 @@ export function extractedInvoice({method, read, final, sourceText = null}) {
   }
   const present = Object.keys(FIELDS).length - missing.length;
   const supportLabels = {...read?.extraction?.fields, ...final?.extraction?.fields};
+  if(final?.lineItemReview?.confirmed)supportLabels.lineItemReview=final.lineItemReview;
   const customer = text(final?.customer)?.slice(0, 250);
   if (customer) supportLabels.customer = {...supportLabels.customer, reviewedValue: customer};
   for(const field of ['shipping','discount']) {
@@ -160,7 +162,7 @@ export function warningPresentation(warning, extraction = null) {
       kind: 'review_requirement', group: 'Review required', title: 'Confirm payable currency', message: 'Check the intended currency against the invoice or supplier records.', fields, details,
     };
     if (flagged.length === 1 && flagged[0] === 'tax_amount' && e.missing?.includes('tax_amount')) return {
-      kind: 'extraction_error', group: 'Review required', title: 'Invoice tax amount missing', message: 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
+      kind: 'extraction_error', group: 'Review required', title: 'Invoice tax amount missing', message: e.tax_proposal?.reason || 'The invoice tax amount is unavailable. Review the source before comparing tax.', needsSourceReview: true,
     };
     const title = e.check === 'date_order' ? 'Review invoice dates'
       : ['currency_conversion', 'mixed_currency_po'].includes(e.check) ? 'Review currency details' : 'Review extracted fields';
@@ -190,7 +192,9 @@ async function readInvoiceFile(file, progress) {
     try { d = JSON.parse(source); } catch { throw Error('This JSON file could not be read.'); }
     if (d?.type === 'credit_note') throw Error('Credit notes are not supported.');
     if (d?.type !== 'invoice') throw Error('The JSON file must describe an invoice ("type": "invoice").');
-    return {method: 'json', read: d, final: d, sourceText: source};
+    const final=lineReviewReasons(d,undefined,true).length
+      ? await reviewExisting({...d,lines:d.lines||[]},source) : d;
+    return final && {method:'json',read:d,final,sourceText:source};
   }
   let source, layout=[], method = 'labeled_text';
   if (/\.txt$/i.test(file.name)) source = await file.text();

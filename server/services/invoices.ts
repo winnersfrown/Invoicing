@@ -1,3 +1,4 @@
+import { hasCreditTitle } from '../../dist/document-type.js';
 import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
 import { validateDocument } from '../../dist/matching-engine.js';
@@ -46,12 +47,23 @@ const lineRow = (l: { quantity: number; unit_price: string; line_total: string |
 export async function createInvoice(db: Db, ctx: Ctx, req: z.infer<typeof CreateInvoiceRequest>, storage: Storage): Promise<string> {
   const bytes = checkUpload(req.file);
   const actor = userActor(ctx), id = randomUUID(), x = req.extracted;
+  const plainText = req.file.mime_type === 'text/plain' ? utf8(bytes) : x.source_text;
+  const jsonCredit = req.file.mime_type === 'application/json' && JSON.parse(utf8(bytes)!)?.type === 'credit_note';
+  if (jsonCredit || hasCreditTitle(plainText)) fail('invalid_request', 'Credit notes are not supported for invoice processing.');
   if (req.supersedes_invoice_id) {
     const [orig] = await db.query<{ status: any; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [req.supersedes_invoice_id, ctx.orgId]);
     if (!orig) notFound();
     if (orig.archived_at) fail('conflict', 'Restore this invoice before uploading a correction.');
     if (orig.status === 'superseded') fail('conflict', 'That invoice has already been superseded.');
     await setInvoiceStatus(db, ctx.orgId, actor, req.supersedes_invoice_id, orig.status, 'superseded', { superseded_by: id });
+  }
+  // Preserve source gaps before lineRow calculates database line totals.
+  const unreviewedAmounts = x.extraction.method !== 'json' &&
+    (x.extraction.support_labels?.lineItemReview as {confirmed?:boolean} | undefined)?.confirmed !== true &&
+    x.lines.some(line=>line.line_total==null);
+  if(unreviewedAmounts){
+    x.extraction.uncertain=[...new Set([...x.extraction.uncertain,'lines'])];
+    x.extraction.reviewed_fields=x.extraction.reviewed_fields?.filter(field=>field!=='lines');
   }
   const path = `${ctx.orgId}/${id}/${req.file.sha256}`;
   await db.query(

@@ -1,0 +1,13 @@
+Vendor: Morgan Maxwell
+Invoice No. MM-SYN-1
+PO Number PO-810
+Currency: USD
+SKU Description Rate Qty Total
+SMM-001 Social Media Strategy Plan 100 1 100
+CNT-002 Content Creation (5 posts) 100 5 500
+RPT-003 Scheduling & Reporting 100 1 100
+IGS-004 Instagram Story Design (3 slides) 50 3 150
+HSR-005 Hashtag Research 50 1 50
+Subtotal: 900
+Tax: 10%
+Total: 990

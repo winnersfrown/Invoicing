@@ -86,8 +86,7 @@ for (const doc of docs) {
     // Tax printed only in the payable currency (dual-currency invoices) is kept apart as payableTax.
     tax: num(d.tax) ?? (Number.isSafeInteger(d.payableTax?.cents) ? d.payableTax.cents / 100 : null),
     total_amount: num(d.total),
-    // The app has no document-type classifier; every upload is read as an invoice.
-    document_type: 'invoice',
+    document_type: d.documentType || 'invoice',
     line_items: (d.lines || []).map(l => ({description: l.description || '', amount: num(l.amount)})),
     // The app stops the upload for multi-invoice files and shows contradictions.
     flagged: multiple || contradictions.length > 0,

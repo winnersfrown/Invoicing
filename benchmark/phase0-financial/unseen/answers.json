@@ -1,0 +1,1442 @@
+[
+  {
+    "file": "case-01.pdf",
+    "scenario": "plain",
+    "kind": "invoice",
+    "number": "IV-4100",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 34.0,
+    "printedTax": 2.55,
+    "total": 36.55,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-100",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 11.0,
+        "amount": 22.0
+      },
+      {
+        "sku": "KT-200",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-02.pdf",
+    "scenario": "rate-first",
+    "kind": "invoice",
+    "number": "IV-4101",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 50.25,
+    "printedTax": 3.77,
+    "total": 54.02,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-101",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 12.75,
+        "amount": 38.25
+      },
+      {
+        "sku": "KT-201",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-03.pdf",
+    "scenario": "header-lost",
+    "kind": "invoice",
+    "number": "IV-4102",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 64.0,
+    "printedTax": 4.8,
+    "total": 68.8,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-102",
+        "description": "Meter sleeve 24",
+        "quantity": 4,
+        "unitPrice": 13.0,
+        "amount": 52.0
+      },
+      {
+        "sku": "KT-202",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": true
+  },
+  {
+    "file": "case-04.pdf",
+    "scenario": "tax-rate",
+    "kind": "invoice",
+    "number": "IV-4103",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 85.75,
+    "printedTax": null,
+    "total": 92.18,
+    "proposedTax": 6.43,
+    "lines": [
+      {
+        "sku": "KT-103",
+        "description": "Meter sleeve 24",
+        "quantity": 5,
+        "unitPrice": 14.75,
+        "amount": 73.75
+      },
+      {
+        "sku": "KT-203",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-05.pdf",
+    "scenario": "split-tax",
+    "kind": "invoice",
+    "number": "IV-4104",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 102.0,
+    "printedTax": 5.7,
+    "total": 107.7,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-104",
+        "description": "Meter sleeve 24",
+        "quantity": 6,
+        "unitPrice": 15.0,
+        "amount": 90.0
+      },
+      {
+        "sku": "KT-204",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-06.pdf",
+    "scenario": "adjustments",
+    "kind": "invoice",
+    "number": "IV-4105",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 129.25,
+    "printedTax": 9.69,
+    "total": 142.94,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-105",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 16.75,
+        "amount": 117.25
+      },
+      {
+        "sku": "KT-205",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-07.pdf",
+    "scenario": "wrapped",
+    "kind": "invoice",
+    "number": "IV-4106",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 148.0,
+    "printedTax": 11.1,
+    "total": 159.1,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-106",
+        "description": "Meter sleeve 24 Series 7",
+        "quantity": 8,
+        "unitPrice": 17.0,
+        "amount": 136.0
+      },
+      {
+        "sku": "KT-206",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-08.pdf",
+    "scenario": "two-currencies",
+    "kind": "invoice",
+    "number": "IV-4107",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 49.5,
+    "printedTax": 3.71,
+    "total": 53.21,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-107",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 18.75,
+        "amount": 37.5
+      },
+      {
+        "sku": "KT-207",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-09.pdf",
+    "scenario": "wrong-subtotal",
+    "kind": "invoice",
+    "number": "IV-4108",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 72.0,
+    "printedTax": 5.4,
+    "total": 77.4,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-108",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 19.0,
+        "amount": 57.0
+      },
+      {
+        "sku": "KT-208",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-10.pdf",
+    "scenario": "wrong-total",
+    "kind": "invoice",
+    "number": "IV-4109",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 95.0,
+    "printedTax": 7.13,
+    "total": 104.13,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-109",
+        "description": "Meter sleeve 24",
+        "quantity": 4,
+        "unitPrice": 20.75,
+        "amount": 83.0
+      },
+      {
+        "sku": "KT-209",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-11.pdf",
+    "scenario": "credit",
+    "kind": "credit_note",
+    "number": "CM-4110",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 117.0,
+    "printedTax": 8.78,
+    "total": -125.78,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-110",
+        "description": "Meter sleeve 24",
+        "quantity": 5,
+        "unitPrice": 21.0,
+        "amount": 105.0
+      },
+      {
+        "sku": "KT-210",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-12.pdf",
+    "scenario": "missing-number",
+    "kind": "invoice",
+    "number": null,
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 148.5,
+    "printedTax": 11.14,
+    "total": 159.64,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-111",
+        "description": "Meter sleeve 24",
+        "quantity": 6,
+        "unitPrice": 22.75,
+        "amount": 136.5
+      },
+      {
+        "sku": "KT-211",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-13.pdf",
+    "scenario": "pair-invoice",
+    "kind": "invoice",
+    "number": "IV-4112",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 173.0,
+    "printedTax": 12.98,
+    "total": 185.98,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-112",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 23.0,
+        "amount": 161.0
+      },
+      {
+        "sku": "KT-212",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-14.pdf",
+    "scenario": "pair-order",
+    "kind": "purchase_order",
+    "number": "PO-4112",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 178.25,
+    "printedTax": 13.37,
+    "total": 191.62,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-112",
+        "description": "Meter sleeve 24",
+        "quantity": 7,
+        "unitPrice": 23.75,
+        "amount": 166.25
+      },
+      {
+        "sku": "KT-212",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-15.pdf",
+    "scenario": "partial-base",
+    "kind": "invoice",
+    "number": "IV-4114",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 62.0,
+    "printedTax": null,
+    "total": 65.75,
+    "proposedTax": 3.75,
+    "lines": [
+      {
+        "sku": "KT-114",
+        "description": "Meter sleeve 24",
+        "quantity": 2,
+        "unitPrice": 25.0,
+        "amount": 50.0
+      },
+      {
+        "sku": "KT-214",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-16.pdf",
+    "scenario": "no-tax",
+    "kind": "invoice",
+    "number": "IV-4115",
+    "supplier": "Plover Hill Studio",
+    "currency": "USD",
+    "subtotal": 92.25,
+    "printedTax": null,
+    "total": 92.25,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-115",
+        "description": "Meter sleeve 24",
+        "quantity": 3,
+        "unitPrice": 26.75,
+        "amount": 80.25
+      },
+      {
+        "sku": "KT-215",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 12.0,
+        "amount": 12.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-17.pdf",
+    "scenario": "plain",
+    "kind": "invoice",
+    "number": "IV-4116",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 121.0,
+    "printedTax": 9.08,
+    "total": 130.08,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-116",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 27.0,
+        "amount": 108.0
+      },
+      {
+        "sku": "KT-216",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-18.pdf",
+    "scenario": "rate-first",
+    "kind": "invoice",
+    "number": "IV-4117",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 156.75,
+    "printedTax": 11.76,
+    "total": 168.51,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-117",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 28.75,
+        "amount": 143.75
+      },
+      {
+        "sku": "KT-217",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-19.png",
+    "scenario": "header-lost",
+    "kind": "invoice",
+    "number": "IV-4118",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 187.0,
+    "printedTax": 14.03,
+    "total": 201.03,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-118",
+        "description": "Packing insert",
+        "quantity": 6,
+        "unitPrice": 29.0,
+        "amount": 174.0
+      },
+      {
+        "sku": "KT-218",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": true
+  },
+  {
+    "file": "case-20.pdf",
+    "scenario": "tax-rate",
+    "kind": "invoice",
+    "number": "IV-4119",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 228.25,
+    "printedTax": null,
+    "total": 245.37,
+    "proposedTax": 17.12,
+    "lines": [
+      {
+        "sku": "KT-119",
+        "description": "Packing insert",
+        "quantity": 7,
+        "unitPrice": 30.75,
+        "amount": 215.25
+      },
+      {
+        "sku": "KT-219",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-21.pdf",
+    "scenario": "split-tax",
+    "kind": "invoice",
+    "number": "IV-4120",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 261.0,
+    "printedTax": 13.7,
+    "total": 274.7,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-120",
+        "description": "Packing insert",
+        "quantity": 8,
+        "unitPrice": 31.0,
+        "amount": 248.0
+      },
+      {
+        "sku": "KT-220",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-22.png",
+    "scenario": "adjustments",
+    "kind": "invoice",
+    "number": "IV-4121",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 78.5,
+    "printedTax": 5.89,
+    "total": 88.39,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-121",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 32.75,
+        "amount": 65.5
+      },
+      {
+        "sku": "KT-221",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-23.pdf",
+    "scenario": "wrapped",
+    "kind": "invoice",
+    "number": "IV-4122",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 112.0,
+    "printedTax": 8.4,
+    "total": 120.4,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-122",
+        "description": "Packing insert Series 7",
+        "quantity": 3,
+        "unitPrice": 33.0,
+        "amount": 99.0
+      },
+      {
+        "sku": "KT-222",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-24.pdf",
+    "scenario": "two-currencies",
+    "kind": "invoice",
+    "number": "IV-4123",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 60.0,
+    "printedTax": 4.5,
+    "total": 64.5,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-123",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 11.75,
+        "amount": 47.0
+      },
+      {
+        "sku": "KT-223",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-25.png",
+    "scenario": "wrong-subtotal",
+    "kind": "invoice",
+    "number": "IV-4124",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 76.0,
+    "printedTax": 5.7,
+    "total": 81.7,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-124",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 12.0,
+        "amount": 60.0
+      },
+      {
+        "sku": "KT-224",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-26.pdf",
+    "scenario": "wrong-total",
+    "kind": "invoice",
+    "number": "IV-4125",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 95.5,
+    "printedTax": 7.16,
+    "total": 104.66,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-125",
+        "description": "Packing insert",
+        "quantity": 6,
+        "unitPrice": 13.75,
+        "amount": 82.5
+      },
+      {
+        "sku": "KT-225",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-27.pdf",
+    "scenario": "credit",
+    "kind": "credit_note",
+    "number": "CM-4126",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 111.0,
+    "printedTax": 8.33,
+    "total": -119.33,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-126",
+        "description": "Packing insert",
+        "quantity": 7,
+        "unitPrice": 14.0,
+        "amount": 98.0
+      },
+      {
+        "sku": "KT-226",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-28.png",
+    "scenario": "missing-number",
+    "kind": "invoice",
+    "number": null,
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 139.0,
+    "printedTax": 10.43,
+    "total": 149.43,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-127",
+        "description": "Packing insert",
+        "quantity": 8,
+        "unitPrice": 15.75,
+        "amount": 126.0
+      },
+      {
+        "sku": "KT-227",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-29.pdf",
+    "scenario": "pair-invoice",
+    "kind": "invoice",
+    "number": "IV-4128",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 45.0,
+    "printedTax": 3.38,
+    "total": 48.38,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-128",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 16.0,
+        "amount": 32.0
+      },
+      {
+        "sku": "KT-228",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-30.pdf",
+    "scenario": "pair-order",
+    "kind": "purchase_order",
+    "number": "PO-4128",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 46.5,
+    "printedTax": 3.49,
+    "total": 49.99,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-128",
+        "description": "Packing insert",
+        "quantity": 2,
+        "unitPrice": 16.75,
+        "amount": 33.5
+      },
+      {
+        "sku": "KT-228",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-31.png",
+    "scenario": "partial-base",
+    "kind": "invoice",
+    "number": "IV-4130",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 85.0,
+    "printedTax": null,
+    "total": 90.4,
+    "proposedTax": 5.4,
+    "lines": [
+      {
+        "sku": "KT-130",
+        "description": "Packing insert",
+        "quantity": 4,
+        "unitPrice": 18.0,
+        "amount": 72.0
+      },
+      {
+        "sku": "KT-230",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-32.pdf",
+    "scenario": "no-tax",
+    "kind": "invoice",
+    "number": "IV-4131",
+    "supplier": "Cairn Office Supply",
+    "currency": "GBP",
+    "subtotal": 111.75,
+    "printedTax": null,
+    "total": 111.75,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-131",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 19.75,
+        "amount": 98.75
+      },
+      {
+        "sku": "KT-231",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13.0,
+        "amount": 13.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-33.jpg",
+    "scenario": "plain",
+    "kind": "invoice",
+    "number": "IV-4132",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 134.0,
+    "printedTax": 10.05,
+    "total": 144.05,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-132",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 20.0,
+        "amount": 120.0
+      },
+      {
+        "sku": "KT-232",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-34.pdf",
+    "scenario": "rate-first",
+    "kind": "invoice",
+    "number": "IV-4133",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 166.25,
+    "printedTax": 12.47,
+    "total": 178.72,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-133",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 21.75,
+        "amount": 152.25
+      },
+      {
+        "sku": "KT-233",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-35.jpg",
+    "scenario": "header-lost",
+    "kind": "invoice",
+    "number": "IV-4134",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 190.0,
+    "printedTax": 14.25,
+    "total": 204.25,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-134",
+        "description": "Binding service",
+        "quantity": 8,
+        "unitPrice": 22.0,
+        "amount": 176.0
+      },
+      {
+        "sku": "KT-234",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": true
+  },
+  {
+    "file": "case-36.pdf",
+    "scenario": "tax-rate",
+    "kind": "invoice",
+    "number": "IV-4135",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 61.5,
+    "printedTax": null,
+    "total": 66.11,
+    "proposedTax": 4.61,
+    "lines": [
+      {
+        "sku": "KT-135",
+        "description": "Binding service",
+        "quantity": 2,
+        "unitPrice": 23.75,
+        "amount": 47.5
+      },
+      {
+        "sku": "KT-235",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-37.jpg",
+    "scenario": "split-tax",
+    "kind": "invoice",
+    "number": "IV-4136",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 86.0,
+    "printedTax": 5.0,
+    "total": 91.0,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-136",
+        "description": "Binding service",
+        "quantity": 3,
+        "unitPrice": 24.0,
+        "amount": 72.0
+      },
+      {
+        "sku": "KT-236",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-38.pdf",
+    "scenario": "adjustments",
+    "kind": "invoice",
+    "number": "IV-4137",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 117.0,
+    "printedTax": 8.78,
+    "total": 129.78,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-137",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 25.75,
+        "amount": 103.0
+      },
+      {
+        "sku": "KT-237",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-39.jpg",
+    "scenario": "wrapped",
+    "kind": "invoice",
+    "number": "IV-4138",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 144.0,
+    "printedTax": 10.8,
+    "total": 154.8,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-138",
+        "description": "Binding service Series 7",
+        "quantity": 5,
+        "unitPrice": 26.0,
+        "amount": 130.0
+      },
+      {
+        "sku": "KT-238",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-40.pdf",
+    "scenario": "two-currencies",
+    "kind": "invoice",
+    "number": "IV-4139",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 180.5,
+    "printedTax": 13.54,
+    "total": 194.04,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-139",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 27.75,
+        "amount": 166.5
+      },
+      {
+        "sku": "KT-239",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-41.jpg",
+    "scenario": "wrong-subtotal",
+    "kind": "invoice",
+    "number": "IV-4140",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 213.0,
+    "printedTax": 15.98,
+    "total": 228.98,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-140",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 28.0,
+        "amount": 196.0
+      },
+      {
+        "sku": "KT-240",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-42.pdf",
+    "scenario": "wrong-total",
+    "kind": "invoice",
+    "number": "IV-4141",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 252.0,
+    "printedTax": 18.9,
+    "total": 272.9,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-141",
+        "description": "Binding service",
+        "quantity": 8,
+        "unitPrice": 29.75,
+        "amount": 238.0
+      },
+      {
+        "sku": "KT-241",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": true,
+    "ambiguous": false
+  },
+  {
+    "file": "case-43.jpg",
+    "scenario": "credit",
+    "kind": "credit_note",
+    "number": "CM-4142",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 74.0,
+    "printedTax": 5.55,
+    "total": -79.55,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-142",
+        "description": "Binding service",
+        "quantity": 2,
+        "unitPrice": 30.0,
+        "amount": 60.0
+      },
+      {
+        "sku": "KT-242",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-44.pdf",
+    "scenario": "missing-number",
+    "kind": "invoice",
+    "number": null,
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 109.25,
+    "printedTax": 8.19,
+    "total": 117.44,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-143",
+        "description": "Binding service",
+        "quantity": 3,
+        "unitPrice": 31.75,
+        "amount": 95.25
+      },
+      {
+        "sku": "KT-243",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-45.jpg",
+    "scenario": "pair-invoice",
+    "kind": "invoice",
+    "number": "IV-4144",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 142.0,
+    "printedTax": 10.65,
+    "total": 152.65,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-144",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 32.0,
+        "amount": 128.0
+      },
+      {
+        "sku": "KT-244",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-46.pdf",
+    "scenario": "pair-order",
+    "kind": "purchase_order",
+    "number": "PO-4144",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 145.0,
+    "printedTax": 10.88,
+    "total": 155.88,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-144",
+        "description": "Binding service",
+        "quantity": 4,
+        "unitPrice": 32.75,
+        "amount": 131.0
+      },
+      {
+        "sku": "KT-244",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-47.jpg",
+    "scenario": "partial-base",
+    "kind": "invoice",
+    "number": "IV-4146",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 80.0,
+    "printedTax": null,
+    "total": 84.95,
+    "proposedTax": 4.95,
+    "lines": [
+      {
+        "sku": "KT-146",
+        "description": "Binding service",
+        "quantity": 6,
+        "unitPrice": 11.0,
+        "amount": 66.0
+      },
+      {
+        "sku": "KT-246",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  },
+  {
+    "file": "case-48.pdf",
+    "scenario": "no-tax",
+    "kind": "invoice",
+    "number": "IV-4147",
+    "supplier": "Mesa Sign Works",
+    "currency": "EUR",
+    "subtotal": 103.25,
+    "printedTax": null,
+    "total": 103.25,
+    "proposedTax": null,
+    "lines": [
+      {
+        "sku": "KT-147",
+        "description": "Binding service",
+        "quantity": 7,
+        "unitPrice": 12.75,
+        "amount": 89.25
+      },
+      {
+        "sku": "KT-247",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 14.0,
+        "amount": 14.0
+      }
+    ],
+    "discrepancy": false,
+    "ambiguous": false
+  }
+]

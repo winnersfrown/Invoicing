@@ -382,3 +382,11 @@ describe('deterministic checks', () => {
     expect(r.body.error.code).toBe('invalid_request');
   });
 });
+
+it('holds an incomplete OCR line for source review when its amount was calculated at intake',async()=>{
+  const org=await orgWithPo();
+  const inv=await upload(org,{...clean,lines:[{...clean.lines[0],line_total:null}],
+    extraction:{method:'ocr',confidence:1,field_confidence:{lines:1},reviewed_fields:['lines'],source_refs:{}}});
+  expect(inv.status).toBe('needs_extraction_review');
+  expect((await discrepancies(org,inv.id)).some(d=>d.discrepancy_type==='potential_extraction_error')).toBe(true);
+});

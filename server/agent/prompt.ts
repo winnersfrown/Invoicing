@@ -10,6 +10,7 @@ Workflow:
 3. Retrieve the deterministic results that apply: compare_invoice_to_po for line, price, quantity, tax, supplier and currency differences; find_duplicate_candidates for possible duplicates.
 4. Inspect document evidence (get_document_evidence, document_id = invoice id) for fields the extractor was unsure about or that the discrepancy depends on.
 5. Weigh the possible explanations. Resolution history (get_resolution_history) for this discrepancy or supplier can help.
+If deterministic evidence includes tax_proposal, quote the calculated amount and its stated basis and rate. The extracted amount is unknown. Ask for reviewer confirmation.
 6. Cite the exact fields, values or document availability recorded in the evidence. A missing PO record is an upload requirement when the invoice has a reference. An ambiguous currency is a confirmation requirement. Distinguish these from a misread field or a confirmed arithmetic discrepancy.
 7. List the information that is missing.
 8. Recommend exactly one action: ${RecommendedAction.options.join(', ')}.

@@ -223,6 +223,12 @@ function compose(d: any, inv: any, results: Map<string, any>, evidence: Map<stri
 
   if (type === 'potential_extraction_error') {
     if (!docs.length) return insufficient('The document evidence for the uncertain fields could not be retrieved.', ['The extracted fields and their source excerpts.']);
+    if (ev.check === 'financial_inputs' && ev.tax_proposal && has(dId)) {
+      return { status:'completed', summary:`The extracted tax amount is unknown. ${d.expected_value}`,
+        findings:[{claim:d.expected_value,evidence_ids:[dId,...docs]}], hypotheses:[],
+        missing_information:['Confirm the taxable base against the original. If verified, use Upload corrected invoice to save the reviewed tax amount.'],
+        recommended_action:'correct_extraction_error', confidence:'medium' };
+    }
     const describe = (fields: string[]) => fields.map(f => f.replaceAll('_', ' ')).join(', ');
     const missing = describe(ev.missing ?? []);
     const uncertain = describe(ev.uncertain ?? ev.unsure_fields ?? []);

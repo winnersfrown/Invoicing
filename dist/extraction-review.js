@@ -1,6 +1,6 @@
 import {invoiceDateIssue} from './invoice-dates.js';
 import {extractFile,parseExtractedText,parseBaselineText} from './extraction.js';
-import {validateExtractionReview} from './extraction-validation.js';
+import {validateExtractionReview,lineReviewReasons} from './extraction-validation.js';
 import {arithmeticReview,arithmeticChecks,adjustmentsOf,taxesOf,pendingConfirmations,pathValue,correctField,ADJUSTMENT_KINDS,FEE_KINDS} from './arithmetic.js';
 
 // Document text is untrusted: every value is set with textContent or as a DOM property, never as HTML.
@@ -48,6 +48,7 @@ export function reviewStatus(d) {
 export async function extractAndReview(file,kind,progress){const {text,layout}=await extractFile(file,progress,{detailed:true,kind}),data=parseExtractedText(text,kind,layout);data.baselineExtraction=parseBaselineText(text,kind);return reviewExisting(data,text,file);}
 
 export function reviewExisting(data,text,file=null){
+ if(data.unsupportedReason)throw Error(data.unsupportedReason);
  if(data.additionalInvoices?.length){
   const ranges=[data.firstInvoicePages,...data.additionalInvoices].map(({firstPage,lastPage})=>firstPage===lastPage?String(firstPage):`${firstPage}–${lastPage}`).join(', ');
   throw Error(`This file contains multiple invoices. Split it by page range (${ranges}) and upload each invoice separately.`);
@@ -89,7 +90,7 @@ export function reviewExisting(data,text,file=null){
    const row=el('div',{className:'ocr-line'},
     el('label',{},'Tax label',el('input',{dataset:{key:'label'},value:fmt(t.label||'Tax')})),
     el('label',{},'Rate (%)',el('input',{dataset:{key:'ratePercent'},type:'number',step:'any',min:0,value:fmt(t.ratePercent)})),
-    el('label',{},'Printed tax amount (blank = unknown)',el('input',{name:`taxes.${i}`,dataset:{key:'cents'},type:'number',step:'any',value:t.cents==null?'':String(t.cents/100)}),support(t.path||`taxes.${i}`)));
+    el('label',{},t.cents==null && t.ratePercent!=null?'Reviewer-confirmed tax amount (blank = unknown)':'Printed tax amount (blank = unknown)',el('input',{name:`taxes.${i}`,dataset:{key:'cents'},type:'number',step:'any',value:t.cents==null?'':String(t.cents/100)}),support(t.path||`taxes.${i}`)));
    row.append(removable(row));row._tax=t;taxHost.append(row);
   }
   function addAdjustment(a={kind:'other_fee',taxable:'unknown',appliesTo:'total'}){
@@ -115,11 +116,16 @@ export function reviewExisting(data,text,file=null){
    row.append(el('button',{type:'button',className:'text-button danger','aria-label':'Remove line',text:'Remove',onclick:()=>{row.remove();renderChecks();}}));
    lineHost.append(row);
   }
-  data.lines.forEach(addLine);
+  (data.lines||[]).forEach(addLine);
 
   const confirmHost=el('div',{className:'confirmations','aria-live':'polite'});
   const dateReview=el('div',{className:'date-review','aria-live':'polite'});
   const arithmeticHost=el('div',{className:'arithmetic-review','aria-live':'polite'});
+  const initialLineIssues=lineReviewReasons(data);
+  const lineChecked=el('input',{type:'checkbox'});
+  const lineReasons=el('ul',{});
+  const reviewLines=el('section',{className:'check'},el('h3',{text:'Line items require review'}),lineReasons,
+   el('label',{},lineChecked,' I compared the line items with the original and accounted for missing or unreadable rows.'));
   const reviewed=el('input',{type:'checkbox',required:true});
   const error=el('p',{className:'ocr-error',role:'alert'});
   const form=el('form',{},confirmHost,fieldsHost,dateReview,
@@ -129,7 +135,7 @@ export function reviewExisting(data,text,file=null){
    el('h3',{text:'Line items'}),data.extraction?.ruledTable?el('p',{className:'check',text:'Sorikano found the table rows. Compare each cell with the original and fill in any required quantities that OCR missed.'}):null,
    el('p',{text:'Keep printed amounts separate from quantity × price. Blank optional amounts remain unknown. Match verified SKUs on both documents.'}),
    lineHost,el('button',{type:'button',className:'text-button',text:'+ Add line item',onclick:()=>{addLine();renderChecks();}}),
-   arithmeticHost,el('label',{className:'review-confirm'},reviewed,' I checked these fields and line items against the original document. Any remaining contradictions must stay on hold.'),
+   reviewLines,arithmeticHost,el('label',{className:'review-confirm'},reviewed,' I checked these fields and line items against the original document. Any remaining contradictions must stay on hold.'),
    error,el('button',{className:'button primary',type:'submit',text:'Save extraction & continue'}));
   dialog.append(el('div',{className:'dialog-top'},
     el('div',{},el('span',{className:'eyebrow',text:'VERIFY EXTRACTED DETAILS'}),el('h2',{text:`Review ${kind==='invoice'?'invoice':'purchase order'}`}),
@@ -138,6 +144,7 @@ export function reviewExisting(data,text,file=null){
    el('div',{className:'ocr-grid'},left,form));
   document.body.append(dialog);
 
+  let lastLineInputs='';
   const number=v=>v===''||v==null?null:Number(v);
   const cents=v=>v===''||v==null?null:Math.round(Number(v)*100);
   const formInput=path=>form.querySelector(`[name="${CSS.escape(path)}"]`);
@@ -182,9 +189,9 @@ export function reviewExisting(data,text,file=null){
      el('legend',{text:f.label||fieldName(p.path)}),el('p',{text:p.reason}),
      f.sourceText?el('p',{},el('small',{text:'Source: '}),el('mark',{text:f.sourceText})):null,
      p.evidence.map(v=>el('p',{},el('small',{text:`Page ${v.page}, text row ${v.row} (${v.method}): `}),el('mark',{text:v.text}))),
-     p.candidates.map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),
+     p.candidates.filter((c,i,all)=>all.findIndex(v=>String(v.value)===String(c.value))===i).map(c=>el('button',{type:'button',className:'text-button',text:`${p.path==='currency'?'Confirm':'Use'} ${c.label??c.value}`,onclick:()=>choose(c.value)})),
      el('label',{},'Or enter the correct value: ',other,el('button',{type:'button',className:'text-button',text:'Use this value',onclick:()=>{if(other.value!=='')choose(numeric?Number(other.value):other.value.trim());}})),
-     p.value!=null&&p.value!==''?el('button',{type:'button',className:'text-button',text:`Confirm the value as read (${p.value})`,onclick:()=>choose(null)})
+     p.value!=null&&p.value!==''?(!p.candidates.some(c=>String(c.value)===String(p.value))&&el('button',{type:'button',className:'text-button',text:`Confirm the value as read (${p.value})`,onclick:()=>choose(null)}))
       :el('button',{type:'button',className:'text-button',text:'Confirm it is unreadable (stays unknown, not zero)',onclick:()=>choose(null)})));
    }
   }
@@ -197,10 +204,24 @@ export function reviewExisting(data,text,file=null){
     badge.className = `field-risk ${accepted || field.support === 'supported' ? 'supported' : 'uncertain'}`;
     badge.textContent = accepted ? 'Confirmed by reviewer' : `${field.support} · ${field.reason}`;
    }
+   const lineInputs=JSON.stringify([current.lines,current.subtotal]);
+   if(lineInputs!==lastLineInputs)lineChecked.checked=false;
+   lastLineInputs=lineInputs;
    const dateIssue=kind==='invoice'?invoiceDateIssue(current.date,current.due):'';
    dateReview.classList.toggle('check',Boolean(dateIssue));dateReview.textContent=dateIssue;dateReview.hidden=!dateIssue;
    const status=reviewStatus(current);
-   renderConfirmations(status.pending);
+   const pending=status.pending.map(p=>{
+    if(!p.path.startsWith('taxes.')||!data.taxProposal)return p;
+    const tax=current.taxes[Number(p.path.split('.')[1])];
+    if(current.subtotal===data.subtotal&&current.total===data.total&&current.currency===data.currency&&
+       tax?.ratePercent===data.taxProposal.rate&&current.taxes.length===1&&!current.adjustments.length)return p;
+    return {...p,candidates:[],reason:'The tax inputs changed. Verify the taxable base and enter the amount from your review.'};
+   });
+   const reasons=[...new Set([...initialLineIssues,...lineReviewReasons(current,status)])];
+   reviewLines.hidden=!reasons.length;
+   lineChecked.required=Boolean(reasons.length);
+   lineReasons.replaceChildren(...reasons.map(text=>el('li',{text})));
+   renderConfirmations(pending);
    const item=(c,cls)=>el('p',{className:cls},c.message||`${c.label}: agrees.`,
     c.evidence?.length?el('small',{text:' Source: '+c.evidence.map(e=>`page ${e.page}, row ${e.row}: “${e.text}”`).join('; ')}):null);
    const section=(title,list,cls)=>list.length?[el('h3',{text:title}),list.map(c=>item(c,cls))]:[];
@@ -210,7 +231,7 @@ export function reviewExisting(data,text,file=null){
     ...section('Currency conversion (reported separately)',status.conversions,status.conversions.some(c=>c.status!=='pass')?'check':''),
     ...(status.contradictions.length||status.uncertain.length?[]:[el('p',{text:'Available arithmetic checks agree. Missing displayed values still need source review.'})]));
   }
-  dialog.addEventListener('input',e=>{if(e.target===reviewed||e.target.closest('.confirmations'))return;reviewed.checked=false;renderChecks();});
+  dialog.addEventListener('input',e=>{if(e.target===lineChecked||e.target===reviewed||e.target.closest('.confirmations'))return;reviewed.checked=false;renderChecks();});
   dialog.addEventListener('change',e=>{if(e.target.tagName==='SELECT')renderChecks();});
   dialog.addEventListener('click',e=>{
    const button=e.target.closest('[data-evidence]');if(!button)return;
@@ -225,6 +246,8 @@ export function reviewExisting(data,text,file=null){
     const d=read();
     const pending=pendingConfirmations(d);
     if(pending.length)throw Error(`Confirm or correct before saving: ${pending.map(p=>fields[p.path]?.label||p.path).join(', ')}.`);
+    if(lineChecked.required && !lineChecked.checked)throw Error('Review the invoice lines against the original before saving.');
+    if(lineChecked.required)d.lineItemReview={confirmed:true,reasons:[...new Set([...initialLineIssues,...lineReviewReasons(d)])]};
     validateExtractionReview(d);
     d.sourceText=text;d.sourceFilename=file?.name||'inbox-source.txt';d.extractionReviewed=true;
     d.arithmeticReview=arithmeticReview(d);d.arithmetic=arithmeticChecks(d);

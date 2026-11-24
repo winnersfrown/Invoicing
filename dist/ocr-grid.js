@@ -1,6 +1,6 @@
 const columns = [
   ['description', /\b(?:description|item|details|particulars)\b/i],
-  ['quantity', /\b(?:qty|quantity|units)\b/i],
+  ['quantity', /\b(?:qty|quantity|units|hours|days)\b/i],
   ['unitPrice', /\b(?:unit\s*(?:price|cost)|price|rate)\b/i],
   ['amount', /\b(?:amount|total|extended)\b/i]
 ];
@@ -117,7 +117,8 @@ export async function readRuledItems(canvas,worker,page,onProgress) {
     await worker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:''});
     const headings=[];
     for(const cell of grid.rows[0])headings.push(await readCell(inkBounds(source,cell)));
-    if(!columns.every(([,pattern],index)=>pattern.test(headings[index])))return null;
+    const order=headings.map(label=>columns.find(([,pattern])=>pattern.test(label))?.[0]);
+    if(order[0]!=='description'||order.includes(undefined)||new Set(order).size!==columns.length)return null;
 
     const rows=[];
     for(const row of grid.rows.slice(1)){
@@ -133,7 +134,7 @@ export async function readRuledItems(canvas,worker,page,onProgress) {
         const value=await readCell(ink[i]);
         // For faint handwritten prices a lost decimal point can inflate the
         // value by orders of magnitude. Keep ambiguous long integers blank.
-        cells[columns[i][0]]=i>1&&/^\d[\d ]{3,}$/.test(value)?'':value;
+        cells[order[i]]=order[i]!=='quantity'&&/^\d[\d ]{3,}$/.test(value)?'':value;
       }
       const bbox={x0:grid.left,y0:row[0].y,x1:grid.right,y1:row[0].y+row[0].height};
       rows.push({text:Object.values(cells).join('  ').trim(),gridCells:cells,bbox,page,method:'ocr'});
@@ -154,6 +155,7 @@ export function keepExistingItemReads(gridRows,document) {
     if(!row||row.sourceRows||line.ratePercent!=null)continue;
     row.sourceRows=[{text:row.text},{text:evidence.text}];
     for(const key of ['description','quantity','unitPrice','amount']){
+      if(document.extraction.fields[`lines.${index}.${key}`]?.needsConfirmation)continue;
       if(line[key]!=null&&line[key]!=='')row.gridCells[key]=String(line[key]);
     }
     row.text=Object.values(row.gridCells).join('  ').trim();

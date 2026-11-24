@@ -1,6 +1,6 @@
 {
   "scope": "Regression on two previously seen datasets. Not a fresh or independently blinded accuracy estimate.",
-  "engineHash": "a06f780f77f7769f739f092f55979e665083a08efd2ee24bf200b79c185952b6",
+  "engineHash": "a909b0f4ef43e1f77f96e219f68d28e496dfda35e2cbbfd59e275c52b372ec5a",
   "supplierHash": "69e10890fdfea95dc4a63b2e0032a307e0622350c7f630ccaa2d28732b9973fe",
   "results": [
     {
@@ -388,7 +388,7 @@
             "Supplier names agree after punctuation and company-suffix normalization.",
             "Document totals agree.",
             "Extracted content shares 93% of unique words (a similarity signal, not a probability).",
-            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
           ]
         },
         {
@@ -583,7 +583,7 @@
             "Supplier names agree after punctuation and company-suffix normalization.",
             "Document totals agree.",
             "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
-            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
           ]
         },
         {
@@ -1229,7 +1229,7 @@
             "Supplier names agree after punctuation and company-suffix normalization.",
             "Document totals agree.",
             "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
-            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
           ]
         },
         {
@@ -1348,7 +1348,7 @@
             "Supplier names agree after punctuation and company-suffix normalization.",
             "Document totals agree.",
             "Extracted content shares 94% of unique words (a similarity signal, not a probability).",
-            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
           ]
         },
         {
@@ -1763,7 +1763,7 @@
             "Supplier names agree after punctuation and company-suffix normalization.",
             "Document totals agree.",
             "Extracted content shares 95% of unique words (a similarity signal, not a probability).",
-            "References differ only by a reissue/copy delivery label or common OCR character confusion; matching supplier, total and content support human review."
+            "References differ only by a reissue/copy delivery label or common OCR character confusion; corroborating supplier, total and document evidence support human review."
           ]
         },
         {

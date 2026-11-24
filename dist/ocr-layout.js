@@ -35,6 +35,10 @@ export function alignOcrRows(rows) {
       text+=(right!==null&&word.x-right>18?'  ':right===null?'':' ')+word.text;
       right=word.x+word.width;
     }
-    return {text,page:rows[0].page,bbox:bounds(words.map(w=>w.box)),method:'ocr',tokens:words};
+    // Geometry changes the grouping, not Tesseract's observations. Use the
+    // weakest word; a missing measurement keeps the entire row uncertain.
+    const ocrConfidence=words.every(w=>Number.isFinite(w.confidence))
+      ? Math.min(...words.map(w=>w.confidence)) : undefined;
+    return {text,ocrConfidence,page:rows[0].page,bbox:bounds(words.map(w=>w.box)),method:'ocr',tokens:words};
   });
 }

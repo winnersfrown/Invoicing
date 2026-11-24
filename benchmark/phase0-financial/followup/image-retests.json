@@ -1,0 +1,189 @@
+[
+  {
+    "file": "juliana-reconstruction.png",
+    "ms": 2374,
+    "kind": "invoice",
+    "subtotal": 870,
+    "contradictions": [],
+    "lines": [
+      {
+        "sku": "",
+        "description": "White Basic Tank Top",
+        "quantity": 2,
+        "unitPrice": 80,
+        "amount": 160
+      },
+      {
+        "sku": "",
+        "description": "Denim Jacket",
+        "quantity": 1,
+        "unitPrice": 320,
+        "amount": 320
+      },
+      {
+        "sku": "",
+        "description": "Bamboo Underwear",
+        "quantity": 3,
+        "unitPrice": 50,
+        "amount": 150
+      },
+      {
+        "sku": "",
+        "description": "Striped Pants",
+        "quantity": 1,
+        "unitPrice": 240,
+        "amount": 240
+      }
+    ],
+    "total": 957,
+    "tax": 87,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": false
+  },
+  {
+    "file": "morgan-synthetic.png",
+    "ms": 3136,
+    "kind": "invoice",
+    "subtotal": 900,
+    "contradictions": [],
+    "lines": [
+      {
+        "sku": "SMM-001",
+        "description": "Social Media Strategy Plan",
+        "quantity": 1,
+        "unitPrice": 100,
+        "amount": 100
+      },
+      {
+        "sku": "CNT-002",
+        "description": "Content Creation (5 posts)",
+        "quantity": 5,
+        "unitPrice": 100,
+        "amount": 500
+      },
+      {
+        "sku": "RPT-003",
+        "description": "Scheduling & Reporting",
+        "quantity": 1,
+        "unitPrice": 100,
+        "amount": 100
+      },
+      {
+        "sku": "1GS-004",
+        "description": "Instagram Story Design (3 slides)",
+        "quantity": 3,
+        "unitPrice": 50,
+        "amount": 150
+      },
+      {
+        "sku": "HSR-005",
+        "description": "Hashtag Research",
+        "quantity": 1,
+        "unitPrice": 50,
+        "amount": 50
+      }
+    ],
+    "total": 990,
+    "tax": null,
+    "proposedTax": 9000,
+    "pending": [
+      "lines.3.sku",
+      "taxes.0"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "morgan-maxwell.png",
+    "ms": 1943,
+    "kind": "invoice",
+    "subtotal": 900,
+    "contradictions": [],
+    "lines": [
+      {
+        "sku": "SMM-001",
+        "description": "Social Media Strategy Plan",
+        "quantity": 1,
+        "unitPrice": 100,
+        "amount": 100
+      },
+      {
+        "sku": "CNT-002",
+        "description": "Content Creation (5 posts)",
+        "quantity": 5,
+        "unitPrice": 100,
+        "amount": 500
+      },
+      {
+        "sku": "RPT-003",
+        "description": "Scheduling & Reporting",
+        "quantity": 1,
+        "unitPrice": 100,
+        "amount": 100
+      },
+      {
+        "sku": "1GS-004",
+        "description": "Instagram Story Design (3 slides)",
+        "quantity": 3,
+        "unitPrice": 50,
+        "amount": 150
+      },
+      {
+        "sku": "HTG-005",
+        "description": "Hashtag Research",
+        "quantity": 1,
+        "unitPrice": 50,
+        "amount": 50
+      }
+    ],
+    "total": 990,
+    "tax": 90,
+    "proposedTax": null,
+    "pending": [
+      "poNumber",
+      "lines.3.sku"
+    ],
+    "flagged": false
+  },
+  {
+    "file": "case-25.png",
+    "ms": 3421,
+    "kind": "invoice",
+    "subtotal": 76,
+    "contradictions": [
+      {
+        "code": "subtotal",
+        "delta": 300
+      },
+      {
+        "code": "printed_line_sum",
+        "delta": 300
+      },
+      {
+        "code": "calculated_total",
+        "delta": 300
+      }
+    ],
+    "lines": [
+      {
+        "sku": "KT-124",
+        "description": "Packing insert",
+        "quantity": 5,
+        "unitPrice": 12,
+        "amount": 60
+      },
+      {
+        "sku": "KT-224",
+        "description": "Finishing kit",
+        "quantity": 1,
+        "unitPrice": 13,
+        "amount": 13
+      }
+    ],
+    "total": 81.7,
+    "tax": 5.7,
+    "proposedTax": null,
+    "pending": [],
+    "flagged": true
+  }
+]
