@@ -1,11 +1,14 @@
 // Optional browser evaluation. Supply CHROMIUM, TESSERACT_GZIP and playwright-core.
 // PLAYWRIGHT_MODULE can point to a separately installed playwright-core ESM entry.
+import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../..');
+const production=process.argv.includes('--production-ocr');
+const acceptance=process.argv.includes('--original-image-acceptance');
 const keys=JSON.parse(await fs.readFile(path.join(here,'answers.json'),'utf8'));
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM});
 const context=await browser.newContext();
@@ -26,21 +29,35 @@ const report=[];
 try{
  const page=await context.newPage();
  await page.goto(origin);
- for(const key of keys){
+ async function read(file,kind){
   const started=performance.now();
-  await page.locator('input').setInputFiles(path.join(here,'documents',key.file));
+  await page.locator('input').setInputFiles(file);
   const result=await page.evaluate(async kind=>{
    const {extractFile,parseExtractedText}=await import('/extraction.js');
    const {pendingConfirmations}=await import('/arithmetic.js');
    try{
     const {text,layout}=await extractFile(document.querySelector('input').files[0],()=>{},{kind,detailed:true});
     const d=parseExtractedText(text,kind,layout);
-    return {kind:d.type,lines:d.lines,total:d.total,tax:d.tax,proposedTax:d.taxProposal?.cents??null,
+    return {kind:d.type,lines:d.lines,subtotal:d.subtotal,total:d.total,tax:d.tax,proposedTax:d.taxProposal?.cents??null,
      pending:pendingConfirmations(d).map(f=>f.path),flagged:!!d.arithmetic.length};
    }catch(e){return {error:String(e?.message||e)};}
-  },key.kind==='purchase_order'?'purchase_order':'invoice');
-  report.push({file:key.file,ms:Math.round(performance.now()-started),...result});
+  },kind);
+  return {file:path.basename(file),ms:Math.round(performance.now()-started),...result};
+ }
+ if(production||acceptance){
+  const fixture=await read(path.join(root,'tests/fixtures/ocr/dark-ruled-rate-before-qty.png'),'invoice');
+  assert.deepEqual(fixture.lines.map(line=>[line.sku,line.quantity,line.unitPrice,line.amount]),[
+   ['AAB-001',1,125,125],['BBC-002',5,80,400],['CDE-003',1,125,125],['DFG-004',3,40,120],['EFG-005',1,30,30]
+  ]);
+  assert.deepEqual([fixture.subtotal,fixture.tax,fixture.total],[800,80,880]);
+  assert.equal(fixture.lines[1].description,'Layout design (5 pages)');
+  assert.deepEqual(fixture.pending,['currency']);
+  console.log(fixture.file,'passed');
+ }
+ for(const key of keys){
+  const result=await read(path.join(here,'documents',key.file),key.kind==='purchase_order'?'purchase_order':'invoice');
+  report.push(result);
   console.log(key.file,result.error||result.lines.length);
  }
- await fs.writeFile(path.join(here,process.argv.includes('--followup')?'../followup/browser-results.json':'browser-results.json'),JSON.stringify(report,null,2)+'\n');
+ await fs.writeFile(path.join(here,acceptance?'../original-image-acceptance/browser-results.json':production?'../production-ocr/browser-results.json':process.argv.includes('--followup')?'../followup/browser-results.json':'browser-results.json'),JSON.stringify(report,null,2)+'\n');
 }finally{await browser.close();}
