@@ -1,4 +1,4 @@
-import {invoiceDateIssue} from './invoice-dates.js';
+import {invoiceDateReviewIssue} from './invoice-dates.js';
 import {extractFile,parseExtractedText,parseBaselineText} from './extraction.js';
 import {validateExtractionReview,lineReviewReasons} from './extraction-validation.js';
 import {arithmeticReview,arithmeticChecks,adjustmentsOf,taxesOf,pendingConfirmations,pathValue,correctField,ADJUSTMENT_KINDS,FEE_KINDS} from './arithmetic.js';
@@ -207,7 +207,7 @@ export function reviewExisting(data,text,file=null){
    const lineInputs=JSON.stringify([current.lines,current.subtotal]);
    if(lineInputs!==lastLineInputs)lineChecked.checked=false;
    lastLineInputs=lineInputs;
-   const dateIssue=kind==='invoice'?invoiceDateIssue(current.date,current.due):'';
+   const dateIssue=kind==='invoice'?invoiceDateReviewIssue(current):'';
    dateReview.classList.toggle('check',Boolean(dateIssue));dateReview.textContent=dateIssue;dateReview.hidden=!dateIssue;
    const status=reviewStatus(current);
    const pending=status.pending.map(p=>{

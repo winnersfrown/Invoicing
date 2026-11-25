@@ -11,7 +11,7 @@ const patterns = {
   poNumber: String.raw`${po}\s*${reference}|${po}(?=\s*[:#]|\s+[\w/-]*\d|\s*$)`,
   currency: String.raw`(?:invoice\s+)?currency(?:\s+code)?`,
   payee: String.raw`(?:bank\s+)?account\s+(?:holder|name)|payee(?:\s+name)?|beneficiary(?:\s+name)?`,
-  customer: String.raw`(?:bill(?:ed)?\s+to|customer(?:\s+name)?)`,
+  customer: String.raw`(?:(?:bill(?:ed)?|issued|invoice(?:d)?|sold)\s+to|customer(?:\s+name)?)`,
   // Issue, due and other (order, delivery, period) date labels in en/fr/de/es/nl/it/pt.
   date: String.raw`(?:invoice\s+date|date\s+of\s+invoice|issue\s+date|date\s+issued|issued\s+on|issued(?=\s*[:#]|\s+\d)|billing\s+date|tax\s+point(?:\s+date)?|date\s+(?:de\s+(?:la\s+)?)?factur(?:e|ation)|date\s+d['’]\s*[ée]mission|rechnungsdatum|ausstellungsdatum|belegdatum|fecha\s+(?:de\s+)?(?:factura|emisi[oó]n|expedici[oó]n)|factuurdatum|data\s+(?:della\s+)?fattura|data\s+(?:di\s+)?emissione|data\s+documento|data\s+da\s+fatura|data\s+de\s+emiss[aã]o|(?:date|datum|fecha|data)(?=\s*[:#]|\s+\d))`,
   due: String.raw`(?:payment\s+due\s+date|due\s+date|payment\s+due|pay(?:able)?\s+by|due\s+by|due(?=\s*[:#]|\s+\d)|date\s+d['’]\s*[ée]ch[ée]ance|[ée]ch[ée]ance|date\s+limite\s+de\s+paiement|f[äa]llig(?:keitsdatum|\s+am|\s+bis)?|zahlbar\s+bis|fecha\s+(?:de\s+)?vencimiento|vencimiento|fecha\s+l[ií]mite\s+de\s+pago|vervaldatum|uiterste\s+betaaldatum|te\s+betalen\s+voor|data\s+(?:di\s+)?scadenza|scadenza|data\s+de\s+vencimento|vencimento)`,
@@ -104,6 +104,17 @@ export function readDocumentMetadata(rows, kind, fields, set) {
   const issuerRefs=[], payees = [], headings = [], letterheads = [];
   let inBuyerBlock = false;
   const dateHits = [];
+  const buyerRows = (column, row) => {
+    if (column.x==null || row.method!=='ocr' || !row.bbox) return [];
+    // Page segmentation can return all cells in the right column before
+    // resuming a label's left column. Follow nearby aligned baselines.
+    return rows.flatMap((next,i)=>{
+      const dy=next.bbox?.y0-row.bbox.y0;
+      if(next.page!==row.page || !(dy>3 && dy<(row.bbox.y1-row.bbox.y0)*9)) return [];
+      const part=alignedValue(column,columns[i]);
+      return part?[{part,row:next,dy}]:[];
+    }).sort((a,b)=>a.dy-b.dy);
+  };
   let invoiceNumberPosition, inferredDate;
   for (const [i, row] of rows.entries()) {
     const cells = columns[i];
@@ -120,15 +131,19 @@ export function readDocumentMetadata(rows, kind, fields, set) {
         const remainder = cell.text.slice(match.index + match[0].length, matches[n+1]?.index).trim();
         let value = remainder.replace(/^[:#=–-]\s*/, '').trim();
         let source = row;
+        const belowBuyer = key==='customer'?buyerRows(cell,row):[];
+        let recipientOnNextRow=false;
         if (!remainder || /^[:#=–-]$/.test(remainder)) {
           const adjacent = cells[j+1];
           const below = rows[i+1]?.page === row.page && alignedValue(cell, columns[i+1]);
-          const next = key !== 'customer' && adjacent && !findLabels(adjacent.text).length ? adjacent : below;
+          const next = key !== 'customer' && adjacent && !findLabels(adjacent.text).length ? adjacent : belowBuyer[0]?.part || below;
           if (!next) continue;
           const nextLabel = findLabels(next.text)[0];
           if (nextLabel && (key !== 'vendor' || nextLabel.index === 0)) continue;
           value = next.text.slice(0, nextLabel?.index).trim();
-          if (next === below) source = {...row, sourceRows:[row,rows[i+1]]};
+          recipientOnNextRow=next===below || next===belowBuyer[0]?.part;
+          if (next===belowBuyer[0]?.part) source={...row,sourceRows:[row,belowBuyer[0].row]};
+          else if (next === below) source = {...row, sourceRows:[row,rows[i+1]]};
         } else if (key === 'vendor' && !/^[:#=–-]/.test(remainder)
             && !/name|issued by|sold by|billed by/i.test(match[0]) && match.index !== 0) continue;
         if (key === 'date' || key === 'due') {
@@ -136,7 +151,20 @@ export function readDocumentMetadata(rows, kind, fields, set) {
           if (token) dateHits.push({key, token, source, label: match[0].trim()});
           continue;
         }
-        if (key === 'customer' && readInvoiceDate(value, row.method)) continue;
+        if (key === 'customer') {
+          if (readInvoiceDate(value, row.method)) continue;
+          // A contact and company can occupy consecutive aligned lines. Require
+          // a following address to distinguish the company from unrelated text.
+          const offset=recipientOnNextRow?1:0;
+          const organization=belowBuyer[offset];
+          const address=belowBuyer[offset+1];
+          if (organization && address && !findLabels(organization.part.text).length &&
+              /^[\p{L}][\p{L} .&'’()-]+$/u.test(organization.part.text) &&
+              /^(?:\d+\s+\p{L}|P\.?\s*O\.?\s+Box)/iu.test(address.part.text)) {
+            value+=` · ${organization.part.text}`;
+            source={...row,sourceRows:[...(source.sourceRows||[row]),organization.row]};
+          }
+        }
         if(key==='issuerRef'){
           const ref=validValue('number',value);
           if (ref && /\d/.test(ref) && !/^(?:PO|SO|DN)[-/#]?\d/i.test(ref))issuerRefs.push({value:ref,source});
@@ -189,6 +217,23 @@ export function readDocumentMetadata(rows, kind, fields, set) {
   readDates(rows, dateHits, inferredDate, set, fields);
   const candidates = headings.length ? headings : letterheads;
   const uniqueHeadings = new Map(candidates.map(candidate=>[candidate.value,candidate]));
+  if (!fields.vendor && kind === 'invoice' && payees.length) {
+    const normalize=value=>value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+    const titleRows=rows.slice(0,6);
+    const title=titleRows.findIndex(row=>/\binvoice\b/i.test(row.text));
+    if(title>=0){
+      const letterhead=titleRows.slice(Math.max(0,title-2),title+3).filter(row=>!findLabels(row.text)
+        .some(match=>['number','customer','date','due','poNumber','payee'].includes(labelKey(match))));
+      const words=normalize(letterhead.map(row=>row.text.replace(/^\s*invoice\s*$/i,'')).join(' '));
+      const corroborated=payees.filter(payee=>normalize(payee.value).split(' ').length>=2 &&
+        ` ${words} `.includes(` ${normalize(payee.value)} `));
+      if(new Set(corroborated.map(payee=>normalize(payee.value))).size===1){
+        const {value,source}=corroborated[0];
+        set('vendor',value,{...source,sourceRows:[...letterhead,source]},'supported',
+          'The supplier in the invoice letterhead matches the payment recipient.');
+      }
+    }
+  }
   if (!fields.vendor && uniqueHeadings.size === 1) {
     const {value,source} = uniqueHeadings.values().next().value;
     set('vendor',value,source,'uncertain','Possible supplier from the document letterhead. Confirm the issuer.');

@@ -131,3 +131,14 @@ export function invoiceDateIssue(invoiceDate, dueDate) {
   const days = (issued - due) / 86400000;
   return `Payment due date ${dueDate} is ${days} ${days === 1 ? 'day' : 'days'} before invoice date ${invoiceDate}. Verify both dates.`;
 }
+
+export function invoiceDateReviewIssue(d) {
+  const actual = invoiceDateIssue(d.date,d.due);
+  if (actual) return actual;
+  const fields=d.extraction?.fields;
+  const issue=fields?.date?.candidates;
+  const due=fields?.due?.candidates;
+  if(d.date || d.due || issue?.length!==2 || due?.length!==2) return '';
+  if(!issue.every((candidate,i)=>invoiceDateIssue(candidate.value,due[i].value))) return '';
+  return `The printed due date ${fields.due.sourceText} precedes the printed invoice date ${fields.date.sourceText} in both date formats. Confirm both dates and verify the source.`;
+}

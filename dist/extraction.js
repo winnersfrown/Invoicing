@@ -3,6 +3,8 @@ import {parseLayoutText,groupPdfRows} from './layout-extraction.js';
 import {enhanceScan,straightenPhoto} from './ocr-image.js';
 import {alignOcrRows,ocrRows} from './ocr-layout.js';
 import {keepExistingItemReads,readRuledItems} from './ocr-grid.js';
+import {readDarkTable} from './ocr-ruled-table.js';
+import {readSummary} from './invoice-money.js';
 import {toCents,adjustmentCents} from './arithmetic.js';
 
 export function parseExtractedText(text,kind,layout=[]) {
@@ -93,6 +95,41 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
    const sameInvoice=!bestDocument.number||!document.number||bestDocument.number===document.number;
    if(!sameInvoice && bestDocument.extraction.fields.number?.support==='supported')return;
    best=rows;bestDocument=document;quality=next;
+  }
+  // A validated ruled reading keeps each printed label with its own cell.
+  // Keep independently captured metadata and any previously readable totals.
+  const weakColumns=doc=>Object.entries(doc.extraction.fields).some(([key,f])=>
+   /\.(quantity|unitPrice)$/.test(key) && f.needsConfirmation);
+  const needsRuledRead=doc=>!doc.lines.length||weakColumns(doc)||doc.subtotal==null||doc.total==null;
+  if(kind==='invoice' && needsRuledRead(bestDocument))try{
+   const grid=await readDarkTable(canvas,worker,page,onProgress);
+   if(grid && grid.rows.length>=bestDocument.lines.length){
+    const outside=best.filter(row=>{
+     const middle=(row.bbox.y0+row.bbox.y1)/2;
+     return middle<grid.top || middle>=grid.bottom;
+    });
+    const summaries=grid.summaries.filter(row=>{
+     const summary=readSummary(row.text);
+     const key=summary.key==='subtotalExclusive'?'subtotal':summary.key;
+     return Number.isFinite(summary.value) && bestDocument[key]==null;
+    });
+    const combined=[...outside,...grid.rows,...summaries].sort((a,b)=>a.bbox.y0-b.bbox.y0);
+    const candidate=parseLayoutText('',kind,combined);
+    const fields=['subtotal','total','tax','amountDue','currency','number','poNumber'];
+    const preserved=fields.every(key=>bestDocument[key]==null || bestDocument[key]==='' || candidate[key]===bestDocument[key]);
+    const knownItems=bestDocument.lines.filter(line=>line.sku && Number.isFinite(line.amount));
+    const amountsPreserved=knownItems.every(line=>candidate.lines.some(next=>next.sku===line.sku && next.amount===line.amount));
+    const completeLines=candidate.lines.every(line=>line.quantity!=null && line.unitPrice!=null && line.amount!=null);
+    const moreReliable=(weakColumns(bestDocument)&&!weakColumns(candidate)) || candidate.lines.length>bestDocument.lines.length ||
+      summaries.some(row=>readSummary(row.text).key==='total'||readSummary(row.text).key==='subtotal');
+    if(preserved&&amountsPreserved&&moreReliable&&candidate.lines.length>=bestDocument.lines.length){
+     best=combined;bestDocument=candidate;quality=invoiceQuality(candidate);
+     // Additional full-page guesses can undo a verified geometric read.
+     if(completeLines&&!needsRuledRead(candidate))quality.weak=false;
+    }
+   }
+  }catch{
+   onProgress('Continuing with the available table rows…');
   }
   if(quality.weak)try{
    onProgress('Retrying difficult text and table rows…');

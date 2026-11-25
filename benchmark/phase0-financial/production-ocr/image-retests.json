@@ -1,0 +1,448 @@
+{
+  "baseline": [
+    {
+      "file": "sorikano-dark-grid.png",
+      "ms": 7497,
+      "passes": [
+        "Loading English OCR\u2026",
+        "Retrying difficult text and table rows\u2026"
+      ],
+      "vendor": "Bright Grove LLC",
+      "customer": "",
+      "number": "00456",
+      "poNumber": "PO-2030-082",
+      "date": "2030-04-14",
+      "due": "2030-04-30",
+      "currency": "",
+      "subtotal": null,
+      "tax": null,
+      "total": 880,
+      "lines": [],
+      "confirmations": [
+        "currency"
+      ],
+      "flagged": false,
+      "geometry": []
+    },
+    {
+      "file": "juliana-reconstruction.png",
+      "ms": 2222,
+      "passes": [
+        "Loading English OCR\u2026"
+      ],
+      "vendor": "Juliana Silva",
+      "customer": "",
+      "number": "12345",
+      "poNumber": "",
+      "date": "2025-07-30",
+      "due": "2025-07-10",
+      "currency": "USD",
+      "subtotal": 870,
+      "tax": 87,
+      "taxRate": 10,
+      "total": 957,
+      "lines": [
+        {
+          "sku": "",
+          "description": "White Basic Tank Top",
+          "quantity": 2,
+          "unitPrice": 80,
+          "amount": 160
+        },
+        {
+          "sku": "",
+          "description": "Denim Jacket",
+          "quantity": 1,
+          "unitPrice": 320,
+          "amount": 320
+        },
+        {
+          "sku": "",
+          "description": "Bamboo Underwear",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "",
+          "description": "Striped Pants",
+          "quantity": 1,
+          "unitPrice": 240,
+          "amount": 240
+        }
+      ],
+      "confirmations": [],
+      "flagged": false,
+      "geometry": []
+    },
+    {
+      "file": "morgan-maxwell.png",
+      "ms": 3905,
+      "passes": [
+        "Loading English OCR\u2026"
+      ],
+      "vendor": "Morgan Maxwell",
+      "customer": "Oak & Elm Creative (fictional)",
+      "number": "MM-2041",
+      "poNumber": "P0-2030-077",
+      "date": "2026-11-03",
+      "due": "2026-12-03",
+      "currency": "USD",
+      "subtotal": 900,
+      "tax": 90,
+      "taxRate": 10,
+      "total": 990,
+      "lines": [
+        {
+          "sku": "SMM-001",
+          "description": "Social Media Strategy Plan",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "CNT-002",
+          "description": "Content Creation (5 posts)",
+          "quantity": 5,
+          "unitPrice": 100,
+          "amount": 500
+        },
+        {
+          "sku": "RPT-003",
+          "description": "Scheduling & Reporting",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "1GS-004",
+          "description": "Instagram Story Design (3 slides)",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "HTG-005",
+          "description": "Hashtag Research",
+          "quantity": 1,
+          "unitPrice": 50,
+          "amount": 50
+        }
+      ],
+      "confirmations": [
+        "poNumber",
+        "lines.3.sku"
+      ],
+      "flagged": false,
+      "geometry": []
+    },
+    {
+      "file": "morgan-synthetic.png",
+      "ms": 5957,
+      "passes": [
+        "Loading English OCR\u2026",
+        "Retrying difficult text and table rows\u2026"
+      ],
+      "vendor": "Morgan Maxwell",
+      "customer": "",
+      "number": "MM-SYN-1",
+      "poNumber": "PO-810",
+      "date": "",
+      "due": "",
+      "currency": "USD",
+      "subtotal": 900,
+      "tax": null,
+      "taxRate": 10,
+      "total": 990,
+      "lines": [
+        {
+          "sku": "SMM-001",
+          "description": "Social Media Strategy Plan",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "CNT-002",
+          "description": "Content Creation (5 posts)",
+          "quantity": 5,
+          "unitPrice": 100,
+          "amount": 500
+        },
+        {
+          "sku": "RPT-003",
+          "description": "Scheduling & Reporting",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "1GS-004",
+          "description": "Instagram Story Design (3 slides)",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "HSR-005",
+          "description": "Hashtag Research",
+          "quantity": 1,
+          "unitPrice": 50,
+          "amount": 50
+        }
+      ],
+      "confirmations": [
+        "lines.3.sku",
+        "taxes.0"
+      ],
+      "flagged": false,
+      "geometry": []
+    }
+  ],
+  "candidate": [
+    {
+      "file": "sorikano-dark-grid.png",
+      "ms": 7221,
+      "passes": [
+        "Loading English OCR\u2026",
+        "Reading dark table headings and ruled financial cells\u2026"
+      ],
+      "vendor": "Northwind Studio",
+      "customer": "Casey Owens \u00b7 Bright Grove LLC",
+      "number": "00456",
+      "poNumber": "PO-2030-082",
+      "date": "2030-04-14",
+      "due": "2030-04-30",
+      "currency": "",
+      "subtotal": 800,
+      "tax": 80,
+      "taxRate": 10,
+      "total": 880,
+      "lines": [
+        {
+          "sku": "AAB-001",
+          "description": "Print setup",
+          "quantity": 1,
+          "unitPrice": 125,
+          "amount": 125
+        },
+        {
+          "sku": "BBC-002",
+          "description": "Layout design (5 pages)",
+          "quantity": 5,
+          "unitPrice": 80,
+          "amount": 400
+        },
+        {
+          "sku": "CDE-003",
+          "description": "Proof review",
+          "quantity": 1,
+          "unitPrice": 125,
+          "amount": 125
+        },
+        {
+          "sku": "DFG-004",
+          "description": "Illustrations (3 panels)",
+          "quantity": 3,
+          "unitPrice": 40,
+          "amount": 120
+        },
+        {
+          "sku": "EFG-005",
+          "description": "Source licensing",
+          "quantity": 1,
+          "unitPrice": 30,
+          "amount": 30
+        }
+      ],
+      "confirmations": [
+        "currency"
+      ],
+      "flagged": false,
+      "geometry": [
+        "AAB-001  Print setup  125  1  $125",
+        "BBC-002  Layout design (5 pages)  80  5  $400",
+        "CDE-003  Proof review  125  1  $125",
+        "DFG-004  Illustrations (3 panels)  40  3  $120",
+        "EFG-005  Source licensing  30  1  $30",
+        "Subtotal  $800",
+        "Tax 10%  $80",
+        "Total  $880"
+      ]
+    },
+    {
+      "file": "juliana-reconstruction.png",
+      "ms": 2783,
+      "passes": [
+        "Loading English OCR\u2026"
+      ],
+      "vendor": "Juliana Silva",
+      "customer": "",
+      "number": "12345",
+      "poNumber": "",
+      "date": "2025-07-30",
+      "due": "2025-07-10",
+      "currency": "USD",
+      "subtotal": 870,
+      "tax": 87,
+      "taxRate": 10,
+      "total": 957,
+      "lines": [
+        {
+          "sku": "",
+          "description": "White Basic Tank Top",
+          "quantity": 2,
+          "unitPrice": 80,
+          "amount": 160
+        },
+        {
+          "sku": "",
+          "description": "Denim Jacket",
+          "quantity": 1,
+          "unitPrice": 320,
+          "amount": 320
+        },
+        {
+          "sku": "",
+          "description": "Bamboo Underwear",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "",
+          "description": "Striped Pants",
+          "quantity": 1,
+          "unitPrice": 240,
+          "amount": 240
+        }
+      ],
+      "confirmations": [],
+      "flagged": false,
+      "geometry": []
+    },
+    {
+      "file": "morgan-maxwell.png",
+      "ms": 3230,
+      "passes": [
+        "Loading English OCR\u2026"
+      ],
+      "vendor": "Morgan Maxwell",
+      "customer": "Oak & Elm Creative (fictional)",
+      "number": "MM-2041",
+      "poNumber": "P0-2030-077",
+      "date": "2026-11-03",
+      "due": "2026-12-03",
+      "currency": "USD",
+      "subtotal": 900,
+      "tax": 90,
+      "taxRate": 10,
+      "total": 990,
+      "lines": [
+        {
+          "sku": "SMM-001",
+          "description": "Social Media Strategy Plan",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "CNT-002",
+          "description": "Content Creation (5 posts)",
+          "quantity": 5,
+          "unitPrice": 100,
+          "amount": 500
+        },
+        {
+          "sku": "RPT-003",
+          "description": "Scheduling & Reporting",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "1GS-004",
+          "description": "Instagram Story Design (3 slides)",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "HTG-005",
+          "description": "Hashtag Research",
+          "quantity": 1,
+          "unitPrice": 50,
+          "amount": 50
+        }
+      ],
+      "confirmations": [
+        "poNumber",
+        "lines.3.sku"
+      ],
+      "flagged": false,
+      "geometry": []
+    },
+    {
+      "file": "morgan-synthetic.png",
+      "ms": 7259,
+      "passes": [
+        "Loading English OCR\u2026",
+        "Retrying difficult text and table rows\u2026"
+      ],
+      "vendor": "Morgan Maxwell",
+      "customer": "",
+      "number": "MM-SYN-1",
+      "poNumber": "PO-810",
+      "date": "",
+      "due": "",
+      "currency": "USD",
+      "subtotal": 900,
+      "tax": null,
+      "taxRate": 10,
+      "total": 990,
+      "lines": [
+        {
+          "sku": "SMM-001",
+          "description": "Social Media Strategy Plan",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "CNT-002",
+          "description": "Content Creation (5 posts)",
+          "quantity": 5,
+          "unitPrice": 100,
+          "amount": 500
+        },
+        {
+          "sku": "RPT-003",
+          "description": "Scheduling & Reporting",
+          "quantity": 1,
+          "unitPrice": 100,
+          "amount": 100
+        },
+        {
+          "sku": "1GS-004",
+          "description": "Instagram Story Design (3 slides)",
+          "quantity": 3,
+          "unitPrice": 50,
+          "amount": 150
+        },
+        {
+          "sku": "HSR-005",
+          "description": "Hashtag Research",
+          "quantity": 1,
+          "unitPrice": 50,
+          "amount": 50
+        }
+      ],
+      "confirmations": [
+        "lines.3.sku",
+        "taxes.0"
+      ],
+      "flagged": false,
+      "geometry": []
+    }
+  ]
+}

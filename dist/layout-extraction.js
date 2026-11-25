@@ -182,7 +182,7 @@ export function parseLayoutText(text,kind,layout=[]){
  const rows=rawRows.flatMap(row=>row.gridCells?[row]:row.text.split(/ {2,}(?=(?:vendor|supplier|seller|from|invoice(?:\s+(?:no\.?|number|date))?|purchase order|po(?: reference)?|currency|due(?: date)?|subtotal|tax|total)\s*[:#])/i).map(text=>({...row,text})));
  const d={taxProposal:/** @type {{rate:number,basisCents:number,cents:number,reason:string}|null} */(null),type:kind,vendor:'',customer:'',number:'',poNumber:'',currency:'',date:'',due:'',subtotal:null,tax:null,taxRate:null,total:null,shipping:null,discount:null,lines:[],note:'Extracted values require source verification.'};
  const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text',...(row.coordinateSpace?{coordinateSpace:row.coordinateSpace}:{})};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.includes('.'))d[key]=value;};
- readDocumentMetadata(inputRows.filter(row=>!row.gridCells),kind,fields,set);
+ readDocumentMetadata(inputRows.filter(row=>!row.gridCells&&!row.summaryCell),kind,fields,set);
  const summaries=[],unassignedRows=[];let exchange=null;
  let table=null, page;
  for(const row of rows){
@@ -190,11 +190,18 @@ export function parseLayoutText(text,kind,layout=[]){
   const t=row.text.trim();
   if (/^(?:brought|carried)\s+forward\b/i.test(t)) continue;
   if(row.gridCells){
-   const {description,quantity,unitPrice,amount:printed}=row.gridCells;
-   const line={sku:'',description,quantity:readMoney(quantity,3)?.value??null,unitPrice:amount(unitPrice),amount:amount(printed)};
+   const {sku='',description,quantity,unitPrice,amount:printed}=row.gridCells;
+   const line={sku,description,quantity:readMoney(quantity,3)?.value??null,unitPrice:amount(unitPrice),amount:amount(printed)};
    const index=d.lines.length;
    d.lines.push(line);
-   for(const [key,value] of Object.entries(line))set(`lines.${index}.${key}`,value,row,'uncertain','Read from a ruled table cell. Verify against the original invoice.');
+   for(const [key,value] of Object.entries(line)){
+    const source=row.gridEvidence?.[key];
+    const heading=row.gridHeading?.find(cell=>aliases[key]?.test(cell.text));
+    const fieldRow=source?{...source,sourceRows:heading?[heading,source]:[source]}:row;
+    const supported=source?.ocrConfidence>=80&&value!==null&&value!=='';
+    set(`lines.${index}.${key}`,value,fieldRow,supported?'supported':'uncertain',
+      supported?'Read from its labeled table cell.':'Read from a ruled table cell. Verify against the original invoice.');
+   }
    table=null;
    continue;
   }
