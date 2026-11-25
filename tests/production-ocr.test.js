@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {checkRuledCandidate} from '../dist/ocr-candidate.js';
 import {findDarkTable} from '../dist/ocr-ruled-table.js';
 import {parseExtractedText} from '../dist/extraction.js';
 import {invoiceDateReviewIssue} from '../dist/invoice-dates.js';
@@ -76,4 +77,70 @@ test('unambiguous, chronological dates stay supported without a warning',()=>{
   assert.equal(d.date,'2030-04-14');
   assert.equal(d.due,'2030-04-30');
   assert.equal(invoiceDateReviewIssue(d),'');
+});
+
+function candidateRows(oldSku, newSku, {oldDescription='Filter 24', newDescription='Filter 24', oldAmount=40,
+    newAmount=40, nextY=60, nextPage=1}={}) {
+  const row=(text,y,page=1)=>({text,page,method:'ocr',ocrConfidence:95,bbox:{x0:10,y0:y,x1:300,y1:y+20}});
+  const fallback=parseExtractedText('','invoice',[row(`${oldSku} | ${oldDescription} 2 20 $${oldAmount}`,60)]);
+  const cells={sku:newSku,description:newDescription,quantity:'2',unitPrice:'20',amount:`$${newAmount}`};
+  const ruled={
+    ...row(Object.values(cells).join(' '),nextY,nextPage),
+    gridCells:cells,
+    gridEvidence:Object.fromEntries(Object.entries(cells).map(([key,value])=>[key,row(value,nextY,nextPage)]))
+  };
+  const candidate=parseExtractedText('','invoice',[ruled]);
+  return {fallback,candidate,ruled};
+}
+
+test('a same-row SKU OCR lookalike preserves both readings and requires confirmation',()=>{
+  for(const [a,b] of ['I1','O0','S5','B8','Z2']){
+    const {fallback,candidate,ruled}=candidateRows(`${b}F-410`,`${a}F-410`);
+    const [conflict]=checkRuledCandidate(fallback,candidate,[ruled]);
+    assert.equal(conflict.fallbackSku,`${b}F-410`);
+    ruled.gridSkuConflict=conflict;
+    const reread=parseExtractedText('','invoice',[ruled]);
+    const field=reread.extraction.fields['lines.0.sku'];
+    assert.equal(reread.lines[0].sku,`${a}F-410`);
+    assert.equal(field.needsConfirmation,true);
+    assert.deepEqual(field.candidates.map(c=>c.value),[`${a}F-410`,`${b}F-410`]);
+    assert.equal(field.evidence.length,2);
+  }
+});
+
+test('the same amount does not authorize substituting an unrelated SKU, description, or row',()=>{
+  for(const {fallback,candidate,ruled} of [
+    candidateRows('SK-410','SK-411'),
+    candidateRows('1F-410','IF-410',{newDescription:'Washer 24'}),
+    candidateRows('1F-410','IF-410',{nextY:100}),
+    candidateRows('1F-410','IF-410',{nextPage:2}),
+    candidateRows('1F-410','IF-410',{newAmount:39})
+  ]){
+    assert.equal(checkRuledCandidate(fallback,candidate,[ruled]),null);
+  }
+});
+
+test('payment, contact and registration rows do not become products or hide resumed tables',()=>{
+  const row=(text,page=1)=>({text,page,method:'text'});
+  const doc=parseExtractedText('','invoice',[
+    row('SKU | Description | Qty | Rate | Total'),
+    row('SEAL-02 | Seal model 24 | 2 | 10.00 | 20.00'),
+    row('Subtotal $20.00'),row('Payment Information:'),
+    row('Account No.: 0128 4321 8012'),row('Routing Number 123 456 789'),
+    row('IBAN: DE02 1234 5678'),row('SWIFT / BIC: BANKYYGG'),
+    row('VAT Reg. No.: 321 654 987'),row('Phone: 123 456 789'),row('1234 5678 9123'),
+    row('Unlabeled charge 2 $5 $10'),
+    row('SKU | Description | Qty | Rate | Total'),
+    row('TRIM-40 | Door trim 14 | 1 | 4.00 | 4.00'),
+    row('Thank you!'),row('BR-20 Panel 42 2 $8 $16',2)
+  ]);
+  assert.deepEqual(doc.lines.map(({sku,description})=>[sku,description]),[
+    ['SEAL-02','Seal model 24'],['TRIM-40','Door trim 14'],['BR-20','Panel 42']
+  ]);
+  assert.deepEqual(doc.extraction.unassignedRows,[{page:1,text:'Unlabeled charge 2 $5 $10'}]);
+});
+
+test('explicit payment identifiers are ignored without a recognized heading',()=>{
+  const d=parseExtractedText('Account No.: 1234 5678 9012\nAB-01 Filter model 200 2 $10 $20','invoice');
+  assert.deepEqual(d.lines,[{sku:'AB-01',description:'Filter model 200',quantity:2,unitPrice:10,amount:20}]);
 });

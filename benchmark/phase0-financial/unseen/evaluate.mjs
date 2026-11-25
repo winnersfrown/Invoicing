@@ -15,7 +15,8 @@ const sha=data=>createHash('sha256').update(data).digest('hex');
 const answers=JSON.parse(read('answers.json'));
 const followup=process.argv.includes('--followup');
 const production=process.argv.includes('--production-ocr');
-const freeze=JSON.parse(read(production?'../../holdout/engine-freeze.v9.json':followup?'../../holdout/engine-freeze.v8.json':'../../holdout/engine-freeze.v7.json'));
+const acceptance=process.argv.includes('--original-image-acceptance');
+const freeze=JSON.parse(read(acceptance?'../../holdout/engine-freeze.v10.json':production?'../../holdout/engine-freeze.v9.json':followup?'../../holdout/engine-freeze.v8.json':'../../holdout/engine-freeze.v7.json'));
 for(const [file,hash] of Object.entries(freeze))assert.equal(sha(fs.readFileSync(file)),hash,file);
 const results=[];
 let worker;
@@ -91,5 +92,5 @@ const summary={documents:results.length,errors:results.filter(r=>r.error).length
  creditsBlocked:results.filter(r=>r.kind==='credit_note'&&r.blocked).length,credits:answers.filter(k=>k.kind==='credit_note').length,
  proposedTaxCorrect:count(r=>r.taxProposalExpected!=null&&r.taxProposal===r.taxProposalExpected),taxProposalsExpected:answers.filter(k=>k.proposedTax!=null).length,
  ms:results.reduce((s,r)=>s+r.ms,0)};
-fs.writeFileSync(new URL(production?'../production-ocr/results.json':followup?'../followup/results.json':'results.json',dir),JSON.stringify({freeze,answerKeySha256:sha(read('answers.json')),summary,results},null,2)+'\n');
+fs.writeFileSync(new URL(acceptance?'../original-image-acceptance/results.json':production?'../production-ocr/results.json':followup?'../followup/results.json':'results.json',dir),JSON.stringify({freeze,answerKeySha256:sha(read('answers.json')),summary,results},null,2)+'\n');
 console.log(summary);

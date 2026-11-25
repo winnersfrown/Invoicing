@@ -55,11 +55,24 @@ function columns(row){
 const numberToken = /^[$€£]?\d[\d,]*(?:\.\d{1,3})?%?$/;
 const skuLike = (s, after = false) => /^(?=.*\d)(?=.*[A-Z])[A-Z0-9][A-Z0-9._/-]{1,19}$/i.test(s) && (!after || s.includes('-'));
 
+// A section heading ends a fallback table. Exact identifiers also occur in
+// other parts of a page, so recognize the label and boundary independently.
+const footerHeading = /^(?:(?:(?:bank|banking|bank account|payment|remittance|wire transfer)\s+(?:info(?:rmation)?|details|instructions?|terms)|(?:direct debit|wire transfer|remittance)|thank you(?: for your (?:business|order|payment))?|terms (?:and|&) conditions)\s*[:.!-]*$)/i;
+const identifierLabels = [
+ /^(?:bank\s+)?account\s*(?:no\.?|number|#)\s*[.:#=-]*\s*(?=\d|$)/i,
+ /^(?:bank\s+(?:name|branch)|account\s+(?:holder|name))\s*[:#=]/i,
+ /^(?:iban|swift(?:\s*\/\s*bic)?|bic|(?:aba\s+)?routing(?:\s+(?:no\.?|number|code))?|sort\s+code|bsb(?:\s+(?:number|code))?)\s*(?:[:#=]|(?=(?:[A-Z]{0,4}\d|[A-Z]{6}[A-Z0-9]{2}\b))|$)/i,
+ /^(?:tel(?:ephone)?|fax|phone|e-?mail|website)\s*[:#=]/i,
+ /^(?:supplier|vendor|company|business|vat|gst|tax)\s+(?:reg(?:istration)?\.?|id|no\.?|number)\s*[:.#=]?\s*(?=\d|[A-Z]{1,3}\d|$)/i
+];
+const isIdentifier = text => identifierLabels.some(label=>label.test(text));
+const numericContinuation = /^(?:[A-Z]{2}\s*\d{2}\s*)?\d[\d .-]*$/i;
+
 /** Keep printed column assignments even when a line does not multiply out. */
 export function splitLineRow(text, order = []) {
  // Registration, banking and contact identifiers often end in grouped integers.
  // A labeled metadata row is never evidence of a priced item.
- if(/\b(?:VAT|GST|tax|company)\s+(?:reg(?:istration)?\.?|id|no\.?|number)\b|^(?:tel(?:ephone)?|fax|phone|account (?:no|number)|sort code|IBAN)\s*[:#]/i.test(text))return null;
+ if(isIdentifier(text.trim())||/\b(?:VAT|GST|tax|company)\s+(?:reg(?:istration)?\.?|id|no\.?|number)\b|^(?:tel(?:ephone)?|fax|phone|account (?:no|number)|sort code|IBAN)\s*[:#]/i.test(text))return null;
  const words=text.trim().split(/\s+/);
  const numbers=[];
  while(words.length>1 && numbers.length<4 && numberToken.test(words.at(-1)))numbers.unshift(words.pop());
@@ -184,12 +197,13 @@ export function parseLayoutText(text,kind,layout=[]){
  const fields={};const set=(key,value,row,support='supported',reason='')=>{if(row.method==='ocr'&&(!Number.isFinite(row.ocrConfidence)||row.ocrConfidence<80))support='uncertain';const evidence={text:row.sourceRows?row.sourceRows.map(r=>r.text).join(' → '):row.text,page:row.page||1,row:row.sourceRows?.[0]?.row||row.row||Math.max(0,inputRows.indexOf(row.sourceRows?.[0]||row),rows.indexOf(row))+1,bbox:row.bbox||null,method:row.method||'text',...(row.coordinateSpace?{coordinateSpace:row.coordinateSpace}:{})};if(fields[key]&&JSON.stringify(fields[key].value)!==JSON.stringify(value)){fields[key].support='uncertain';fields[key].reason='Conflicting labeled values; verify the source.';fields[key].evidence.push(evidence);return;}if(fields[key]?.support==='uncertain'&&!reason){support='uncertain';reason=fields[key].reason;}fields[key]={value,support,reason:reason||(support==='supported'?'Explicit label or recognized table column.':row.method==='ocr'?'OCR or column interpretation needs verification against the source.':'Inferred from row pattern; verify against the source.'),evidence:[...(fields[key]?.evidence||[]),evidence]};if(!key.includes('.'))d[key]=value;};
  readDocumentMetadata(inputRows.filter(row=>!row.gridCells&&!row.summaryCell),kind,fields,set);
  const summaries=[],unassignedRows=[];let exchange=null;
- let table=null, page;
+ let table=null, footer=false, page;
  for(const row of rows){
-  if(row.page!==page){table=null;page=row.page;}
+  if(row.page!==page){table=null;footer=false;page=row.page;}
   const t=row.text.trim();
   if (/^(?:brought|carried)\s+forward\b/i.test(t)) continue;
   if(row.gridCells){
+   footer=false;
    const {sku='',description,quantity,unitPrice,amount:printed}=row.gridCells;
    const line={sku,description,quantity:readMoney(quantity,3)?.value??null,unitPrice:amount(unitPrice),amount:amount(printed)};
    const index=d.lines.length;
@@ -201,6 +215,14 @@ export function parseLayoutText(text,kind,layout=[]){
     const supported=source?.ocrConfidence>=80&&value!==null&&value!=='';
     set(`lines.${index}.${key}`,value,fieldRow,supported?'supported':'uncertain',
       supported?'Read from its labeled table cell.':'Read from a ruled table cell. Verify against the original invoice.');
+   }
+   if(row.gridSkuConflict){
+    const {fallbackSku,evidence}=row.gridSkuConflict;
+    const field=fields[`lines.${index}.sku`];
+    Object.assign(field,{support:'uncertain',needsConfirmation:true,
+     reason:'The labeled SKU cell and the full-page OCR disagree on a lookalike character. Confirm the printed code.',
+     candidates:[{value:sku,label:`${sku} (labeled cell)`},{value:fallbackSku,label:`${fallbackSku} (full-page read)`}],
+     evidence:[...field.evidence,...evidence]});
    }
    table=null;
    continue;
@@ -220,7 +242,9 @@ export function parseLayoutText(text,kind,layout=[]){
   if(!summary && row.method==='ocr' && /^sub\s*total\b/i.test(t) && /\d/.test(t))
    summary={key:'subtotal',value:null,unreadable:true,text:t};
   if(summary){summaries.push({...summary,row});table=null;continue;}
- const head=columns(row);if(head){table={...head,source:row};continue;}
+ const head=columns(row);if(head){table={...head,source:row};footer=false;continue;}
+ if(footerHeading.test(t)){table=null;footer=true;continue;}
+ if(isIdentifier(t) || (footer && numericContinuation.test(t))) continue;
  let l=null,support='supported';
  if(table){
   const values=tableValues(row,table);
@@ -239,6 +263,10 @@ export function parseLayoutText(text,kind,layout=[]){
    l={sku:cells.sku||'',description:cells.description,quantity:null,unitPrice:null,amount:printed};
    support='uncertain';
   }
+ }
+ if(l && footer){
+  unassignedRows.push({page:row.page||1,text:t});
+  continue;
  }
  if(l){
   const {ambiguousColumns,inferredQuantity,...line}=l;
@@ -273,7 +301,7 @@ export function parseLayoutText(text,kind,layout=[]){
  d.lines.forEach((l,i)=>{
   const m=(l.sku||'').match(/^([01])([A-Z]{1,5})(?=[-\d])/i);
   const key=`lines.${i}.sku`;
-  if(!m||!fields[key]||!fields[key].evidence.some(e=>e.method==='ocr')||letterCodes<2)return;
+  if(!m||!fields[key]||fields[key].needsConfirmation||!fields[key].evidence.some(e=>e.method==='ocr')||letterCodes<2)return;
   const alternative=(m[1]==='1'?'I':'O')+l.sku.slice(1);
   Object.assign(fields[key],{support:'uncertain',needsConfirmation:true,
    reason:`"${l.sku}" starts with ${m[1]}, which OCR often reads for ${m[1]==='1'?'I':'O'}; the other item codes start with letters. Confirm the code.`,

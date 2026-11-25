@@ -1,5 +1,7 @@
 # Production OCR follow-up
 
+[Read the final original-image acceptance results](original-image-acceptance.md). The report below records the earlier synthetic baseline.
+
 The branch starts from main at `a0c5eb1`, which contains PR #23. Production served an identical SHA-256 for the browser extraction module used in the baseline run. The workspace received the text brief and could display the two inline invoice images in chat. It did not receive downloadable invoice files for Chromium. The production screenshots record the reported symptoms. The exact-image reproduction, retest and before-and-after screenshots are pending. The image and screenshots committed here are from a purpose-built synthetic invoice with different names, line items and amounts.
 
 ## Investigation and fixes

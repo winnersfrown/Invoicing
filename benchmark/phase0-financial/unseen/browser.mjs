@@ -8,6 +8,7 @@ const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../..');
 const production=process.argv.includes('--production-ocr');
+const acceptance=process.argv.includes('--original-image-acceptance');
 const keys=JSON.parse(await fs.readFile(path.join(here,'answers.json'),'utf8'));
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM});
 const context=await browser.newContext();
@@ -43,7 +44,7 @@ try{
   },kind);
   return {file:path.basename(file),ms:Math.round(performance.now()-started),...result};
  }
- if(production){
+ if(production||acceptance){
   const fixture=await read(path.join(root,'tests/fixtures/ocr/dark-ruled-rate-before-qty.png'),'invoice');
   assert.deepEqual(fixture.lines.map(line=>[line.sku,line.quantity,line.unitPrice,line.amount]),[
    ['AAB-001',1,125,125],['BBC-002',5,80,400],['CDE-003',1,125,125],['DFG-004',3,40,120],['EFG-005',1,30,30]
@@ -58,5 +59,5 @@ try{
   report.push(result);
   console.log(key.file,result.error||result.lines.length);
  }
- await fs.writeFile(path.join(here,production?'../production-ocr/browser-results.json':process.argv.includes('--followup')?'../followup/browser-results.json':'browser-results.json'),JSON.stringify(report,null,2)+'\n');
+ await fs.writeFile(path.join(here,acceptance?'../original-image-acceptance/browser-results.json':production?'../production-ocr/browser-results.json':process.argv.includes('--followup')?'../followup/browser-results.json':'browser-results.json'),JSON.stringify(report,null,2)+'\n');
 }finally{await browser.close();}

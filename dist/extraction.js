@@ -4,6 +4,7 @@ import {enhanceScan,straightenPhoto} from './ocr-image.js';
 import {alignOcrRows,ocrRows} from './ocr-layout.js';
 import {keepExistingItemReads,readRuledItems} from './ocr-grid.js';
 import {readDarkTable} from './ocr-ruled-table.js';
+import {checkRuledCandidate} from './ocr-candidate.js';
 import {readSummary} from './invoice-money.js';
 import {toCents,adjustmentCents} from './arithmetic.js';
 
@@ -103,7 +104,7 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
   const needsRuledRead=doc=>!doc.lines.length||weakColumns(doc)||doc.subtotal==null||doc.total==null;
   if(kind==='invoice' && needsRuledRead(bestDocument))try{
    const grid=await readDarkTable(canvas,worker,page,onProgress);
-   if(grid && grid.rows.length>=bestDocument.lines.length){
+   if(grid){
     const outside=best.filter(row=>{
      const middle=(row.bbox.y0+row.bbox.y1)/2;
      return middle<grid.top || middle>=grid.bottom;
@@ -117,13 +118,15 @@ export async function extractFile(file,onProgress=()=>{},options={}) {
     const candidate=parseLayoutText('',kind,combined);
     const fields=['subtotal','total','tax','amountDue','currency','number','poNumber'];
     const preserved=fields.every(key=>bestDocument[key]==null || bestDocument[key]==='' || candidate[key]===bestDocument[key]);
-    const knownItems=bestDocument.lines.filter(line=>line.sku && Number.isFinite(line.amount));
-    const amountsPreserved=knownItems.every(line=>candidate.lines.some(next=>next.sku===line.sku && next.amount===line.amount));
+    const skuConflicts=checkRuledCandidate(bestDocument,candidate,grid.rows);
     const completeLines=candidate.lines.every(line=>line.quantity!=null && line.unitPrice!=null && line.amount!=null);
     const moreReliable=(weakColumns(bestDocument)&&!weakColumns(candidate)) || candidate.lines.length>bestDocument.lines.length ||
       summaries.some(row=>readSummary(row.text).key==='total'||readSummary(row.text).key==='subtotal');
-    if(preserved&&amountsPreserved&&moreReliable&&candidate.lines.length>=bestDocument.lines.length){
-     best=combined;bestDocument=candidate;quality=invoiceQuality(candidate);
+    if(preserved&&skuConflicts&&moreReliable&&candidate.lines.length>=bestDocument.lines.length){
+     for(const {row,fallbackSku,evidence} of skuConflicts)row.gridSkuConflict={fallbackSku,evidence};
+     best=combined;
+     bestDocument=skuConflicts.length?parseLayoutText('',kind,best):candidate;
+     quality=invoiceQuality(bestDocument);
      // Additional full-page guesses can undo a verified geometric read.
      if(completeLines&&!needsRuledRead(candidate))quality.weak=false;
     }
