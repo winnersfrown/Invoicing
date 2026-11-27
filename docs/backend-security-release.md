@@ -29,6 +29,8 @@ Invoice management history now also shows the recorded creation of a correction 
 
 ## Verification matrix
 
+The final run passed 195/195 frontend tests with the OCR cache enabled, 550/550 backend tests across 20 files, and TypeScript. Two overlapping intermediate backend runs exhausted the test harness's 10-second database setup timeout. The final complete run used two workers and the original timeout. The reissue regression also passed on both sets.
+
 | Check | Authorized result | Denied or failure result | Environment |
 |---|---|---|---|
 | Registration / returning workspace | Concurrent provisioning creates one workspace and sample per identity, returning account retains prior decisions | Missing, anonymous, invalid, expired and unconfirmed sessions fail the appropriate verifier or route | Real router and PostgreSQL policies, controlled Auth responses |
@@ -61,5 +63,7 @@ On the disposable migrated schema the upstream Supabase Splinter SQL at cc529aa 
 7. Stop on a missing audit event, changed historical amount, visible foreign record, broken signup, unexpected grant, or blocked legitimate workflow. Before 0006, revert the application to the recorded revision if needed, leaving additive 0005 in place. After 0006, keep the hardened grants and roll forward with a role-compatible application or return to the last role-compatible deployment. If none works, temporarily suspend financial mutations. Reinstating the original grants reopens the known bypass and requires a separately approved emergency plan. Restore the pre-change backup into an isolated instance to reconcile data before any production restore. Never discard later legitimate decisions as a routine rollback.
 
 ## Open release risks
+
+An additional local Supabase Auth/Storage rehearsal could not start. The container registry rate-limited a pull, and unpacking the database image consumed over 90% of the available filesystem, so the startup was stopped. No full-provider signup, mail delivery or real signed-object expiry result is claimed from that attempt.
 
 The production tests in this change read metadata only. Live end-to-end confirmation mail, pooler grants, object expiry, Auth rate limits and the post-cutover advisor require an approved environment with the candidate deployed. Disabled leaked-password protection remains open. Original object upload and PostgreSQL commit use separate services: a late database rollback can leave a private, unreferenced object. Signed links already issued can be used until expiry. Future application tables and functions need explicit grants in their migrations because hosting defaults can grant access. Keep Phase 0 closed to external confidential documents until these controls and the production smoke test are signed off.
