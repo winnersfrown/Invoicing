@@ -24,10 +24,11 @@ function router() {
   const modelId = model.id;
   registerJobHandler('investigate', investigateHandler({ model }));
   const anonKey = process.env.SUPABASE_ANON_KEY;
+  const verifyToken = supabaseVerifier(url, serviceKey);
   route = createRouter({
     db: pgDb(env('DATABASE_URL')),
-    verifyToken: supabaseVerifier(url, serviceKey),
-    verifyWorkspaceToken: process.env.PUBLIC_SIGNUP === 'true' ? supabaseVerifier(url, serviceKey, { verifiedEmail: true }) : undefined,
+    verifyToken,
+    verifyWorkspaceToken: process.env.PUBLIC_SIGNUP === 'true' ? verifyToken : undefined,
     storage: supabaseStorage(url, serviceKey),
     cronSecret: process.env.CRON_SECRET,
     model: modelId,

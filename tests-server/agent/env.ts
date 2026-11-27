@@ -32,8 +32,9 @@ export const call = (name: string, args: unknown, id = randomUUID()) => ({ id, n
 export async function agentEnv(model: Model, limits: Partial<Limits> = {}) {
   const pg = (await createTestDb()).db;
   const db = pgliteDb(pg);
+  const storage = memoryStorage();
   const router = createRouter({
-    db, storage: memoryStorage(), verifyToken: async (t) => (t.startsWith('tok-') ? t.slice(4) : null),
+    db, storage, verifyToken: async (t) => (t.startsWith('tok-') ? t.slice(4) : null),
     model: model.id, rateLimitPerMinute: 1000, log: () => {},
   });
 
@@ -98,6 +99,6 @@ export async function agentEnv(model: Model, limits: Partial<Limits> = {}) {
     });
   }
 
-  return { pg, db, router, http, newOrg, scenario, work, investigate, snapshot, close: () => pg.close() };
+  return { pg, db, storage, router, http, newOrg, scenario, work, investigate, snapshot, close: () => pg.close() };
 }
 export type AgentEnv = Awaited<ReturnType<typeof agentEnv>>;

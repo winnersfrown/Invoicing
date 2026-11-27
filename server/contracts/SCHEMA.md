@@ -40,13 +40,13 @@ idempotency_keys           organization_id, key, endpoint, user_id, response jso
 ## Rules the migration must enforce
 
 - Row-level security on every table. A row is visible only to members of its `organization_id`. Child tables without the column (`invoice_line_items`, `purchase_order_line_items`) check through their parent.
-- Writes need role `reviewer` or `admin`; `viewer` is read-only. `organization_memberships` is writable by `admin` only.
+- Migration 0004 constrains memberships to Reviewer. After 0006, browser roles have no application table privileges. Provisioning runs in the trusted server context.
 - `audit_events`, `resolution_actions`, `tool_calls` and `supplier_message_drafts` are append-only: a trigger raises on `update` or `delete` for every role.
 - Invoices and their documents are never deleted: no `delete` policy, and foreign keys from evidence tables use `on delete restrict`.
 - `jobs` and `idempotency_keys` have no policies for `authenticated`; only the server's privileged connection touches them.
 - Helper `public.current_role_in(org uuid) returns text` (security definer, stable) reads the caller's membership using `auth.uid()`.
-- Storage bucket `invoice-documents` is private. Object path is `<organization_id>/<invoice_id>/<sha256>`; policies allow members of that organisation to read and reviewers to insert; nobody updates or deletes.
+- Storage bucket `invoice-documents` is private. Object path is `<organization_id>/<invoice_id>/<sha256>`; the backend uploads new objects and signs canonical paths after authorization. Browser roles have no object policies for this bucket.
 
 ## Connection model
 
-Server code talks SQL through one small `Db` interface (`query`, `transaction`). In production it is `pg` against the Supabase pooler; in tests it is PGlite. For a user request the server opens a transaction and runs `set local role authenticated` plus `select set_config('request.jwt.claims', <claims json>, true)` so the policies above apply to that request. Application code still filters by organisation; the policies are the backstop.
+Server code talks SQL through one small `Db` interface (`query`, `transaction`). In production it is `pg` against the Supabase pooler; in tests it is PGlite. For a user request the server opens a transaction and runs `set local role sorikano_workflow` plus `select set_config('request.jwt.claims', <claims json>, true)` so the policies above apply to that request. Application code still filters by organisation; the policies are the backstop.

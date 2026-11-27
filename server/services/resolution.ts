@@ -49,6 +49,7 @@ export async function resolveDiscrepancy(db: Db, ctx: Ctx, discrepancyId: string
   const { invoice_id } = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
   // Match validation's lock order so a correction and a resolution can safely run together.
   const [inv] = await db.query<{ status: any; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [invoice_id, ctx.orgId]);
+  if (inv.status === 'superseded') fail('conflict', 'Review the replacement invoice.');
   if (inv.archived_at) fail('conflict', 'Restore this invoice before resolving findings.');
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId, true);
   if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
@@ -98,7 +99,8 @@ export async function requestInvestigation(db: Db, ctx: Ctx, discrepancyId: stri
   const d = await loadDiscrepancy(db, ctx.orgId, discrepancyId);
   if (d.deterministic_evidence?.check === 'line_match_review') fail('conflict', 'Review each suggested product match on the invoice.');
   if (REVIEW_ON_INVOICE.includes(d.deterministic_evidence?.check)) fail('conflict', 'Verify the supplier and PO reference on the invoice.');
-  const [inv] = await db.query<{ archived_at: Date | null }>('select archived_at from invoices where id = $1 and organization_id = $2 for update', [d.invoice_id, ctx.orgId]);
+  const [inv] = await db.query<{ status: string; archived_at: Date | null }>('select status, archived_at from invoices where id = $1 and organization_id = $2 for update', [d.invoice_id, ctx.orgId]);
+  if (inv.status === 'superseded') fail('conflict', 'Review the replacement invoice.');
   if (inv.archived_at) fail('conflict', 'Restore this invoice before starting an investigation.');
   const [created] = await db.query(
     `insert into ai_investigations (organization_id, discrepancy_id, model_identifier, prompt_version, investigation_status, evidence_hash, evidence_references, requested_by)

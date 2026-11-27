@@ -40,6 +40,7 @@ it('stops on shared legacy access and converts sole memberships in place when cl
   await db.query('delete from organization_memberships where user_id = $1', [partner]);
   const before = (await db.query('select user_id, organization_id, created_at from organization_memberships order by user_id')).rows;
   await db.exec(migration);
+  await db.exec(readFileSync(new URL('../../supabase/migrations/0005_workflow_role.sql', import.meta.url), 'utf8'));
   const after = (await db.query('select user_id, organization_id, created_at from organization_memberships order by user_id')).rows;
   expect(after).toEqual(before);
 
