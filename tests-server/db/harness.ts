@@ -9,8 +9,8 @@
  *   await t.close();
  *
  * asUser(userId, fn): one transaction running `set local role authenticated` and
- *   set_config('request.jwt.claims', {"sub": userId, "role": "authenticated"}, true), the same
- *   thing the server does per request. Commits if fn resolves, rolls back if it throws.
+ *   set_config('request.jwt.claims', {"sub": userId, "role": "authenticated"}, true), simulating
+ *   a browser database session. Backend tests enter sorikano_workflow through server/db. Commits if fn resolves, rolls back if it throws.
  * asService(fn): one transaction as the connecting superuser (`postgres`), standing in for the
  *   server's privileged pooler connection. Triggers still fire; RLS does not apply.
  * createTestDb({ storage: true }) also creates a minimal stub of Supabase's `storage` schema

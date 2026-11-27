@@ -8,13 +8,13 @@ import { fail } from './util.ts';
 export type TokenVerifier = (token: string) => Promise<string | null>;
 export type Caller = { userId: string; orgId: string; role: z.infer<typeof Role> };
 
-export function supabaseVerifier(url: string, key: string, { verifiedEmail = false } = {}): TokenVerifier {
+export function supabaseVerifier(url: string, key: string): TokenVerifier {
   const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   return async (token) => {
     const { data, error } = await client.auth.getUser(token);
     const user = data.user;
     if (error || !user) return null;
-    if (verifiedEmail && (user.is_anonymous || !user.email || !user.email_confirmed_at)) return null;
+    if (user.is_anonymous || !user.email || !user.email_confirmed_at) return null;
     return user.id;
   };
 }

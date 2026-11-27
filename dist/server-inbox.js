@@ -602,9 +602,12 @@ export function createServerInbox({api, root, onDetailClosed}) {
         h('details', {'data-ev': 'invoice-history', tabindex: '-1'}, h('summary', {}, 'Invoice management history'),
           management.length ? management.map(event => h('div', {class: 'activity-item'},
             h('strong', {}, {'invoice.archived': 'Invoice archived', 'invoice.restored': 'Invoice restored',
+              'invoice.created': 'Correction uploaded', 'invoice.status_changed': 'Invoice superseded',
               'invoice.purchase_order_unlinked': 'Purchase order unlinked'}[event.event_type]),
-            h('small', {}, `${when(event.timestamp)} · reviewer ${event.actor_id}`)))
-            : h('p', {}, 'No archive, restore, or unlink actions recorded.'))),
+            event.new_state?.superseded_by && h('p', {}, `Invoice ${event.target_id}: ${event.previous_state?.status} → superseded. Replacement: ${event.new_state.superseded_by}`),
+            event.new_state?.supersedes_invoice_id && h('p', {}, `Invoice ${event.target_id} uploaded to replace ${event.new_state.supersedes_invoice_id}`),
+            h('small', {}, `${when(event.timestamp)} · ${event.actor_type} ${event.actor_id ?? ''}`)))
+            : h('p', {}, 'No invoice management events recorded.'))),
       d.live);
   }
 

@@ -94,6 +94,7 @@ export async function draftSupplierMessage(db: Db, orgId: string, discrepancyId:
     'select id, invoice_id, purchase_order_id from discrepancies where id = $1 and organization_id = $2', [discrepancyId, orgId]);
   if (!d) notFound();
   const inv = (await loadInvoice(db, orgId, d.invoice_id, true)) ?? notFound();
+  if (inv.status === 'superseded') fail('conflict', 'Review the replacement invoice.');
   if (inv.archived_at) fail('conflict', 'Restore this invoice before drafting a correction.');
   const poId = inv.purchase_order_id;
   if (d.purchase_order_id && d.purchase_order_id !== poId) fail('conflict', 'This finding refers to a purchase order that is no longer linked.');

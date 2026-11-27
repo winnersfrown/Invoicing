@@ -62,6 +62,10 @@ export async function runTool(ctx: ToolContext, name: string, rawArgs: string): 
   const started = Date.now();
   let args: unknown, outcome: ToolOutcome;
   try { args = JSON.parse(rawArgs); } catch { args = { unparsed: String(rawArgs).slice(0, 500) }; }
+  // Postgres text and jsonb reject NUL; the log must never be the thing that fails.
+  const recordCall = (db: Db, ok: boolean) => db.query(
+    'insert into tool_calls (organization_id, investigation_id, tool_name, arguments, ok, duration_ms) values ($1, $2, $3, $4::jsonb, $5, $6)',
+    [ctx.orgId, ctx.investigationId, name.replace(/[^\x20-\x7e]/g, '?').slice(0, 100), (JSON.stringify(args) ?? 'null').replace(/\\u0000/g, ''), ok, Date.now() - started]);
   const def = (TOOL_NAMES as string[]).includes(name) ? DEFS[name as ToolName] : undefined;
   if (!def) {
     outcome = { ok: false, error: { code: 'unknown_tool', message: `Unknown tool. Available tools: ${TOOL_NAMES.join(', ')}.` } };
@@ -71,17 +75,18 @@ export async function runTool(ctx: ToolContext, name: string, rawArgs: string): 
       outcome = { ok: false, error: { code: 'invalid_arguments', message: `Invalid arguments: ${parsed.error.issues.map((i) => `${i.path.join('.') || '(arguments)'}: ${i.message}`).join('; ')}`.slice(0, 500) } };
     } else {
       try {
-        const r = await ctx.db.transaction((tx) => def.run({ ...ctx, db: tx }, parsed.data));
+        const r = await ctx.db.transaction(async (tx) => {
+          const result = await def.run({ ...ctx, db: tx }, parsed.data);
+          await recordCall(tx, true);
+          return result;
+        });
         for (const e of r.evidence) ctx.evidence.set(e.id, e);
-        outcome = { ok: true, data: r.data, evidence: r.evidence };
+        return { ok: true, data: r.data, evidence: r.evidence };
       } catch (e) {
         outcome = failure(e);
       }
     }
   }
-  // Postgres text and jsonb reject NUL; the log must never be the thing that fails.
-  await ctx.db.query(
-    'insert into tool_calls (organization_id, investigation_id, tool_name, arguments, ok, duration_ms) values ($1, $2, $3, $4::jsonb, $5, $6)',
-    [ctx.orgId, ctx.investigationId, name.replace(/[^\x20-\x7e]/g, '?').slice(0, 100), (JSON.stringify(args) ?? 'null').replace(/\\u0000/g, ''), outcome.ok, Date.now() - started]);
+  await recordCall(ctx.db, false);
   return outcome;
 }

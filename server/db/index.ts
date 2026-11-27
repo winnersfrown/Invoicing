@@ -42,7 +42,7 @@ export function pgDb(connectionString = process.env.DATABASE_URL): Db {
  */
 export async function asUser<T>(tx: Db, userId: string, fn: () => Promise<T>): Promise<T> {
   await tx.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: userId, role: 'authenticated' })]);
-  await tx.query('set local role authenticated');
+  await tx.query('set local role sorikano_workflow');
   const result = await fn();
   await tx.query('reset role');
   return result;

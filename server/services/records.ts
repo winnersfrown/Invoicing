@@ -56,14 +56,17 @@ export async function invoiceManagementHistory(db: Db, orgId: string, id: string
   const [invoice] = await db.query('select id from invoices where id = $1 and organization_id = $2', [id, orgId]);
   if (!invoice) notFound();
   const events = await db.query(`select * from audit_events where organization_id = $1 and target_type = 'invoice' and target_id = $2
-    and event_type in ('invoice.archived', 'invoice.restored', 'invoice.purchase_order_unlinked') order by id desc`, [orgId, id]);
+    and (event_type in ('invoice.archived', 'invoice.restored', 'invoice.purchase_order_unlinked')
+      or (event_type = 'invoice.status_changed' and new_state->>'status' = 'superseded')
+      or (event_type = 'invoice.created' and new_state->>'supersedes_invoice_id' is not null))
+    order by id desc`, [orgId, id]);
   return events.map(auditDto);
 }
 
 export async function getInvoiceDto(db: Db, orgId: string, id: string, documentUrl?: (path: string) => Promise<string>) {
   const inv = (await loadInvoice(db, orgId, id)) ?? notFound();
   const [extras] = await db.query<{ open_discrepancy_count: number; investigation_status: string | null }>(`select ${EXTRAS} from invoices i where i.id = $1`, [id]);
-  // Reviewers can edit their own rows through the Data API. Sign only this invoice's private object.
+  // Sign only the canonical object for the authorized invoice, including for historical rows.
   const path = `${inv.organization_id}/${inv.id}/${inv.document_sha256}`;
   const document_url = documentUrl && /^[a-f0-9]{64}$/.test(inv.document_sha256) && inv.document_storage_path === path
     ? await documentUrl(path) : undefined;
